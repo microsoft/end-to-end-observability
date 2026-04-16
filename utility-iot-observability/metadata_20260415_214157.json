@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-04-15T21:41:57.480060Z",
+  "total_records": 2304,
+  "hours_generated": 24,
+  "device_counts": {
+    "smart_meters": 6,
+    "gas_meters": 3,
+    "transformers": 5,
+    "regulators": 3,
+    "cathodic_protection": 3,
+    "pipeline_stations": 3
+  },
+  "output_files": {
+    "jsonl": "utility_telemetry_20260415_214157.jsonl",
+    "csv": "utility_telemetry_20260415_214157.csv"
+  }
+}
