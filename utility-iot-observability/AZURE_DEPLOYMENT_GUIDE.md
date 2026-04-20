@@ -6,6 +6,32 @@
 
 ---
 
+## Two reference architectures
+
+This repository supports **two** Azure reference paths. Pick one based on the demo goal.
+
+### Pattern A — Fast cloud demo (this guide's original content)
+`IoT Hub` *or* `Event Hubs` → `Azure Data Explorer (ADX)` → `Grafana` / `Power BI`,
+with **`upload_to_azure.py`** acting as a blueprint uploader. Minimal moving parts; good
+for a time-series analytics story with dashboards in under an hour.
+
+**Inputs consumed:** `utility_telemetry_<ts>.jsonl` (canonical), optionally
+`telemetry_protocol_<ts>.jsonl` (Tier 3 views) and `events_<ts>.jsonl`.
+
+### Pattern B — Modern industrial (AIO + ADT + ADX)
+`Devices` → **Azure IoT Operations (AIO)** MQTT broker on Arc-enabled Kubernetes →
+**dataflows** to `Event Hubs` → `ADX` for hot/warm time-series + **Azure Digital Twins (ADT)**
+for topology/semantics + **Azure Managed Grafana** + `Microsoft Fabric` for OT/IT convergence.
+
+**Inputs consumed (additional):** `asset_hierarchy_<ts>.json` (Tier 5 — DTDL v3 interfaces,
+twin instances, relationships) is loaded directly into ADT.
+
+Pattern A and Pattern B share the same canonical telemetry schema. Upgrading from A to B
+does not require regenerating data — the Tier 5 hierarchy file is a pure function of the
+inventory and is emitted alongside telemetry on every seeded run.
+
+---
+
 ## Quick Start (5 Steps)
 
 ### 1. Create Azure Resource Group
@@ -449,3 +475,133 @@ azcopy copy "https://utilitydata.dfs.core.windows.net/raw/*" \
 ---
 
 **Questions?** See the main research document: `2026-04-15-utility-iot-device-telemetry.md`
+```
+
+---
+
+## Pattern B — Modern industrial (AIO + ADT + ADX)
+
+This pattern is recommended when the customer wants topology-aware analytics, OT/IT
+convergence across plants/feeders/regions, or a clear path from edge broker to cloud
+time-series without vendor lock-in. All components below are first-party Azure services.
+
+### Reference topology
+
+```
+[PLC / RTU / AMI headend / compressor controller]
+      |
+      v  (OPC UA / DLMS / DNP3 / IEC 61850 / MQTT)
+[Arc-enabled K8s cluster on site]
+      - Azure IoT Operations (AIO) MQTT broker
+      - AIO dataflows (normalize, enrich, route)
+      |
+      v  (dataflow endpoint, TLS)
+[Azure Event Hubs]              (cloud boundary)
+      |
+      +---------> [Azure Data Explorer] - hot/warm time-series + KQL
+      |                 |
+      |                 +--> [Managed Grafana] (dashboards)
+      |                 +--> [Microsoft Fabric / OneLake] (lakehouse, AI)
+      |
+      +---------> [Azure Digital Twins (ADT)]
+                        ^ topology, hierarchy, relationships
+                        | (loaded from asset_hierarchy_<ts>.json)
+```
+
+### Deploy DTDL models + twins from the Tier 5 hierarchy file
+
+The generator emits a single `asset_hierarchy_<ts>.json` document containing DTDL v3
+interfaces, twin instances, and relationships. A minimal loader (Azure CLI + `jq`):
+
+```bash
+# 1) Create the ADT instance (one-time)
+az dt create --dt-name adt-eseg-dev --resource-group rg-utility-observability \
+  --location eastus2
+
+HIER=asset_hierarchy_20260101_000000.json
+
+# 2) Upload DTDL models (interfaces)
+jq -c '.dtdl_interfaces' "$HIER" > /tmp/models.json
+az dt model create --dt-name adt-eseg-dev --models /tmp/models.json
+
+# 3) Create twins
+jq -c '.twin_instances[]' "$HIER" | while read twin; do
+  id=$(echo "$twin" | jq -r '."$dtId"')
+  model=$(echo "$twin" | jq -r '."$metadata"."$model"')
+  props=$(echo "$twin" | jq 'del(."$dtId", ."$metadata")')
+  az dt twin create --dt-name adt-eseg-dev --dtmi "$model" \
+    --twin-id "$id" --properties "$props"
+done
+
+# 4) Create relationships (contains / feeds / regulates)
+jq -c '.relationships[]' "$HIER" | while read rel; do
+  src=$(echo "$rel" | jq -r '.source')
+  tgt=$(echo "$rel" | jq -r '.target')
+  name=$(echo "$rel" | jq -r '.name')
+  az dt twin relationship create --dt-name adt-eseg-dev \
+    --source "$src" --target "$tgt" --relationship "$name" \
+    --relationship-id "$src-$name-$tgt"
+done
+```
+
+### AIO dataflow: canonical telemetry -> Event Hubs
+
+Dataflow YAML snippet (ingest from AIO MQTT `telemetry/#`, forward to Event Hubs):
+
+```yaml
+apiVersion: connectivity.iotoperations.azure.com/v1beta1
+kind: Dataflow
+metadata:
+  name: df-utility-telemetry
+spec:
+  mode: Enabled
+  operations:
+    - operationType: Source
+      sourceSettings:
+        endpointRef: mq-default
+        dataSources: ["telemetry/#"]
+    - operationType: BuiltInTransformation
+      builtInTransformationSettings:
+        datasets: []
+        filter:
+          - type: Filter
+            description: "Drop STALE quality below 15 min old (dedupe)"
+            expression: "quality != 'STALE' || (now() - received_timestamp) > 900s"
+    - operationType: Destination
+      destinationSettings:
+        endpointRef: eh-utility
+        dataDestination: utility-telemetry
+```
+
+### KQL join: live telemetry joined to ADT hierarchy
+
+Once twins are loaded, ADX queries can enrich time-series with topology. Example —
+all smart meters on transformers in the Albany region with any reverse-flow activity
+in the last hour:
+
+```kusto
+let affected = evaluate azure_digital_twins_query_request(
+  "https://adt-eseg-dev.api.eus2.digitaltwins.azure.net",
+  "SELECT meter.$dtId FROM DIGITALTWINS region "
+  "JOIN substation RELATED region.contains "
+  "JOIN transformer RELATED substation.contains "
+  "JOIN meter RELATED transformer.feeds "
+  "WHERE region.code = 'ALB'");
+utility_telemetry
+| where device_type == "smart_meter"
+| where device_id in (affected)
+| where timestamp > ago(1h)
+| where reverse_flow == true or demand_kw < 0
+| summarize min(demand_kw), avg(voltage_a), count() by device_id;
+```
+
+### When to pick which pattern
+
+| Need                                  | Pattern A (Fast) | Pattern B (Modern) |
+|---------------------------------------|:----------------:|:------------------:|
+| Dashboards in under an hour           | yes              |                    |
+| On-prem broker / edge normalization   |                  | yes                |
+| Topology-aware alerts (feeder/region) |                  | yes                |
+| Multi-site / fleet view               |                  | yes                |
+| OT/IT convergence (Fabric, OneLake)   |                  | yes                |
+| Minimal Azure services to manage      | yes              |                    |
