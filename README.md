@@ -94,10 +94,15 @@ Outputs:
 
 ### Running the tests
 
+Unit tests (no Azure required):
+
 ```pwsh
 pip install pytest
 pytest discovery/tests
 ```
+
+Integration tests against a real test subscription — see
+[tests/README.md](tests/README.md) for the full deploy-fixture → scan → assert → cleanup loop.
 
 ### Extending the rule set
 
