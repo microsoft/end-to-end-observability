@@ -1,22 +1,23 @@
 # Discovery tool — testing
 
-This folder contains everything needed to validate the `discovery/` tool
-against a real Azure test subscription.
+This folder contains everything needed to validate the `discovery/` tool,
+both offline (unit tests) and against a real Azure test subscription
+(integration tests + Bicep fixture).
 
 ```
-tests/
+discovery/tests/
+├── test_rules_engine.py        # unit tests, no Azure required
 ├── fixtures/azure/
-│   ├── main.bicep                 # deterministic resources that trigger every rule
-│   ├── Deploy-TestFixture.ps1     # provisions the fixture + emits expected-findings.json
-│   └── Remove-TestFixture.ps1     # tears it down
+│   ├── main.bicep              # deterministic resources that trigger every rule
+│   ├── Deploy-TestFixture.ps1  # provisions the fixture + emits expected-findings.json
+│   └── Remove-TestFixture.ps1  # tears it down
 ├── integration/
 │   └── test_expected_findings.py  # asserts the discovery report matches expectations
 └── README.md
 ```
 
-The unit tests under `discovery/tests/` need **no Azure** and run on every
-PR. The integration tests in `tests/integration/` are **opt-in** and gated
-by environment variables, so they will not run by accident.
+The unit tests run on every PR. The integration tests are **opt-in** and
+gated by environment variables, so they will not run by accident.
 
 ---
 
@@ -33,7 +34,7 @@ by environment variables, so they will not run by accident.
 ```pwsh
 # 1. Deploy the fixture
 $pw = Read-Host -AsSecureString "SQL admin password"
-.\tests\fixtures\azure\Deploy-TestFixture.ps1 `
+.\discovery\tests\fixtures\azure\Deploy-TestFixture.ps1 `
     -SubscriptionId <test-sub-id> `
     -ResourceGroupName rg-obs-discovery-test `
     -Location eastus2 `
@@ -44,11 +45,11 @@ python -m discovery scan --subscription <test-sub-id> --out-dir .\out
 
 # 3. Assert the report matches the fixture's expected findings
 $env:OBS_TEST_REPORT   = ".\out\discovery-report.json"
-$env:OBS_TEST_EXPECTED = ".\tests\fixtures\azure\expected-findings.json"
-pytest tests/integration -q
+$env:OBS_TEST_EXPECTED = ".\discovery\tests\fixtures\azure\expected-findings.json"
+pytest discovery/tests/integration -q
 
 # 4. Tear down (async)
-.\tests\fixtures\azure\Remove-TestFixture.ps1 -SubscriptionId <test-sub-id>
+.\discovery\tests\fixtures\azure\Remove-TestFixture.ps1 -SubscriptionId <test-sub-id>
 ```
 
 ## What the fixture deploys
