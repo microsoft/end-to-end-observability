@@ -8,4 +8,4 @@ out/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-tests/fixtures/azure/expected-findings.json
+discovery/tests/fixtures/azure/expected-findings.json

@@ -4,8 +4,8 @@ Prerequisites (this test is opt-in, gated by env vars so it never runs in
 the default `pytest discovery/tests` invocation):
 
     $env:OBS_TEST_REPORT   = ".\out\discovery-report.json"
-    $env:OBS_TEST_EXPECTED = ".\tests\fixtures\azure\expected-findings.json"
-    pytest tests/integration -q
+    $env:OBS_TEST_EXPECTED = ".\discovery\tests\fixtures\azure\expected-findings.json"
+    pytest discovery/tests/integration -q
 
 `expected-findings.json` is written by Deploy-TestFixture.ps1 and contains
 the (resourceName, ruleIds[]) pairs the fixture should produce.
