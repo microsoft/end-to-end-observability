@@ -1,0 +1,200 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# AMBA Alert Health Workbook\n\nMonitors alert routing health across all AMBA-managed subscriptions.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "sub-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "value": []
+          },
+          {
+            "id": "time-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 86400000 }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Alert Volume Overview"
+      },
+      "name": "section-volume"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AlertsManagementResources\n| where type == 'microsoft.alertsmanagement/alerts'\n| where properties.essentials.startDateTime >= ago(24h)\n| where properties.essentials.monitorCondition == 'Fired'\n| extend severity = tostring(properties.essentials.severity)\n| extend targetResource = tostring(properties.essentials.targetResource)\n| extend alertRule = tostring(properties.essentials.alertRule)\n| summarize AlertCount = count() by severity\n| order by severity asc",
+        "size": 1,
+        "title": "Fired Alerts by Severity (24h)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "piechart"
+      },
+      "name": "alerts-by-severity"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AlertsManagementResources\n| where type == 'microsoft.alertsmanagement/alerts'\n| where properties.essentials.startDateTime >= ago(7d)\n| where properties.essentials.monitorCondition == 'Fired'\n| extend alertTime = todatetime(properties.essentials.startDateTime)\n| summarize AlertCount = count() by bin(alertTime, 1h)\n| order by alertTime asc",
+        "size": 0,
+        "title": "Alert Volume Trend (7 days)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "timechart"
+      },
+      "name": "alert-trend"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Alert Processing Rule Health"
+      },
+      "name": "section-apr"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type == 'microsoft.alertsmanagement/actionrules'\n| extend ruleName = name\n| extend enabled = tostring(properties.enabled)\n| extend ruleType = tostring(properties.type)\n| extend scope = tostring(properties.scopes)\n| project ruleName, enabled, ruleType, subscriptionId, resourceGroup\n| order by ruleName asc",
+        "size": 0,
+        "title": "Alert Processing Rules Status",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "enabled",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  { "operator": "==", "thresholdValue": "True", "representation": "success", "text": "Active" },
+                  { "operator": "==", "thresholdValue": "False", "representation": "disabled", "text": "Disabled" },
+                  { "operator": "Default", "representation": "unknown", "text": "{0}" }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "name": "apr-status"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Action Group Routing"
+      },
+      "name": "section-ag"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type == 'microsoft.insights/actiongroups'\n| where tags['_deployed_by_amba'] == 'True'\n| extend agName = name\n| extend emailReceivers = array_length(properties.emailReceivers)\n| extend webhookReceivers = array_length(properties.webhookReceivers)\n| extend armRoleReceivers = array_length(properties.armRoleReceivers)\n| extend enabled = tostring(properties.enabled)\n| project agName, enabled, emailReceivers, webhookReceivers, armRoleReceivers, subscriptionId, resourceGroup\n| order by agName asc",
+        "size": 0,
+        "title": "AMBA Action Groups",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table"
+      },
+      "name": "action-groups"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Unresolved Alerts (Potential Routing Issues)"
+      },
+      "name": "section-unresolved"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AlertsManagementResources\n| where type == 'microsoft.alertsmanagement/alerts'\n| where properties.essentials.monitorCondition == 'Fired'\n| where properties.essentials.alertState == 'New'\n| extend age = datetime_diff('hour', now(), todatetime(properties.essentials.startDateTime))\n| where age > 24\n| extend alertRule = tostring(properties.essentials.alertRule)\n| extend severity = tostring(properties.essentials.severity)\n| extend targetResource = tostring(properties.essentials.targetResource)\n| extend startTime = todatetime(properties.essentials.startDateTime)\n| project alertRule, severity, targetResource, startTime, age\n| order by age desc\n| take 50",
+        "size": 0,
+        "title": "Stale Alerts (>24h unacknowledged)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "severity",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  { "operator": "==", "thresholdValue": "Sev0", "representation": "4", "text": "Critical" },
+                  { "operator": "==", "thresholdValue": "Sev1", "representation": "2", "text": "Error" },
+                  { "operator": "==", "thresholdValue": "Sev2", "representation": "warning", "text": "Warning" },
+                  { "operator": "Default", "representation": "info", "text": "{0}" }
+                ]
+              }
+            },
+            {
+              "columnMatch": "age",
+              "formatter": 8,
+              "formatOptions": { "min": 24, "max": 168, "palette": "redGreen" }
+            }
+          ]
+        }
+      },
+      "name": "stale-alerts"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## AMBA Resource Inventory"
+      },
+      "name": "section-inventory"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where tags['_deployed_by_amba'] == 'True'\n| summarize Count = count() by type\n| order by Count desc",
+        "size": 0,
+        "title": "AMBA-Deployed Resources by Type",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "barchart"
+      },
+      "name": "amba-inventory"
+    }
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json",
+  "fallbackResourceIds": ["/subscriptions/00000000-0000-0000-0000-000000000000"],
+  "styleSettings": { "paddingStyle": "narrow" }
+}

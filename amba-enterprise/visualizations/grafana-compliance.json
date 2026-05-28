@@ -1,0 +1,164 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "AMBA Policy Compliance Dashboard - Monitors Azure Policy compliance state for all 17 AMBA initiatives",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Overall AMBA Compliance Rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Alerting-.*\"}",
+          "legendFormat": "{{initiative}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "orange", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Compliance by Initiative",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 4 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Alerting-.*\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "unit", "value": "percent" },
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 80 }, { "color": "green", "value": 95 }] } }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        { "id": "organize", "options": { "renameByName": { "initiative": "Initiative", "Value": "Compliance %" } } }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Non-Compliant Resources by Initiative",
+      "type": "barchart",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 4 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_non_compliant_resources{initiative=~\"Alerting-.*\"}",
+          "legendFormat": "{{initiative}}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Compliance Trend (7 days)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Alerting-.*\"}",
+          "legendFormat": "{{initiative}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right" }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Deployment Wave Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 22 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_assignment_status{initiative=~\"Alerting-.*\"}",
+          "legendFormat": "{{initiative}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "1": { "text": "Active", "color": "green" }, "0": { "text": "Not Deployed", "color": "dark-gray" } } }
+          ]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Remediation Tasks",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_remediation_status{initiative=~\"Alerting-.*\"}",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["amba", "azure", "monitoring", "compliance"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "grafana-azure-monitor-datasource",
+        "current": {}
+      },
+      {
+        "name": "management_group",
+        "type": "query",
+        "datasource": "${datasource}",
+        "query": "ManagementGroups()",
+        "current": {}
+      }
+    ]
+  },
+  "time": { "from": "now-7d", "to": "now" },
+  "title": "AMBA Policy Compliance",
+  "uid": "amba-compliance-001",
+  "version": 1
+}
