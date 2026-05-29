@@ -1,0 +1,116 @@
+# -----------------------------------------------------------------------------
+# AMBA Enterprise - Drift Detection Pipeline
+# Runs on schedule to detect configuration drift between desired and actual state
+# -----------------------------------------------------------------------------
+name: AMBA Drift Detection
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+
+env:
+  TF_VERSION: '1.9.0'
+  WORKING_DIR: 'amba-enterprise/terraform'
+
+jobs:
+  drift-check:
+    name: Check Drift (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [sandbox, pre-prod, prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ secrets.TF_STATE_RG }}" \
+            -backend-config="storage_account_name=${{ secrets.TF_STATE_SA }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=amba-${{ matrix.environment }}.tfstate"
+
+      - name: Terraform Plan (drift detection)
+        id: plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform plan \
+            -var-file="environments/${{ matrix.environment }}.tfvars" \
+            -var="management_subscription_id=${{ secrets.MANAGEMENT_SUBSCRIPTION_ID }}" \
+            -detailed-exitcode \
+            -out=drift-plan 2>&1 | tee plan-output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Report Drift
+        if: steps.plan.outputs.exitcode == '2'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('${{ env.WORKING_DIR }}/plan-output.txt', 'utf8');
+            const issueTitle = `[AMBA Drift] Configuration drift detected in ${{ matrix.environment }}`;
+            const issueBody = `## Drift Detected\n\n**Environment:** ${{ matrix.environment }}\n**Detected:** ${new Date().toISOString()}\n\n### Plan Output\n\`\`\`\n${planOutput.substring(0, 3000)}\n\`\`\`\n\n### Action Required\nReview the drift and either:\n1. Apply the Terraform plan to restore desired state\n2. Update the tfvars to match the intentional change\n3. Document as approved exception`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['amba', 'drift', '${{ matrix.environment }}']
+            });
+
+  compliance-check:
+    name: Policy Compliance Summary
+    runs-on: ubuntu-latest
+    needs: drift-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check policy compliance state
+        shell: pwsh
+        run: |
+          $complianceStates = az policy state summarize --management-group "${{ secrets.ENTERPRISE_PREFIX }}" --filter "policySetDefinitionName eq 'Alerting-*'" | ConvertFrom-Json
+          $totalResources = $complianceStates.results.resourceDetails | Measure-Object -Property count -Sum
+          $nonCompliant = $complianceStates.results.resourceDetails | Where-Object { $_.complianceState -eq 'NonCompliant' } | Measure-Object -Property count -Sum
+          $complianceRate = if ($totalResources.Sum -gt 0) { [math]::Round((1 - $nonCompliant.Sum / $totalResources.Sum) * 100, 2) } else { 100 }
+          Write-Host "Policy Compliance Rate: $complianceRate%"
+          if ($complianceRate -lt 95) {
+            Write-Host "::warning::Compliance rate below 95% threshold: $complianceRate%"
+          }
+
+      - name: Check deployment count budget
+        shell: pwsh
+        run: |
+          $deployments = az deployment mg list --management-group-id "${{ secrets.ENTERPRISE_PREFIX }}" --query "length(@)" | ConvertFrom-Json
+          $remaining = 800 - $deployments
+          Write-Host "Deployment budget: $deployments/800 used, $remaining remaining"
+          if ($remaining -lt 100) {
+            Write-Host "::warning::Deployment budget running low: only $remaining slots remaining"
+          }
