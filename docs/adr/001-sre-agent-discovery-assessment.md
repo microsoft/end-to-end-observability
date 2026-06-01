@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | Proposed |
-| **Date** | 2026-05-22 |
+| **Status** | **Accepted: Option D (SRE Agent-native)** |
+| **Date** | 2026-05-22 (proposed) · 2026-06-01 (accepted) |
 | **Author** | Andrew Delosky |
 | **Deciders** | Andrew Delosky, James Hunter, Wilkin Shum, Gaurav Bhardwaj, Brad Allen |
 | **Related** | User Story #37 (Discovery-Driven Monitoring Baseline), Task #53 (SRE Agent Use Case Mapping) |
@@ -232,4 +232,23 @@ Both options are viable. The choice depends on the team's answers to these quest
 
 ## Decision
 
-**Pending** — to be decided at OGE Observability Sync (May 26, 2026).
+**Accepted: Option D (SRE Agent-native)** — decided at OGE Observability Sync, June 1, 2026.
+
+The team agreed that Azure SRE Agent will be the underlying architecture for the OGE Observability solution. The standalone discovery module (`discovery/`) will be deprecated; its logic (ARG queries, rules engine, JSON output schema) will be migrated into SRE Agent as Python tools, Skills, and Knowledge Base content.
+
+### Rationale
+
+- OGE customers are already leaning toward SRE Agent as their operational platform
+- SRE Agent's extensibility (Python tools, Skills, Knowledge Base) closes 5 of 6 identified gaps
+- Single-platform approach (scan → investigate → remediate → learn) reduces delivery complexity
+- The team's role pivots to additive value: custom sub-agents, skills, and delivery IP — not a standalone accelerator
+- SRE Agent cost model is a known concern and will be addressed via PG engagement (Story #58)
+
+### Next Steps (Post-Decision)
+
+1. ~~**Team discussion** — Review Options C and D~~ ✅ Done (June 1)
+2. **Customer validation** — Validate Option D with first OGE customer pilot
+3. **Prototype** — Build SRE Agent Skill + Python tool demonstrating discovery-to-remediation
+4. **Story #37** — Close with architecture decision reference
+5. **Story #55** — Complete SRE Agent permissions and safe-deployment guide
+6. **Story #58** — Initiate VBD/Service delivery vehicle with PG (Deepthi Chelupati)
