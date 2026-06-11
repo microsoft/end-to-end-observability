@@ -88,7 +88,7 @@ Research and reference implementation for electric, gas, and oil/gas pipeline mo
 
 - Synthetic data generator producing realistic 24-hour telemetry (2,304 records) with time-of-day patterns, seasonal variation, and device-specific fault signatures
 - Multi-mode Azure uploader (IoT Hub, Event Hub, Cosmos DB)
-- Full Bicep deployment blueprint for IoT Hub, Event Hub, ADX, ADLS Gen2, Cosmos DB, Digital Twins, and Stream Analytics
+- Deployment guide for IoT Hub, Event Hub, ADX, ADLS Gen2, Cosmos DB, Digital Twins, and Stream Analytics (see [`AZURE_DEPLOYMENT_GUIDE.md`](utility-iot-observability/AZURE_DEPLOYMENT_GUIDE.md))
 - Coverage of 25+ device types across smart meters, distribution transformers, substations, gas metering, and pipeline systems
 
 See [`utility-iot-observability/README.md`](utility-iot-observability/README.md).
