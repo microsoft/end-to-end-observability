@@ -53,3 +53,11 @@ amba-enterprise/
 - Management group hierarchy already established (ALZ reference architecture)
 - VM Insights DCR deployed on target VMs (for log-based alerts)
 - Subscription names must use only alphanumeric characters, underscores, and hyphens
+
+## Related components
+
+AMBA covers **alerting** only (alert rules, action groups, alert processing rules). Enforcement of **monitoring baselines** — Azure Monitor Agent deployment, diagnostic settings, and private endpoint posture — lives in a separate, independently-versioned component:
+
+- [`monitoring-baselines/`](../monitoring-baselines/README.md) — Azure Policy initiative that auto-enforces AMA and diagnostic settings and flags private endpoint gaps.
+
+The two components share the management group hierarchy and the remediation User Assigned Managed Identity, but are deployed and upgraded independently.

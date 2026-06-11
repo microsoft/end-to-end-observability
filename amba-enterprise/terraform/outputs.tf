@@ -4,12 +4,12 @@
 
 output "monitoring_resource_group_id" {
   description = "Resource ID of the AMBA monitoring resource group"
-  value       = module.monitoring_resource_group.id
+  value       = module.amba_monitoring.resource_id
 }
 
 output "user_assigned_identity_id" {
   description = "Resource ID of the UAMI used by AMBA policies"
-  value       = var.bring_your_own_user_assigned_managed_identity == "No" ? module.user_assigned_identity[0].id : var.bring_your_own_user_assigned_managed_identity_resource_id
+  value       = module.amba_monitoring.user_assigned_managed_identity_resource_id
 }
 
 output "deployment_location" {
