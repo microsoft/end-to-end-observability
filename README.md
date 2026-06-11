@@ -171,7 +171,7 @@ cd test-data
 ./validate-data.ps1
 ```
 
-See each module's README and [`docs/onboarding.md`](amba-enterprise/docs/onboarding-greenfield.md) for detailed deployment guidance.
+See each module's README plus the onboarding guides ([AMBA greenfield](amba-enterprise/docs/onboarding-greenfield.md), [AMBA brownfield](amba-enterprise/docs/onboarding-brownfield.md), [Monitoring Baselines](monitoring-baselines/docs/onboarding.md)) for detailed deployment guidance.
 
 ---
 
