@@ -177,7 +177,7 @@ See each module's README plus the onboarding guides ([AMBA greenfield](amba-ente
 
 ## CI/CD Pipelines
 
-Both AMBA Enterprise and Monitoring Baselines include GitHub Actions pipelines:
+Both AMBA Enterprise and Monitoring Baselines include GitHub Actions workflow files under their respective `pipelines/` directories (GitHub Actions will only execute workflows placed in `.github/workflows/`).
 
 | Pipeline | Trigger | Purpose |
 |---|---|---|
