@@ -253,3 +253,15 @@ variable "deployment_location" {
   type        = string
   default     = "eastus"
 }
+
+variable "alz_architecture_name" {
+  description = "Name of the ALZ architecture definition that describes which AMBA initiatives are deployed (matches an *.alz_architecture_definition.json file in the module library)."
+  type        = string
+  default     = "alz"
+}
+
+variable "monitoring_role_definition_id" {
+  description = "Role definition GUID assigned to the AMBA remediation UAMI at the root management group. Defaults to Monitoring Contributor."
+  type        = string
+  default     = "749f88d5-cbae-40b8-bcfc-e573ddc772fa"
+}

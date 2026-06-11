@@ -1,0 +1,201 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "Monitoring Baselines Compliance Dashboard - tracks Azure Policy compliance for AMA, diagnostic settings, and private endpoint policies (separate from AMBA alerting).",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Overall Monitoring Baselines Compliance",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Monitoring-Baselines-.*\"}",
+          "legendFormat": "{{initiative}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "orange", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Compliance by Policy Category",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 4 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Monitoring-Baselines-.*\", category=~\"azure-monitor-agent|diagnostic-settings|private-endpoints\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "unit", "value": "percent" },
+              { "id": "custom.displayMode", "value": "color-background" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 80 }, { "color": "green", "value": 95 }] } }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        { "id": "organize", "options": { "renameByName": { "category": "Category", "Value": "Compliance %" } } }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Non-Compliant Resources by Category",
+      "type": "barchart",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 4 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_non_compliant_resources{initiative=~\"Monitoring-Baselines-.*\", category=~\"azure-monitor-agent|diagnostic-settings|private-endpoints\"}",
+          "legendFormat": "{{category}}"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "always"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Compliance Trend (30 days)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Monitoring-Baselines-.*\"}",
+          "legendFormat": "{{category}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right" }
+      }
+    },
+    {
+      "id": 5,
+      "title": "AMA Deployment Coverage",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 22 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Monitoring-Baselines-.*\", category=\"azure-monitor-agent\"}",
+          "legendFormat": "AMA"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 80 }, { "color": "green", "value": 95 }] }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Diagnostic Settings Coverage",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 22 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Monitoring-Baselines-.*\", category=\"diagnostic-settings\"}",
+          "legendFormat": "Diagnostic Settings"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 80 }, { "color": "green", "value": 95 }] }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Private Endpoint Posture",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 22 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_compliance_percentage{initiative=~\"Monitoring-Baselines-.*\", category=\"private-endpoints\"}",
+          "legendFormat": "Private Endpoints"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": 0 }, { "color": "orange", "value": 80 }, { "color": "green", "value": 95 }] }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Remediation Tasks",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
+      "datasource": "${datasource}",
+      "targets": [
+        {
+          "expr": "azure_policy_remediation_status{initiative=~\"Monitoring-Baselines-.*\"}",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["monitoring-baselines", "azure", "ama", "diagnostic-settings", "compliance"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "grafana-azure-monitor-datasource",
+        "current": {}
+      },
+      {
+        "name": "management_group",
+        "type": "query",
+        "datasource": "${datasource}",
+        "query": "ManagementGroups()",
+        "current": {}
+      }
+    ]
+  },
+  "time": { "from": "now-30d", "to": "now" },
+  "title": "Monitoring Baselines Compliance",
+  "uid": "monitoring-baselines-001",
+  "version": 1
+}
