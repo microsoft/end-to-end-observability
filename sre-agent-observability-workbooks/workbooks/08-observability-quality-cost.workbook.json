@@ -1,0 +1,571 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Observability Quality & Cost\n\nMonitor **telemetry completeness, workbook quality, alert hygiene, and Log Analytics cost**. Gaps here become Unknown health everywhere else; this page keeps the observability platform itself observable.\n\n> **SRE Agent at the center.** This page is an operating surface for both humans and the SRE Agent. Set the **Subscriptions** and **Log Analytics workspace** parameters, then act on the Top 10 recommendations below."
+      },
+      "name": "page-header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "param-timerange",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time range",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "value": {
+              "durationMs": 604800000
+            }
+          },
+          {
+            "id": "param-subscriptions",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "label": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "param-loganalyticsworkspaceid",
+            "version": "KqlParameterItem/1.0",
+            "name": "LogAnalyticsWorkspaceId",
+            "label": "Log Analytics workspace",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources | where type =~ 'microsoft.operationalinsights/workspaces' | project value = id, label = name, selected = false | order by label asc",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "queryType": 1,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            }
+          },
+          {
+            "id": "param-managementgroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ManagementGroup",
+            "label": "Management group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-resourcegroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroup",
+            "label": "Resource group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-region",
+            "version": "KqlParameterItem/1.0",
+            "name": "Region",
+            "label": "Region",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-environment",
+            "version": "KqlParameterItem/1.0",
+            "name": "Environment",
+            "label": "Environment",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Production\", \"label\": \"Production\", \"selected\": false}, {\"value\": \"Pre-Production\", \"label\": \"Pre-Production\", \"selected\": false}, {\"value\": \"Development\", \"label\": \"Development\", \"selected\": false}, {\"value\": \"Test\", \"label\": \"Test\", \"selected\": false}, {\"value\": \"Sandbox\", \"label\": \"Sandbox\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-workload",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workload",
+            "label": "Workload / application",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-ownerteam",
+            "version": "KqlParameterItem/1.0",
+            "name": "OwnerTeam",
+            "label": "Owner team",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-businesscriticality",
+            "version": "KqlParameterItem/1.0",
+            "name": "BusinessCriticality",
+            "label": "Business criticality",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Mission Critical\", \"label\": \"Mission Critical\", \"selected\": false}, {\"value\": \"Business Critical\", \"label\": \"Business Critical\", \"selected\": false}, {\"value\": \"High\", \"label\": \"High\", \"selected\": false}, {\"value\": \"Medium\", \"label\": \"Medium\", \"selected\": false}, {\"value\": \"Low\", \"label\": \"Low\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-resourcetype",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceType",
+            "label": "Resource type",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-severity",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "label": "Severity",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Sev0 - Critical\", \"label\": \"Sev0 - Critical\", \"selected\": false}, {\"value\": \"Sev1 - High\", \"label\": \"Sev1 - High\", \"selected\": false}, {\"value\": \"Sev2 - Medium\", \"label\": \"Sev2 - Medium\", \"selected\": false}, {\"value\": \"Sev3 - Low\", \"label\": \"Sev3 - Low\", \"selected\": false}, {\"value\": \"Sev4 - Informational\", \"label\": \"Sev4 - Informational\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-recommendationstatus",
+            "version": "KqlParameterItem/1.0",
+            "name": "RecommendationStatus",
+            "label": "Recommendation status",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"Active\", \"label\": \"Active\", \"selected\": true}, {\"value\": \"All\", \"label\": \"All\", \"selected\": false}, {\"value\": \"New\", \"label\": \"New\", \"selected\": false}, {\"value\": \"Pending approval\", \"label\": \"Pending approval\", \"selected\": false}, {\"value\": \"Approved\", \"label\": \"Approved\", \"selected\": false}, {\"value\": \"In progress\", \"label\": \"In progress\", \"selected\": false}, {\"value\": \"Applied\", \"label\": \"Applied\", \"selected\": false}, {\"value\": \"Validated\", \"label\": \"Validated\", \"selected\": false}, {\"value\": \"Rejected\", \"label\": \"Rejected\", \"selected\": false}, {\"value\": \"Suppressed\", \"label\": \"Suppressed\", \"selected\": false}, {\"value\": \"Expired\", \"label\": \"Expired\", \"selected\": false}, {\"value\": \"Failed\", \"label\": \"Failed\", \"selected\": false}, {\"value\": \"Rolled back\", \"label\": \"Rolled back\", \"selected\": false}]",
+            "value": "Active"
+          }
+        ]
+      },
+      "name": "shared-parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Observability quality & cost at a glance\n\nIngestion volume, billable split, and telemetry coverage of the monitoring estate."
+      },
+      "name": "sec-4"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated {TimeRange}\n| summarize ['Billable GB'] = round(sum(Quantity)/1024, 1)\n| extend Metric = 'Billable GB'\n| project Metric, Value = ['Billable GB']",
+        "size": 4,
+        "title": "Billable ingestion (selected window)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "la-1"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated {TimeRange}\n| summarize GB = round(sum(Quantity)/1024, 1) by Billable = tostring(IsBillable)",
+        "size": 1,
+        "title": "Billable vs non-billable",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "piechart"
+      },
+      "name": "la-2"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated {TimeRange}\n| where IsBillable == true\n| summarize GB = round(sum(Quantity)/1024, 2) by DataType\n| order by GB desc\n| take 10",
+        "size": 1,
+        "title": "Top tables by ingestion",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "barchart"
+      },
+      "name": "la-3"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Top 10 SRE Agent Recommendations\n\nPrioritized, auditable actions the **SRE Agent** has produced for this page, ranked by `RecommendationScore`. Each row is evidence-backed and carries its agent action type, approval requirement, and lifecycle status.\n\n- **Approval required = true** -> the agent will *not* act without human sign-off (always true for SLO, alert, remediation, health-model, access, or panel-deletion changes).\n- Use the **Evidence / Incident / PR / Runbook** links to drill into the supporting data.\n- Source table: `SREAgentRecommendations_CL`. If empty, no active recommendations exist for this page, or the workspace parameter is not yet set - see *Configuration* in the README."
+      },
+      "name": "top10-explainer"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where WorkbookName == \"Observability Quality & Cost\" and WorkbookPage == \"Observability Quality & Cost\"\n| where Status in (\"New\",\"Pending approval\",\"Approved\",\"In progress\",\"Failed\")\n| where isnull(ExpiresOn) or ExpiresOn > now()\n| where \"{Severity}\" == \"All\" or \"{Severity}\" == \"\" or Severity == \"{Severity}\"\n| where \"{BusinessCriticality}\" == \"All\" or \"{BusinessCriticality}\" == \"\" or BusinessCriticality == \"{BusinessCriticality}\"\n| where \"{OwnerTeam}\" == \"*\" or \"{OwnerTeam}\" == \"\" or OwnerTeam =~ \"{OwnerTeam}\"\n| where \"{RecommendationStatus}\" in (\"Active\",\"All\",\"\") or Status == \"{RecommendationStatus}\"\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| order by RecommendationScore desc, Severity asc, LastUpdated desc\n| take 10\n| project\n    Rank,\n    Severity,\n    Recommendation = RecommendationText,\n    Scope = AffectedScope,\n    OwnerTeam,\n    Confidence = ConfidenceScore,\n    ['Agent action'] = AgentActionType,\n    ['Approval required'] = ApprovalRequired,\n    Status,\n    ['Last updated'] = LastUpdated,\n    Evidence = EvidenceLinks,\n    Runbook = RelatedWorkItem,\n    Incident = RelatedIncidentId,\n    PR = RelatedPullRequest,\n    RecommendationId",
+        "size": 0,
+        "title": "Top 10 SRE Agent Recommendations",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Evidence",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Evidence"
+              }
+            },
+            {
+              "columnMatch": "Incident",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Incident"
+              }
+            },
+            {
+              "columnMatch": "PR",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "PR"
+              }
+            },
+            {
+              "columnMatch": "Runbook",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Runbook"
+              }
+            }
+          ]
+        }
+      },
+      "name": "top10-recommendations"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n"
+      },
+      "name": "top10-divider"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Diagnostic-settings coverage\n\nResources missing diagnostics or sending to the wrong workspace produce Unknown health. This is the agent's top telemetry-coverage backlog."
+      },
+      "name": "sec-7"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - Resources missing diagnostic settings**\n>\n> ARG cannot read diagnostic settings directly. Use the Azure Policy 'Deploy/Audit diagnostic settings' compliance state (policyresources) or a scheduled export to list resources without diagnostics, by type/subscription.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-5"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union *\n| where TimeGenerated {TimeRange}\n| where isnotempty(_ResourceId)\n| summarize Records = count() by _ResourceId\n| summarize ResourcesEmitting = dcount(_ResourceId)",
+        "size": 0,
+        "title": "Resources actively sending logs (sanity check)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-6"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Workspace inventory & ingestion\n\nWhich workspaces exist and how much they ingest. Spikes are cost and noise; drops are coverage loss."
+      },
+      "name": "sec-10"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.operationalinsights/workspaces'\n| extend sku = tostring(properties.sku.name), retention = toint(properties.retentionInDays)\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project name, location, sku, retention, Subscription\n| order by name asc",
+        "size": 0,
+        "title": "Log Analytics workspaces",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-8"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated {TimeRange}\n| where IsBillable == true\n| summarize BillableGB = round(sum(Quantity)/1024, 3) by DataType\n| order by BillableGB desc\n| take 25",
+        "size": 0,
+        "title": "Ingestion volume by table",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-9"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Billable vs non-billable & trend\n\nCost driver breakdown and daily ingestion trend. Use with commitment-tier sizing."
+      },
+      "name": "sec-14"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated {TimeRange}\n| summarize GB = round(sum(Quantity)/1024, 2) by IsBillable\n",
+        "size": 0,
+        "title": "Billable vs non-billable",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-11"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated {TimeRange}\n| where IsBillable == true\n| summarize BillableGB = round(sum(Quantity)/1024, 3) by bin(TimeGenerated, 1d)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Daily ingestion trend",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-12"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - Commitment tier & daily cap**\n>\n> Compare average daily billable GB to commitment-tier breakpoints (100/200/300/400/500 GB) for right-sizing, and surface daily-cap hits from the workspace _LogOperation events.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-13"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Collection coverage\n\nData Collection Rule coverage and agent (AMA) heartbeat failures. Missing DCRs and dead agents are silent coverage holes."
+      },
+      "name": "sec-17"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Heartbeat\n| where TimeGenerated > ago(1h)\n| summarize LastHeartbeat = max(TimeGenerated) by Computer, Category\n| where LastHeartbeat < ago(15m)\n| order by LastHeartbeat asc",
+        "size": 0,
+        "title": "AMA heartbeat failures (stale machines)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-15"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - DCR / Container Insights / Prometheus coverage**\n>\n> Bind ARG (microsoft.insights/datacollectionrules) for DCR inventory and compare to enrolled machines; check ContainerLog/InsightsMetrics for Container Insights and the managed-Prometheus scrape targets for coverage.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-16"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## App Insights coverage\n\nApplications actively reporting vs the expected set. A silent app is Unknown, not healthy."
+      },
+      "name": "sec-19"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppRequests\n| where TimeGenerated {TimeRange}\n| summarize Requests = count(), LastSeen = max(TimeGenerated) by AppRoleName\n| order by Requests desc",
+        "size": 0,
+        "title": "Applications reporting telemetry",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-18"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Workbook quality\n\nSlow queries, empty panels, and broken links across the suite. Keeps the surfaces the agent and humans rely on trustworthy (driven by Workbook Maintenance)."
+      },
+      "name": "sec-21"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - Slow / empty / broken panels**\n>\n> Bind workbook QA results (WorkbookQA_CL) produced by the weekly review: per-panel query duration, row counts (0 = empty), and link reachability. See automation/weekly-review.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-20"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Alert hygiene\n\nDuplicate/noisy alert rules and rules missing routing. Poor hygiene trains people to ignore alerts."
+      },
+      "name": "sec-24"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend rule = tostring(properties.essentials.alertRule)\n| summarize Fires = count() by rule\n| order by Fires desc\n| take 25",
+        "size": 0,
+        "title": "Noisiest alert rules",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-22"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - Alerts without action groups**\n>\n> Bind alert-rule configuration to list enabled rules with no action group (unroutable) or duplicated scope/condition (noise candidates).\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-23"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n### Operating model (safe-update)\nLive data on this page refreshes automatically. Changes to the **workbook definition** follow the suite's safe-update model:\n\n| Change | How it happens |\n| --- | --- |\n| Live data refresh | Automatic |\n| Low-risk metadata (titles, descriptions, layout) | Agent may auto-apply, versioned |\n| Medium/high-risk panel or query changes | Pull request + human approval |\n| SLO, alert, remediation, health-scoring, access scope, panel deletion | **Mandatory approval** - agent records a recommendation only |\n\nEvery change is versioned, validated, auditable, and reversible. See `docs/operating-model.md`."
+      },
+      "name": "operating-model-footer"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<law>"
+  ],
+  "styleSettings": {
+    "paddingStyle": "wide"
+  },
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

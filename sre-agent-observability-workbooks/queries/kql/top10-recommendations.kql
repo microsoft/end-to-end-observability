@@ -1,0 +1,47 @@
+// ---------------------------------------------------------------------------
+// top10-recommendations.kql
+// The reusable "Top 10 SRE Agent Recommendations" query rendered on EVERY page
+// of the SRE Agent Observability Workbooks suite.
+//
+// In the workbooks, {{WorkbookName}} and {{WorkbookPage}} are replaced at BUILD
+// time (by builder/shared/recommendations.py) with the page's identity, while
+// {Severity}, {BusinessCriticality}, {OwnerTeam} and {RecommendationStatus} are
+// resolved at VIEW time from the shared workbook parameters.
+//
+// This standalone copy uses example values so it can be run directly in Log
+// Analytics. Replace the two header values to test a specific page.
+// ---------------------------------------------------------------------------
+let WorkbookNameFilter = "SRE Agent Command Center";   // = manifest displayName
+let WorkbookPageFilter = "Command Center";             // = manifest page
+SREAgentRecommendations_CL
+| where TimeGenerated > ago(30d)
+| where WorkbookName == WorkbookNameFilter and WorkbookPage == WorkbookPageFilter
+// Active statuses only (exclude Applied/Validated/Rejected/Suppressed/Expired/Rolled back).
+| where Status in ("New", "Pending approval", "Approved", "In progress", "Failed")
+// Exclude expired recommendations.
+| where isnull(ExpiresOn) or ExpiresOn > now()
+// Optional narrowing by the shared workbook parameters (no-op when set to All/* or empty).
+// | where Severity == "{Severity}"
+// | where BusinessCriticality == "{BusinessCriticality}"
+// | where OwnerTeam =~ "{OwnerTeam}"
+// Keep only the latest revision of each recommendation.
+| summarize arg_max(LastUpdated, *) by RecommendationId
+// Highest-scoring, then most severe, then most recently updated.
+| order by RecommendationScore desc, Severity asc, LastUpdated desc
+| take 10
+| project
+    Rank,
+    Severity,
+    Recommendation = RecommendationText,
+    Scope = AffectedScope,
+    OwnerTeam,
+    Confidence = ConfidenceScore,
+    ['Agent action'] = AgentActionType,
+    ['Approval required'] = ApprovalRequired,
+    Status,
+    ['Last updated'] = LastUpdated,
+    Evidence = EvidenceLinks,
+    Runbook = RelatedWorkItem,
+    Incident = RelatedIncidentId,
+    PR = RelatedPullRequest,
+    RecommendationId

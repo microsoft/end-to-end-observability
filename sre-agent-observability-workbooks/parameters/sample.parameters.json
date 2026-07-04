@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "comment": "Sample environment values for the SRE Agent Observability Workbooks suite. These mirror the shared workbook parameters; set LogAnalyticsWorkspaceId before production use so every Top 10 panel and Log Analytics tile resolves. Copy this file per environment (dev/test/prod).",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "resourceGroupName": { "value": "rg-observability" },
+    "location": { "value": "eastus" },
+    "workspaceResourceId": {
+      "value": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-observability"
+    },
+    "workbookParameterDefaults": {
+      "comment": "Default values an operator typically sets at view time. ManagementGroup/ResourceGroup/Region/Workload/OwnerTeam/ResourceType use '*' to mean 'all'.",
+      "value": {
+        "TimeRange": "P1D",
+        "Subscriptions": "value::all",
+        "LogAnalyticsWorkspaceId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-observability",
+        "ManagementGroup": "*",
+        "ResourceGroup": "*",
+        "Region": "*",
+        "Environment": "prod",
+        "Workload": "*",
+        "OwnerTeam": "*",
+        "BusinessCriticality": "All",
+        "ResourceType": "*",
+        "Severity": "All",
+        "RecommendationStatus": "Active"
+      }
+    },
+    "recommendationIngestion": {
+      "comment": "Logs Ingestion API target for SREAgentRecommendations_CL. Required before the agent (or New-SampleRecommendations.ps1) can write recommendations. See docs/data-sources.md.",
+      "value": {
+        "dataCollectionEndpoint": "https://dce-sre.eastus.ingest.monitor.azure.com",
+        "dataCollectionRuleImmutableId": "dcr-00000000000000000000000000000000",
+        "streamName": "Custom-SREAgentRecommendations_CL"
+      }
+    },
+    "tags": {
+      "value": {
+        "workload": "sre-agent-observability-workbooks",
+        "managedBy": "sre-agent",
+        "suite": "SRE Agent Observability Workbooks",
+        "env": "prod"
+      }
+    }
+  }
+}

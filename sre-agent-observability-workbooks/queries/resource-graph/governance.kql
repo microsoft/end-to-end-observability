@@ -1,0 +1,40 @@
+// ---------------------------------------------------------------------------
+// governance.kql (Azure Resource Graph)
+// Governance and posture queries shared by the Enterprise Architecture &
+// Governance, Security & Identity, and Observability Quality & Cost workbooks.
+// ---------------------------------------------------------------------------
+
+// Azure Policy compliance summary.
+policyresources
+| where type =~ 'microsoft.policyinsights/policystates'
+| extend state = tostring(properties.complianceState)
+| summarize Count = count() by state
+| order by Count desc
+
+// ---------------------------------------------------------------------------
+// Resources missing governance-critical tags (Owner / Environment / CostCenter).
+// ---------------------------------------------------------------------------
+// resources
+// | extend owner = tostring(tags['Owner']), env = tostring(tags['Environment']), cc = tostring(tags['CostCenter'])
+// | where isempty(owner) or isempty(env) or isempty(cc)
+// | summarize Count = count() by type
+// | order by Count desc
+
+// ---------------------------------------------------------------------------
+// Public exposure: storage accounts allowing public blob access.
+// ---------------------------------------------------------------------------
+// resources
+// | where type =~ 'microsoft.storage/storageaccounts'
+// | extend allowBlobPublic = tobool(properties.allowBlobPublicAccess),
+//          defaultAction = tostring(properties.networkAcls.defaultAction)
+// | where allowBlobPublic == true or defaultAction == 'Allow'
+// | project name, location, allowBlobPublic, defaultAction, subscriptionId
+
+// ---------------------------------------------------------------------------
+// Resource Health rollup (Healthy / Degraded / Unavailable / Unknown).
+// ---------------------------------------------------------------------------
+// healthresources
+// | where type =~ 'microsoft.resourcehealth/availabilitystatuses'
+// | extend state = tostring(properties.availabilityState)
+// | summarize Count = count() by subscriptionId, state
+// | order by Count desc

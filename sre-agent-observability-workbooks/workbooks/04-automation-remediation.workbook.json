@@ -1,0 +1,553 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Automation & Remediation\n\nTrack what the SRE Agent **can** do, what it **did**, what **requires approval**, and **rollback** status - the agent's automation surface with guardrails front and center.\n\n> **SRE Agent at the center.** This page is an operating surface for both humans and the SRE Agent. Set the **Subscriptions** and **Log Analytics workspace** parameters, then act on the Top 10 recommendations below."
+      },
+      "name": "page-header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "param-timerange",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time range",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "value": {
+              "durationMs": 604800000
+            }
+          },
+          {
+            "id": "param-subscriptions",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "label": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "param-loganalyticsworkspaceid",
+            "version": "KqlParameterItem/1.0",
+            "name": "LogAnalyticsWorkspaceId",
+            "label": "Log Analytics workspace",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources | where type =~ 'microsoft.operationalinsights/workspaces' | project value = id, label = name, selected = false | order by label asc",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "queryType": 1,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            }
+          },
+          {
+            "id": "param-managementgroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ManagementGroup",
+            "label": "Management group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-resourcegroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroup",
+            "label": "Resource group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-region",
+            "version": "KqlParameterItem/1.0",
+            "name": "Region",
+            "label": "Region",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-environment",
+            "version": "KqlParameterItem/1.0",
+            "name": "Environment",
+            "label": "Environment",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Production\", \"label\": \"Production\", \"selected\": false}, {\"value\": \"Pre-Production\", \"label\": \"Pre-Production\", \"selected\": false}, {\"value\": \"Development\", \"label\": \"Development\", \"selected\": false}, {\"value\": \"Test\", \"label\": \"Test\", \"selected\": false}, {\"value\": \"Sandbox\", \"label\": \"Sandbox\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-workload",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workload",
+            "label": "Workload / application",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-ownerteam",
+            "version": "KqlParameterItem/1.0",
+            "name": "OwnerTeam",
+            "label": "Owner team",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-businesscriticality",
+            "version": "KqlParameterItem/1.0",
+            "name": "BusinessCriticality",
+            "label": "Business criticality",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Mission Critical\", \"label\": \"Mission Critical\", \"selected\": false}, {\"value\": \"Business Critical\", \"label\": \"Business Critical\", \"selected\": false}, {\"value\": \"High\", \"label\": \"High\", \"selected\": false}, {\"value\": \"Medium\", \"label\": \"Medium\", \"selected\": false}, {\"value\": \"Low\", \"label\": \"Low\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-resourcetype",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceType",
+            "label": "Resource type",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-severity",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "label": "Severity",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Sev0 - Critical\", \"label\": \"Sev0 - Critical\", \"selected\": false}, {\"value\": \"Sev1 - High\", \"label\": \"Sev1 - High\", \"selected\": false}, {\"value\": \"Sev2 - Medium\", \"label\": \"Sev2 - Medium\", \"selected\": false}, {\"value\": \"Sev3 - Low\", \"label\": \"Sev3 - Low\", \"selected\": false}, {\"value\": \"Sev4 - Informational\", \"label\": \"Sev4 - Informational\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-recommendationstatus",
+            "version": "KqlParameterItem/1.0",
+            "name": "RecommendationStatus",
+            "label": "Recommendation status",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"Active\", \"label\": \"Active\", \"selected\": true}, {\"value\": \"All\", \"label\": \"All\", \"selected\": false}, {\"value\": \"New\", \"label\": \"New\", \"selected\": false}, {\"value\": \"Pending approval\", \"label\": \"Pending approval\", \"selected\": false}, {\"value\": \"Approved\", \"label\": \"Approved\", \"selected\": false}, {\"value\": \"In progress\", \"label\": \"In progress\", \"selected\": false}, {\"value\": \"Applied\", \"label\": \"Applied\", \"selected\": false}, {\"value\": \"Validated\", \"label\": \"Validated\", \"selected\": false}, {\"value\": \"Rejected\", \"label\": \"Rejected\", \"selected\": false}, {\"value\": \"Suppressed\", \"label\": \"Suppressed\", \"selected\": false}, {\"value\": \"Expired\", \"label\": \"Expired\", \"selected\": false}, {\"value\": \"Failed\", \"label\": \"Failed\", \"selected\": false}, {\"value\": \"Rolled back\", \"label\": \"Rolled back\", \"selected\": false}]",
+            "value": "Active"
+          }
+        ]
+      },
+      "name": "shared-parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Automation posture at a glance\n\nHealth of the automation itself over the last 30 days: outcomes and whether the guardrails are blocking or actions are failing."
+      },
+      "name": "sec-4"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated > ago(30d)\n| summarize Failed = countif(Outcome=='Failed'), Blocked = countif(Outcome=='Blocked'), Total = count()\n| extend Posture = case(Failed > 0, 'CRITICAL', Blocked > 0, 'DEGRADED', Total > 0, 'ELEVATED', 'HEALTHY')\n| project Posture, ['Actions (30d)'] = Total",
+        "size": 4,
+        "title": "Automation posture",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Posture",
+            "formatter": 18,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": "==",
+                  "thresholdValue": "CRITICAL",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "DEGRADED",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "ELEVATED",
+                  "representation": "yellow",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            }
+          },
+          "leftContent": {
+            "columnMatch": "Actions (30d)",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "full"
+        }
+      },
+      "name": "la-1"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated > ago(30d)\n| summarize Actions = count() by Outcome\n| order by Actions desc",
+        "size": 3,
+        "title": "Action outcomes",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Outcome",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Actions",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "la-2"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated > ago(30d)\n| summarize Actions = count() by Outcome",
+        "size": 1,
+        "title": "Outcome mix",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "piechart"
+      },
+      "name": "la-3"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Top 10 SRE Agent Recommendations\n\nPrioritized, auditable actions the **SRE Agent** has produced for this page, ranked by `RecommendationScore`. Each row is evidence-backed and carries its agent action type, approval requirement, and lifecycle status.\n\n- **Approval required = true** -> the agent will *not* act without human sign-off (always true for SLO, alert, remediation, health-model, access, or panel-deletion changes).\n- Use the **Evidence / Incident / PR / Runbook** links to drill into the supporting data.\n- Source table: `SREAgentRecommendations_CL`. If empty, no active recommendations exist for this page, or the workspace parameter is not yet set - see *Configuration* in the README."
+      },
+      "name": "top10-explainer"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where WorkbookName == \"Automation & Remediation\" and WorkbookPage == \"Automation & Remediation\"\n| where Status in (\"New\",\"Pending approval\",\"Approved\",\"In progress\",\"Failed\")\n| where isnull(ExpiresOn) or ExpiresOn > now()\n| where \"{Severity}\" == \"All\" or \"{Severity}\" == \"\" or Severity == \"{Severity}\"\n| where \"{BusinessCriticality}\" == \"All\" or \"{BusinessCriticality}\" == \"\" or BusinessCriticality == \"{BusinessCriticality}\"\n| where \"{OwnerTeam}\" == \"*\" or \"{OwnerTeam}\" == \"\" or OwnerTeam =~ \"{OwnerTeam}\"\n| where \"{RecommendationStatus}\" in (\"Active\",\"All\",\"\") or Status == \"{RecommendationStatus}\"\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| order by RecommendationScore desc, Severity asc, LastUpdated desc\n| take 10\n| project\n    Rank,\n    Severity,\n    Recommendation = RecommendationText,\n    Scope = AffectedScope,\n    OwnerTeam,\n    Confidence = ConfidenceScore,\n    ['Agent action'] = AgentActionType,\n    ['Approval required'] = ApprovalRequired,\n    Status,\n    ['Last updated'] = LastUpdated,\n    Evidence = EvidenceLinks,\n    Runbook = RelatedWorkItem,\n    Incident = RelatedIncidentId,\n    PR = RelatedPullRequest,\n    RecommendationId",
+        "size": 0,
+        "title": "Top 10 SRE Agent Recommendations",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Evidence",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Evidence"
+              }
+            },
+            {
+              "columnMatch": "Incident",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Incident"
+              }
+            },
+            {
+              "columnMatch": "PR",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "PR"
+              }
+            },
+            {
+              "columnMatch": "Runbook",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Runbook"
+              }
+            }
+          ]
+        }
+      },
+      "name": "top10-recommendations"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n"
+      },
+      "name": "top10-divider"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Automation catalog\n\nThe catalog of supported automations: resource type, trigger condition, required permissions, approval requirement, risk rating, and rollback availability."
+      },
+      "name": "sec-6"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - SREAgentAutomationCatalog_CL**\n>\n> Bind the automation catalog table (ActionType, SupportedResourceType, TriggerCondition, RequiredPermissions, ApprovalRequired, RiskRating, RollbackAvailable, LastRun). Documented in docs/data-sources.md.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-5"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Pending approvals\n\nRecommendations whose agent action is blocked on human sign-off. Approving authorizes execution per `AgentActionType`."
+      },
+      "name": "sec-8"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where Status == 'Pending approval'\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| project LastUpdated, Severity, RecommendationText, AgentActionType, AffectedResourceId, RemediationRisk, RollbackAvailable, OwnerTeam\n| order by LastUpdated desc",
+        "size": 0,
+        "title": "Actions pending approval",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-7"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Remediation execution history\n\nEvery agent-initiated action and its outcome. The audit trail for what changed, when, by whom (or which agent), and whether it can be rolled back."
+      },
+      "name": "sec-11"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated {TimeRange}\n| project StartedOn, ActionType, TargetResourceId, Outcome, Approver, RollbackAvailable, CompletedOn\n| order by StartedOn desc\n| take 200",
+        "size": 0,
+        "title": "Remediation history",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-9"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - SREAgentActions_CL**\n>\n> Custom table for automation runs (ActionId, ActionType, TargetResourceId, Outcome [Running/Succeeded/Failed/Blocked], BlockedReason, Approver, RollbackAvailable, StartedOn, CompletedOn).\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-10"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Success / failure rate\n\nReliability of the automation itself. A rising failure rate for an action type is a signal to pause it and review."
+      },
+      "name": "sec-13"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated {TimeRange}\n| summarize Total = count(), Succeeded = countif(Outcome=='Succeeded'), Failed = countif(Outcome=='Failed') by ActionType\n| extend SuccessRate = round(100.0*Succeeded/Total,2)\n| order by Failed desc",
+        "size": 0,
+        "title": "Outcome rate by action type",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-12"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Failed remediations\n\nActions that failed - candidates for rollback verification and root-cause review."
+      },
+      "name": "sec-15"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated {TimeRange}\n| where Outcome == 'Failed'\n| project StartedOn, ActionType, TargetResourceId, BlockedReason, RollbackAvailable\n| order by StartedOn desc",
+        "size": 0,
+        "title": "Failed remediations",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-14"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Blocked actions & guardrails\n\nActions the agent declined to run, with the guardrail that stopped them. This is the system working as intended - review for false positives only."
+      },
+      "name": "sec-17"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated {TimeRange}\n| where Outcome == 'Blocked'\n| summarize Count = count() by BlockedReason\n| order by Count desc",
+        "size": 0,
+        "title": "Blocked actions by reason",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-16"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Guardrails\nThe agent blocks an action when any guardrail trips:\n\n- Blocked by policy / Blocked by RBAC / Blocked by business hours\n- Blocked for production / Blocked due to missing owner\n- Blocked due to insufficient confidence / Blocked due to missing rollback\n- Blocked because Service Health indicates a platform issue\n\nGuardrail changes are **approval-required** and versioned."
+      },
+      "name": "guardrails"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n### Operating model (safe-update)\nLive data on this page refreshes automatically. Changes to the **workbook definition** follow the suite's safe-update model:\n\n| Change | How it happens |\n| --- | --- |\n| Live data refresh | Automatic |\n| Low-risk metadata (titles, descriptions, layout) | Agent may auto-apply, versioned |\n| Medium/high-risk panel or query changes | Pull request + human approval |\n| SLO, alert, remediation, health-scoring, access scope, panel deletion | **Mandatory approval** - agent records a recommendation only |\n\nEvery change is versioned, validated, auditable, and reversible. See `docs/operating-model.md`."
+      },
+      "name": "operating-model-footer"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<law>"
+  ],
+  "styleSettings": {
+    "paddingStyle": "wide"
+  },
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
