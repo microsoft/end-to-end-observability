@@ -1,0 +1,2057 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Security & Identity Observability\n\n**Security and identity observability**: live security alerts first, then identity risk, exposure, privileged access, lifecycle hygiene, change/RCA, expiring credentials, and finally Defender posture - the security lens on the same tenant the rest of the suite operates.\n\n> **SRE Agent at the center.** This page is an operating surface for both humans and the SRE Agent. Set the **Subscriptions** and **Log Analytics workspace** parameters, then act on the Top 10 recommendations below."
+      },
+      "name": "page-header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "param-timerange",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time range",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "value": {
+              "durationMs": 604800000
+            }
+          },
+          {
+            "id": "param-subscriptions",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "label": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "param-loganalyticsworkspaceid",
+            "version": "KqlParameterItem/1.0",
+            "name": "LogAnalyticsWorkspaceId",
+            "label": "Log Analytics workspace",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources | where type =~ 'microsoft.operationalinsights/workspaces' | project value = id, label = name, selected = false | order by label asc",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "queryType": 1,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            }
+          },
+          {
+            "id": "param-managementgroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ManagementGroup",
+            "label": "Management group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-resourcegroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroup",
+            "label": "Resource group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-region",
+            "version": "KqlParameterItem/1.0",
+            "name": "Region",
+            "label": "Region",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-environment",
+            "version": "KqlParameterItem/1.0",
+            "name": "Environment",
+            "label": "Environment",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Production\", \"label\": \"Production\", \"selected\": false}, {\"value\": \"Pre-Production\", \"label\": \"Pre-Production\", \"selected\": false}, {\"value\": \"Development\", \"label\": \"Development\", \"selected\": false}, {\"value\": \"Test\", \"label\": \"Test\", \"selected\": false}, {\"value\": \"Sandbox\", \"label\": \"Sandbox\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-workload",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workload",
+            "label": "Workload / application",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-ownerteam",
+            "version": "KqlParameterItem/1.0",
+            "name": "OwnerTeam",
+            "label": "Owner team",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-businesscriticality",
+            "version": "KqlParameterItem/1.0",
+            "name": "BusinessCriticality",
+            "label": "Business criticality",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Mission Critical\", \"label\": \"Mission Critical\", \"selected\": false}, {\"value\": \"Business Critical\", \"label\": \"Business Critical\", \"selected\": false}, {\"value\": \"High\", \"label\": \"High\", \"selected\": false}, {\"value\": \"Medium\", \"label\": \"Medium\", \"selected\": false}, {\"value\": \"Low\", \"label\": \"Low\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-resourcetype",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceType",
+            "label": "Resource type",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-severity",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "label": "Severity",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Sev0 - Critical\", \"label\": \"Sev0 - Critical\", \"selected\": false}, {\"value\": \"Sev1 - High\", \"label\": \"Sev1 - High\", \"selected\": false}, {\"value\": \"Sev2 - Medium\", \"label\": \"Sev2 - Medium\", \"selected\": false}, {\"value\": \"Sev3 - Low\", \"label\": \"Sev3 - Low\", \"selected\": false}, {\"value\": \"Sev4 - Informational\", \"label\": \"Sev4 - Informational\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-recommendationstatus",
+            "version": "KqlParameterItem/1.0",
+            "name": "RecommendationStatus",
+            "label": "Recommendation status",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"Active\", \"label\": \"Active\", \"selected\": true}, {\"value\": \"All\", \"label\": \"All\", \"selected\": false}, {\"value\": \"New\", \"label\": \"New\", \"selected\": false}, {\"value\": \"Pending approval\", \"label\": \"Pending approval\", \"selected\": false}, {\"value\": \"Approved\", \"label\": \"Approved\", \"selected\": false}, {\"value\": \"In progress\", \"label\": \"In progress\", \"selected\": false}, {\"value\": \"Applied\", \"label\": \"Applied\", \"selected\": false}, {\"value\": \"Validated\", \"label\": \"Validated\", \"selected\": false}, {\"value\": \"Rejected\", \"label\": \"Rejected\", \"selected\": false}, {\"value\": \"Suppressed\", \"label\": \"Suppressed\", \"selected\": false}, {\"value\": \"Expired\", \"label\": \"Expired\", \"selected\": false}, {\"value\": \"Failed\", \"label\": \"Failed\", \"selected\": false}, {\"value\": \"Rolled back\", \"label\": \"Rolled back\", \"selected\": false}]",
+            "value": "Active"
+          }
+        ]
+      },
+      "name": "shared-parameters"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "pivot-36",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedUser",
+            "label": "Selected user",
+            "type": 1,
+            "isHiddenWhenLocked": true,
+            "value": ""
+          },
+          {
+            "id": "pivot-37",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedIP",
+            "label": "Selected IP",
+            "type": 1,
+            "isHiddenWhenLocked": true,
+            "value": ""
+          },
+          {
+            "id": "pivot-38",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedResource",
+            "label": "Selected resource",
+            "type": 1,
+            "isHiddenWhenLocked": true,
+            "value": ""
+          }
+        ],
+        "style": "pills"
+      },
+      "name": "security-pivot-params"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 9,
+            "content": {
+              "version": "KqlParameterItem/1.0",
+              "parameters": [
+                {
+                  "id": "tabparam-39",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "tab_secnav",
+                  "type": 1,
+                  "isHiddenWhenLocked": true,
+                  "value": "overview"
+                }
+              ],
+              "style": "pills"
+            },
+            "name": "tabparamblock-40"
+          },
+          {
+            "type": 11,
+            "content": {
+              "version": "LinkItem/1.0",
+              "style": "tabs",
+              "links": [
+                {
+                  "id": "tablink-41",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Overview",
+                  "subTarget": "overview",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-42",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Threats",
+                  "subTarget": "threats",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-43",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Identity",
+                  "subTarget": "identity",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-44",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Exposure",
+                  "subTarget": "exposure",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-45",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Access",
+                  "subTarget": "access",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-46",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Lifecycle",
+                  "subTarget": "lifecycle",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-47",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Changes",
+                  "subTarget": "changes",
+                  "style": "link"
+                },
+                {
+                  "id": "tablink-48",
+                  "cellValue": "tab_secnav",
+                  "linkTarget": "parameter",
+                  "linkLabel": "Posture",
+                  "subTarget": "posture",
+                  "style": "link"
+                }
+              ]
+            },
+            "name": "tabselector-49"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "overview"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Overview\n\nResponse-first security cockpit. Pick a tab to drill in; the **hero KPIs and 'Security posture at a glance' scorecard sit just below** and turn **red** on live signal. **Click any risky user, source IP, or resource row to pivot** - the sign-in, RBAC-change, stale-account, and credential tiles refilter to that entity for one-click investigation. Clear a pivot by reloading the page.\n\nTabs: **Threats** (active alerts) - **Identity** (risk) - **Exposure** - **Access** (privilege + credentials) - **Lifecycle** (stale accounts) - **Changes** (RCA) - **Posture** (Defender backlog)."
+                  },
+                  "name": "sec-overview"
+                }
+              ]
+            },
+            "name": "tabcontent-50"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "threats"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Active security alerts\n\nLive Microsoft Defender for Cloud security alerts (active attacks / suspicious activity), newest first. Click a row to **pivot** the page to that resource; click **Open** to jump to its blade."
+                  },
+                  "name": "sec-4"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "securityresources\n| where type =~ 'microsoft.security/alerts'\n| extend sev = tostring(properties.severity),\n         status = tostring(properties.status),\n         alertName = tostring(properties.alertDisplayName),\n         entity = tostring(properties.compromisedEntity),\n         started = todatetime(properties.timeGeneratedUtc),\n         resId = tostring(properties.resourceIdentifiers[0].azureResourceId)\n| where status in ('Active','InProgress')\n| where isempty('{SelectedResource}') or resId =~ '{SelectedResource}'\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project started, Severity = sev, Alert = alertName, Entity = entity,\n           Subscription, ResourceId = resId\n| order by started desc\n| take 100",
+                    "size": 0,
+                    "title": "Active Defender alerts",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Severity",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "colors",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "==",
+                                "thresholdValue": "High",
+                                "representation": "red",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "Medium",
+                                "representation": "orange",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "Low",
+                                "representation": "yellow",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "green",
+                                "text": "{0}"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No active Defender for Cloud alerts in scope - either the tenant is quiet or Defender for Cloud alerting is not enabled on these subscriptions.",
+                    "exportFieldName": "ResourceId",
+                    "exportParameterName": "SelectedResource",
+                    "exportDefaultValue": ""
+                  },
+                  "name": "arg-1"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SecurityAlert\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by SystemAlertId\n| project TimeGenerated, AlertSeverity, AlertName, CompromisedEntity, ProviderName\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "Sentinel alerts (if connected)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "AlertSeverity",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "colors",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "==",
+                                "thresholdValue": "High",
+                                "representation": "red",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "Medium",
+                                "representation": "orange",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "Low",
+                                "representation": "yellow",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "green",
+                                "text": "{0}"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No Microsoft Sentinel SecurityAlert rows - Sentinel is not connected to this workspace, or no alerts in the selected time range. (Defender alerts above are the primary source.)"
+                  },
+                  "name": "la-2"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SecurityIncident\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\n| where Status != 'Closed'\n| project TimeGenerated, Severity, Title, Status, Owner = tostring(Owner)\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "Sentinel incidents (open)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "noDataMessage": "No open Sentinel incidents (or Sentinel is not connected to this workspace)."
+                  },
+                  "name": "la-3"
+                }
+              ]
+            },
+            "name": "tabcontent-51"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "identity"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Identity risk\n\nRisky sign-ins, password-spray campaigns, and legacy-auth logons - the live identity-attack signal. Click a risky user or source IP to **pivot** the page. Requires Entra ID logs (SigninLogs / AADUserRiskEvents) and Entra ID P1/P2."
+                  },
+                  "name": "sec-8"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AADUserRiskEvents\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by UserId, RiskEventType\n| where RiskState in ('atRisk','confirmedCompromised')\n| extend User = UserPrincipalName\n| where isempty('{SelectedUser}') or User =~ '{SelectedUser}'\n| where isempty('{SelectedIP}') or IpAddress =~ '{SelectedIP}'\n| extend ['Open in Entra'] = strcat('https://portal.azure.com/#view/Microsoft_AAD_IAM/UserDetailsMenuBlade/~/RiskyUsers/userId/', UserId)\n| project TimeGenerated, User, RiskLevel, RiskEventType,\n          IpAddress, Location, ['Open in Entra']\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "Risky sign-ins (Entra Identity Protection)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "RiskLevel",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "colors",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "==",
+                                "thresholdValue": "high",
+                                "representation": "red",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "medium",
+                                "representation": "orange",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "low",
+                                "representation": "yellow",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "green",
+                                "text": "{0}"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "columnMatch": "Open in Entra",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Url",
+                            "linkLabel": "Open in Entra"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No risky sign-ins in the window - either Identity Protection is clean, or AADUserRiskEvents is not streamed / Entra ID P2 is not licensed on this tenant.",
+                    "exportFieldName": "User",
+                    "exportParameterName": "SelectedUser",
+                    "exportDefaultValue": ""
+                  },
+                  "name": "la-5"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where ResultType != 0\n| summarize Failures = count(), TargetedUsers = dcount(UserPrincipalName),\n            FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated)\n    by IPAddress, Location = tostring(LocationDetails.countryOrRegion)\n| where Failures >= 5\n| where isempty('{SelectedIP}') or IPAddress =~ '{SelectedIP}'\n| project IPAddress, Location, TargetedUsers, Failures, FirstSeen, LastSeen\n| order by TargetedUsers desc, Failures desc\n| take 100",
+                    "size": 0,
+                    "title": "Password-spray campaigns (failures grouped by source IP)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "TargetedUsers",
+                          "formatter": 8,
+                          "formatOptions": {
+                            "palette": "red"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No sign-in failure clusters in the window - one row per source IP; a high distinct-user count is a spray signal. (Or SigninLogs is not streamed here.)",
+                    "exportFieldName": "IPAddress",
+                    "exportParameterName": "SelectedIP",
+                    "exportDefaultValue": ""
+                  },
+                  "name": "la-6"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where ClientAppUsed in ('Other clients','IMAP4','POP3','MAPI','SMTP','Exchange ActiveSync','Exchange Web Services','Authenticated SMTP','AutoDiscover','Offline Address Book')\n| summarize SignIns = count(), Users = dcount(UserPrincipalName) by ClientAppUsed\n| order by SignIns desc",
+                    "size": 0,
+                    "title": "Legacy-authentication sign-ins",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "barchart",
+                    "noDataMessage": "No legacy-auth sign-ins in the window - modern auth is enforced (or SigninLogs is not streamed to this workspace). Legacy auth bypasses MFA; block it."
+                  },
+                  "name": "la-7"
+                }
+              ]
+            },
+            "name": "tabcontent-52"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "exposure"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Exposure\n\nInternet-facing surface: public IPs, public storage, and NSGs opening sensitive ports. Each is an attack-surface and a governance finding."
+                  },
+                  "name": "sec-12"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "resources\n| where type =~ 'microsoft.network/publicipaddresses'\n| extend assoc = isnotempty(tostring(properties.ipConfiguration.id))\n| where assoc\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| summarize ExposedPublicIPs = count() by location, Subscription\n| order by ExposedPublicIPs desc",
+                    "size": 0,
+                    "title": "Public IP exposure",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "barchart",
+                    "noDataMessage": "No associated public IP addresses in scope."
+                  },
+                  "name": "arg-9"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "resources\n| where type =~ 'microsoft.storage/storageaccounts'\n| extend allowBlobPublic = tobool(properties.allowBlobPublicAccess),\n         defaultAction = tostring(properties.networkAcls.defaultAction)\n| where allowBlobPublic == true or defaultAction == 'Allow'\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project name, location, allowBlobPublic, defaultAction, Subscription, ResourceId = id\n| take 100",
+                    "size": 0,
+                    "title": "Storage accounts allowing public blob access",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No storage accounts allow public blob access or open network default action."
+                  },
+                  "name": "arg-10"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "resources\n| where type =~ 'microsoft.network/networksecuritygroups'\n| mv-expand rule = properties.securityRules\n| extend access = tostring(rule.properties.access),\n         direction = tostring(rule.properties.direction),\n         src = tostring(rule.properties.sourceAddressPrefix),\n         dport = tostring(rule.properties.destinationPortRange),\n         ruleName = tostring(rule.name)\n| where access =~ 'Allow' and direction =~ 'Inbound'\n| where src in ('*','0.0.0.0/0','Internet','Any')\n| where dport in ('22','3389','1433','3306','5432','6379','27017') or dport == '*'\n| extend PortRisk = case(dport in ('3389','22'), 3, dport == '*', 3,\n                          dport in ('1433','3306','5432','6379','27017'), 2, 1)\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project NSG = name, Rule = ruleName, Port = dport, Source = src,\n           PortRisk, Subscription, ResourceId = id\n| order by PortRisk desc, NSG asc\n| take 100",
+                    "size": 0,
+                    "title": "NSGs allowing Internet inbound on sensitive ports",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "PortRisk",
+                          "formatter": 8,
+                          "formatOptions": {
+                            "palette": "red"
+                          }
+                        },
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No NSG rules expose sensitive ports (22/3389/1433/3306/5432/6379/27017) to the Internet in scope. Good - keep management ports private."
+                  },
+                  "name": "arg-11"
+                }
+              ]
+            },
+            "name": "tabcontent-53"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "access"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Privileged access\n\nPrivileged role assignments and broad Owner grants. Over-privilege is the most common path to blast-radius escalation."
+                  },
+                  "name": "sec-16"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "authorizationresources\n| where type =~ 'microsoft.authorization/roleassignments'\n| extend principalType = tostring(properties.principalType),\n         principalId = tostring(properties.principalId),\n         scope = tostring(properties.scope)\n| extend roleDefinitionId = tolower(tostring(properties.roleDefinitionId))\n| join kind=leftouter (authorizationresources\n    | where type =~ 'microsoft.authorization/roledefinitions'\n    | project roleDefinitionId = tolower(id), RoleName = tostring(properties.roleName)) on roleDefinitionId\n| where RoleName in ('Owner', 'User Access Administrator', 'Contributor')\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project RoleName, principalType, scope, principalId, Subscription\n| order by RoleName asc\n| take 100",
+                    "size": 0,
+                    "title": "Privileged role assignments",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table"
+                  },
+                  "name": "arg-13"
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "> Privileged grants (**Owner / User Access Administrator / Contributor**) at subscription or management-group scope warrant review. Role names are resolved from role definitions; the daily posture task enriches `principalId` to a display name / UPN so reviewers see who holds the grant, not a GUID."
+                  },
+                  "name": "rbac-note"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "authorizationresources\n| where type =~ 'microsoft.authorization/roleassignments'\n| extend principalType = tostring(properties.principalType),\n         principalId = tostring(properties.principalId),\n         scope = tostring(properties.scope)\n| where principalType == 'User'\n| extend roleDefinitionId = tolower(tostring(properties.roleDefinitionId))\n| join kind=leftouter (authorizationresources\n    | where type =~ 'microsoft.authorization/roledefinitions'\n    | project roleDefinitionId = tolower(id), RoleName = tostring(properties.roleName)) on roleDefinitionId\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project RoleName, scope, ['PrincipalId (task resolves name/UPN)'] = principalId, Subscription\n| order by RoleName asc\n| take 100",
+                    "size": 0,
+                    "title": "Guest / external accounts holding roles",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "noDataMessage": "No user-principal role assignments in scope. The daily posture task flags which of these are guest (#EXT#) accounts by resolving each principal via Graph."
+                  },
+                  "name": "arg-14"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "authorizationresources\n| where type =~ 'microsoft.authorization/roleassignments'\n| extend principalType = tostring(properties.principalType),\n         principalId = tostring(properties.principalId),\n         scope = tostring(properties.scope)\n| where principalType == 'ServicePrincipal'\n| extend roleDefinitionId = tolower(tostring(properties.roleDefinitionId))\n| join kind=leftouter (authorizationresources\n    | where type =~ 'microsoft.authorization/roledefinitions'\n    | project roleDefinitionId = tolower(id), RoleName = tostring(properties.roleName)) on roleDefinitionId\n| where RoleName in ('Owner', 'Contributor')\n| where scope !contains '/resourceGroups/' or scope endswith tolower(subscriptionId)\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project RoleName, scope, ['PrincipalId (task resolves SP name)'] = principalId, Subscription\n| order by RoleName asc\n| take 100",
+                    "size": 0,
+                    "title": "High-privilege service principals",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "noDataMessage": "No service principals hold Owner/Contributor at subscription or management-group scope. The posture task resolves each SP's display name."
+                  },
+                  "name": "arg-15"
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Expiring credentials\n\nKey Vault secrets/certificates and Entra app-registration credentials approaching expiry (30/60/90d) - rotate before they lapse and break auth. Fed by the posture task's companion tables."
+                  },
+                  "name": "sec-30"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "KeyVaultCredentials_CL\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by ResourceId_s, ItemName_s\n| where DaysToExpiry_d <= 90\n| project Vault = VaultName_s, Type = ItemType_s, Item = ItemName_s,\n          ['Days to expiry'] = DaysToExpiry_d, ExpiresOn = ExpiresOn_t,\n          Subscription = Subscription_s, ResourceId = ResourceId_s\n| order by ['Days to expiry'] asc\n| take 200",
+                    "size": 0,
+                    "title": "Key Vault secrets / certificates expiring",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Days to expiry",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "colors",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "<=",
+                                "thresholdValue": "30",
+                                "representation": "red",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "<=",
+                                "thresholdValue": "60",
+                                "representation": "orange",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "<=",
+                                "thresholdValue": "90",
+                                "representation": "yellow",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "green",
+                                "text": "{0}"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No Key Vault secrets/certificates expiring within 90 days (or the posture task has not yet populated KeyVaultCredentials_CL - it reads vault expiry via the data-plane where it has access)."
+                  },
+                  "name": "la-28"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AppCredentials_CL\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by AppId_s, KeyId_s\n| where DaysToExpiry_d <= 90\n| extend ['Open in Entra'] = EvidenceLinks_s\n| project Application = AppDisplayName_s, Type = CredType_s,\n          ['Days to expiry'] = DaysToExpiry_d, ExpiresOn = ExpiresOn_t,\n          Owner = Owner_s, ['Open in Entra']\n| order by ['Days to expiry'] asc\n| take 200",
+                    "size": 0,
+                    "title": "Entra app-registration credentials expiring",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Days to expiry",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "colors",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "<=",
+                                "thresholdValue": "30",
+                                "representation": "red",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "<=",
+                                "thresholdValue": "60",
+                                "representation": "orange",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "<=",
+                                "thresholdValue": "90",
+                                "representation": "yellow",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "green",
+                                "text": "{0}"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "columnMatch": "Open in Entra",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Url",
+                            "linkLabel": "Open in Entra"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No Entra app-registration credentials expiring within 90 days (or the posture task has not yet populated AppCredentials_CL via Microsoft Graph). Expired app secrets/certs break service-to-service auth - rotate ahead of the red band."
+                  },
+                  "name": "la-29"
+                }
+              ]
+            },
+            "name": "tabcontent-54"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "lifecycle"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Identity lifecycle & stale-account hygiene\n\nStale accounts (priority matrix P0-P3), orphaned MIs, and dangling assignments - delete/disable candidates. Every proposal is recommend-only and human-gated; break-glass identities tagged `ExcludeFromLifecycle` are skipped by the task."
+                  },
+                  "name": "sec-22"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "resources\n| where type =~ 'microsoft.managedidentity/userassignedidentities'\n| extend miId = tolower(id)\n| join kind=leftanti (resources\n    | where isnotnull(identity.userAssignedIdentities)\n    | mv-expand uami = bag_keys(identity.userAssignedIdentities)\n    | project uamiId = tolower(tostring(uami))) on $left.miId == $right.uamiId\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project ['Managed identity'] = name, resourceGroup, Subscription, ResourceId = id\n| order by ['Managed identity'] asc\n| take 100",
+                    "size": 0,
+                    "title": "Orphaned user-assigned managed identities",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No orphaned user-assigned managed identities - every UAMI is attached to at least one resource. (System-assigned identities are excluded by design.)"
+                  },
+                  "name": "arg-17"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "authorizationresources\n| where type =~ 'microsoft.authorization/roleassignments'\n| extend principalType = tostring(properties.principalType),\n         principalId = tostring(properties.principalId),\n         scope = tolower(tostring(properties.scope))\n| where principalType == 'ServicePrincipal'\n| where scope contains '/resourcegroups/' and scope contains '/providers/'\n| extend roleDefinitionId = tolower(tostring(properties.roleDefinitionId))\n| join kind=leftouter (authorizationresources\n    | where type =~ 'microsoft.authorization/roledefinitions'\n    | project roleDefinitionId = tolower(id), RoleName = tostring(properties.roleName)) on roleDefinitionId\n| join kind=leftanti (resources | project scope = tolower(id)) on scope\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project RoleName, scope, ['PrincipalId (task resolves name)'] = principalId, Subscription\n| order by RoleName asc\n| take 100",
+                    "size": 0,
+                    "title": "Dangling role assignments (target resource gone)",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "noDataMessage": "No dangling resource-scoped role assignments detected - every assignment's target resource still exists."
+                  },
+                  "name": "arg-18"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "IdentityInventory_CL\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by PrincipalId_s\n| where ExcludeFromLifecycle_b != true\n| where isnotempty(Priority_s)\n| where isempty('{SelectedUser}') or DisplayName_s =~ '{SelectedUser}'\n| extend ['Open in Entra'] = EvidenceLinks_s\n| project Priority = Priority_s, Type = PrincipalType_s, Identity = DisplayName_s,\n          ['Days since sign-in'] = DaysSinceSignIn_d, ['Cred age (d)'] = CredAgeDays_d,\n          Privileged = Privileged_b, Recommendation = Recommendation_s, ['Open in Entra']\n| order by Priority asc, ['Days since sign-in'] desc\n| take 200",
+                    "size": 0,
+                    "title": "Stale accounts - priority matrix (P0-P3)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Priority",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "colors",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "==",
+                                "thresholdValue": "P0",
+                                "representation": "red",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "P1",
+                                "representation": "orange",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "==",
+                                "thresholdValue": "P2",
+                                "representation": "yellow",
+                                "text": "{0}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "green",
+                                "text": "{0}"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "columnMatch": "Days since sign-in",
+                          "formatter": 8,
+                          "formatOptions": {
+                            "palette": "red"
+                          }
+                        },
+                        {
+                          "columnMatch": "Open in Entra",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Url",
+                            "linkLabel": "Open in Entra"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No stale accounts scored yet. The daily posture task enriches users, service principals, and managed identities (last sign-in, privilege, credential age) into IdentityInventory_CL and scores each P0-P3. P0 = privileged AND dormant AND has standing credentials. Once the task runs, ranked candidates appear here."
+                  },
+                  "name": "la-19"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AADServicePrincipalSignInLogs\n| where TimeGenerated {TimeRange}\n| summarize LastSignIn = max(TimeGenerated) by ServicePrincipalName, ServicePrincipalId\n| extend ['Days since sign-in'] = datetime_diff('day', now(), LastSignIn) * -1\n| where ['Days since sign-in'] >= 90\n| project ServicePrincipal = ServicePrincipalName, LastSignIn, ['Days since sign-in']\n| order by ['Days since sign-in'] desc\n| take 100",
+                    "size": 0,
+                    "title": "Dormant service principals (no sign-in in window)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Days since sign-in",
+                          "formatter": 8,
+                          "formatOptions": {
+                            "palette": "red"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No dormant service principals (or AADServicePrincipalSignInLogs is not streamed). The task cross-checks these against standing credentials and privilege."
+                  },
+                  "name": "la-20"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AADManagedIdentitySignInLogs\n| where TimeGenerated {TimeRange}\n| summarize LastSignIn = max(TimeGenerated) by ServicePrincipalName, ServicePrincipalId\n| extend ['Days since sign-in'] = datetime_diff('day', now(), LastSignIn) * -1\n| where ['Days since sign-in'] >= 90\n| project ['Managed identity'] = ServicePrincipalName, LastSignIn, ['Days since sign-in']\n| order by ['Days since sign-in'] desc\n| take 100",
+                    "size": 0,
+                    "title": "Dormant managed identities (no sign-in in window)",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Days since sign-in",
+                          "formatter": 8,
+                          "formatOptions": {
+                            "palette": "red"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No dormant managed identities with sign-in history (or AADManagedIdentitySignInLogs is not streamed). Orphaned MIs are covered above."
+                  },
+                  "name": "la-21"
+                }
+              ]
+            },
+            "name": "tabcontent-55"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "changes"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Change / RCA\n\nRBAC, Conditional Access, Key Vault, and app-credential/consent changes - the config-and-identity change stream. Unexpected grants or new credentials near an incident are a strong RCA signal."
+                  },
+                  "name": "sec-27"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AzureActivity\n| where TimeGenerated {TimeRange}\n| where OperationNameValue has 'roleAssignments/write' or OperationNameValue has 'roleAssignments/delete'\n| extend rdid = tostring(parse_json(tostring(parse_json(tostring(Properties)).requestbody)).Properties.RoleDefinitionId)\n| extend roleGuid = tolower(extract('([0-9a-fA-F-]{36})$', 1, rdid))\n| extend RoleName = case(\n    roleGuid == '8e3af657-a8ff-443c-a75c-2fe8c4bcb635', 'Owner',\n    roleGuid == 'b24988ac-6180-42a0-ab88-20f7382dd24c', 'Contributor',\n    roleGuid == '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9', 'User Access Administrator',\n    roleGuid == 'acdd72a7-3385-48ef-bd42-f606fbee5b42', 'Reader',\n    isnotempty(roleGuid), strcat('Role ', roleGuid), 'n/a')\n| where isempty('{SelectedUser}') or Caller =~ '{SelectedUser}'\n| project TimeGenerated, Operation = OperationNameValue, Status = ActivityStatusValue,\n          Caller, RoleName, ResourceId = _ResourceId\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "RBAC change events",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No RBAC change events in the window (or AzureActivity is not streamed to this workspace)."
+                  },
+                  "name": "la-23"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AuditLogs\n| where TimeGenerated {TimeRange}\n| where OperationName has 'conditional access policy'\n| project TimeGenerated, OperationName,\n          InitiatedBy = tostring(InitiatedBy.user.userPrincipalName),\n          Policy = tostring(TargetResources[0].displayName), Result\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "Conditional Access policy changes",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "noDataMessage": "No Conditional Access policy changes in the window (or AuditLogs is not streamed). CA changes can weaken MFA/access controls - review any near an incident."
+                  },
+                  "name": "la-24"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AzureActivity\n| where TimeGenerated {TimeRange}\n| where tolower(_ResourceId) has '/providers/microsoft.keyvault/vaults/'\n| where OperationNameValue has 'accessPolicies' or OperationNameValue has 'vaults/write'\n    or OperationNameValue has 'roleAssignments'\n| project TimeGenerated, Operation = OperationNameValue, Status = ActivityStatusValue,\n          Caller, ResourceId = _ResourceId\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "Key Vault access-policy / RBAC changes",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No Key Vault access-policy or RBAC changes in the window (or AzureActivity is not streamed). A widened vault policy is a common exfiltration precursor."
+                  },
+                  "name": "la-25"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "AuditLogs\n| where TimeGenerated {TimeRange}\n| where OperationName in ('Add service principal credentials',\n    'Update application - Certificates and secrets management',\n    'Add app role assignment to service principal',\n    'Consent to application', 'Add delegated permission grant')\n| project TimeGenerated, OperationName,\n          InitiatedBy = tostring(InitiatedBy.user.userPrincipalName),\n          Target = tostring(TargetResources[0].displayName), Result\n| order by TimeGenerated desc\n| take 100",
+                    "size": 0,
+                    "title": "New app credentials & OAuth consent grants",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{LogAnalyticsWorkspaceId}"
+                    ],
+                    "visualization": "table",
+                    "noDataMessage": "No new app credentials or OAuth consent grants in the window (or AuditLogs is not streamed). New secrets / broad consent grants are a common persistence technique."
+                  },
+                  "name": "la-26"
+                }
+              ]
+            },
+            "name": "tabcontent-56"
+          },
+          {
+            "type": 12,
+            "conditionalVisibility": {
+              "parameterName": "tab_secnav",
+              "comparison": "isEqualTo",
+              "value": "posture"
+            },
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Posture & secure score\n\nDefender for Cloud posture, secure score, and Key Vault protection - the burn-down backlog behind the live signals above."
+                  },
+                  "name": "sec-35"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "securityresources\n| where type =~ 'microsoft.security/assessments'\n| extend status = tostring(properties.status.code),\n         sev = tostring(properties.metadata.severity),\n         display = tostring(properties.displayName)\n| where status == 'Unhealthy'\n| summarize Count = count() by sev, display\n| order by Count desc\n| take 50",
+                    "size": 0,
+                    "title": "Security assessments (unhealthy)",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "barchart",
+                    "noDataMessage": "No unhealthy Defender assessments in scope (or Defender for Cloud is not enabled)."
+                  },
+                  "name": "arg-31"
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "> **Placeholder - Secure score**\n>\n> Bind Defender secure score (securityresources microsoft.security/secureScores or the Defender API) for the score trend and per-control contribution.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+                  },
+                  "name": "ph-32"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "resources\n| where type =~ 'microsoft.keyvault/vaults'\n| extend purgeProtection = tobool(properties.enablePurgeProtection),\n         softDelete = tobool(properties.enableSoftDelete)\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project name, location, purgeProtection, softDelete, Subscription, ResourceId = id\n| order by name asc",
+                    "size": 0,
+                    "title": "Key Vault protection settings",
+                    "queryType": 1,
+                    "resourceType": "microsoft.resourcegraph/resources",
+                    "crossComponentResources": [
+                      "{Subscriptions}"
+                    ],
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "ResourceId",
+                          "formatter": 7,
+                          "formatOptions": {
+                            "linkTarget": "Resource",
+                            "linkLabel": "Open"
+                          }
+                        }
+                      ]
+                    },
+                    "noDataMessage": "No Key Vaults in scope."
+                  },
+                  "name": "arg-33"
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "> **Placeholder - Key Vault diagnostic logging**\n>\n> Use the diagnostic-settings coverage source (Observability Quality & Cost) filtered to microsoft.keyvault/vaults to confirm AuditEvent logging is on.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+                  },
+                  "name": "ph-34"
+                }
+              ]
+            },
+            "name": "tabcontent-57"
+          }
+        ]
+      },
+      "name": "security-tabs"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Security posture at a glance\n\nActive threat first: the **Active alert** banner and hero KPIs turn **red** on live signal. The response-health row (MTTR, aging alerts, MFA & Conditional-Access coverage) tracks how fast and how well we respond; then the Defender backlog by severity - worst first."
+      },
+      "name": "sec-69"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "securityresources\n| where type =~ 'microsoft.security/alerts'\n| extend sev = tostring(properties.severity), status = tostring(properties.status)\n| where status in ('Active','InProgress')\n| summarize High = countif(sev =~ 'High'), Med = countif(sev =~ 'Medium'), Total = count()\n| extend Posture = case(High > 0, 'CRITICAL', Med > 0, 'DEGRADED', Total > 0, 'ELEVATED', 'HEALTHY')\n| project Posture, ['Active alerts'] = Total",
+        "size": 4,
+        "title": "Active alert posture",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Posture",
+            "formatter": 18,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": "==",
+                  "thresholdValue": "CRITICAL",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "DEGRADED",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "ELEVATED",
+                  "representation": "yellow",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            }
+          },
+          "leftContent": {
+            "columnMatch": "Active alerts",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "full"
+        }
+      },
+      "name": "arg-66"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "securityresources\n| where type =~ 'microsoft.security/assessments'\n| extend status = tostring(properties.status.code), sev = tostring(properties.metadata.severity)\n| where status == 'Unhealthy'\n| summarize High = countif(sev == 'High'), Med = countif(sev == 'Medium'), Total = count()\n| extend Posture = case(High > 0, 'CRITICAL', Med > 0, 'DEGRADED', Total > 0, 'ELEVATED', 'HEALTHY')\n| project Posture, ['Unhealthy findings'] = Total",
+        "size": 4,
+        "title": "Security posture",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Posture",
+            "formatter": 18,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": "==",
+                  "thresholdValue": "CRITICAL",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "DEGRADED",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "ELEVATED",
+                  "representation": "yellow",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            }
+          },
+          "leftContent": {
+            "columnMatch": "Unhealthy findings",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "full"
+        }
+      },
+      "name": "arg-67"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "securityresources\n| where type =~ 'microsoft.security/alerts'\n| extend sev = tostring(properties.severity),\n         status = tostring(properties.status)\n| where status in ('Active','InProgress') and sev =~ 'High'\n| summarize Value = count()\n| extend Metric = 'Active critical alerts'\n| project Metric, Value",
+        "size": 4,
+        "title": "Active critical alerts",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": ">=",
+                  "thresholdValue": "1",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-58"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/networksecuritygroups'\n| mv-expand rule = properties.securityRules\n| extend access = tostring(rule.properties.access),\n         direction = tostring(rule.properties.direction),\n         src = tostring(rule.properties.sourceAddressPrefix),\n         dport = tostring(rule.properties.destinationPortRange)\n| where access =~ 'Allow' and direction =~ 'Inbound'\n| where src in ('*','0.0.0.0/0','Internet','Any')\n| where dport in ('22','3389','1433','3306','5432','6379','27017') or dport == '*'\n| summarize Value = count()\n| extend Metric = 'Open sensitive ports'\n| project Metric, Value",
+        "size": 4,
+        "title": "Open sensitive ports",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": ">=",
+                  "thresholdValue": "5",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": ">=",
+                  "thresholdValue": "1",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-59"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.managedidentity/userassignedidentities'\n| extend miId = tolower(id)\n| join kind=leftanti (resources\n    | where isnotnull(identity.userAssignedIdentities)\n    | mv-expand uami = bag_keys(identity.userAssignedIdentities)\n    | project uamiId = tolower(tostring(uami))) on $left.miId == $right.uamiId\n| summarize Value = count()\n| extend Metric = 'Orphaned managed identities'\n| project Metric, Value",
+        "size": 4,
+        "title": "Orphaned managed identities",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": ">=",
+                  "thresholdValue": "5",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": ">=",
+                  "thresholdValue": "1",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-60"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "authorizationresources\n| where type =~ 'microsoft.authorization/roleassignments'\n| extend principalType = tostring(properties.principalType)\n| extend roleDefinitionId = tolower(tostring(properties.roleDefinitionId))\n| join kind=leftouter (authorizationresources\n    | where type =~ 'microsoft.authorization/roledefinitions'\n    | project roleDefinitionId = tolower(id), RoleName = tostring(properties.roleName)) on roleDefinitionId\n| where RoleName in ('Owner','User Access Administrator','Contributor')\n| where principalType in ('ServicePrincipal','User')\n| summarize Value = count()\n| extend Metric = 'Privileged SPs & users'\n| project Metric, Value",
+        "size": 4,
+        "title": "Privileged SPs & users",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": ">=",
+                  "thresholdValue": "5",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": ">=",
+                  "thresholdValue": "1",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-61"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend fired = todatetime(properties.essentials.startDateTime),\n         resolved = todatetime(properties.essentials.monitorConditionResolvedDateTime),\n         cond = tostring(properties.essentials.monitorCondition)\n| where cond == 'Resolved' and isnotempty(resolved)\n| summarize Value = round(avg(datetime_diff('hour', resolved, fired)), 1)\n| extend Metric = 'MTTR (fired->resolved)'\n| project Metric, Value",
+        "size": 4,
+        "title": "MTTR (alert fired to resolved)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": ">=",
+                  "thresholdValue": "24",
+                  "representation": "red",
+                  "text": "{0} h"
+                },
+                {
+                  "operator": ">=",
+                  "thresholdValue": "8",
+                  "representation": "orange",
+                  "text": "{0} h"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0} h"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-62"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend cond = tostring(properties.essentials.monitorCondition),\n         fired = todatetime(properties.essentials.startDateTime)\n| where cond == 'Fired' and fired < ago(4h)\n| summarize Value = count()\n| extend Metric = 'Alerts open > 4h'\n| project Metric, Value",
+        "size": 4,
+        "title": "Active alerts open over 4h",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": ">=",
+                  "thresholdValue": "5",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": ">=",
+                  "thresholdValue": "1",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-63"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "IdentityInventory_CL\n| where TimeGenerated {TimeRange}\n| summarize arg_max(TimeGenerated, *) by PrincipalId_s\n| where Privileged_b == true\n| summarize Total = count(), Mfa = countif(MfaRegistered_b == true)\n| extend Value = iff(Total == 0, 100.0, round(100.0 * Mfa / Total, 1))\n| extend Metric = 'Priv MFA coverage'\n| project Metric, Value",
+        "size": 4,
+        "title": "Privileged MFA coverage %",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": "<",
+                  "thresholdValue": "70",
+                  "representation": "red",
+                  "text": "{0}%"
+                },
+                {
+                  "operator": "<",
+                  "thresholdValue": "90",
+                  "representation": "orange",
+                  "text": "{0}%"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}%"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        },
+        "noDataMessage": "Privileged MFA coverage appears once the posture task populates IdentityInventory_CL (privileged flag + MFA-registration)."
+      },
+      "name": "la-64"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\n| where TimeGenerated {TimeRange}\n| where ResultType == 0\n| summarize Total = count(), Evaluated = countif(ConditionalAccessStatus in ('success','failure'))\n| extend Value = iff(Total == 0, 0.0, round(100.0 * Evaluated / Total, 1))\n| extend Metric = 'CA coverage'\n| project Metric, Value",
+        "size": 4,
+        "title": "Conditional Access coverage %",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Metric",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": "<",
+                  "thresholdValue": "70",
+                  "representation": "red",
+                  "text": "{0}%"
+                },
+                {
+                  "operator": "<",
+                  "thresholdValue": "90",
+                  "representation": "orange",
+                  "text": "{0}%"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}%"
+                }
+              ]
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        },
+        "noDataMessage": "Conditional Access coverage needs SigninLogs streamed to this workspace."
+      },
+      "name": "la-65"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "securityresources\n| where type =~ 'microsoft.security/assessments'\n| extend status = tostring(properties.status.code), sev = tostring(properties.metadata.severity)\n| where status == 'Unhealthy'\n| summarize Findings = count() by Severity = sev\n| order by Severity asc",
+        "size": 1,
+        "title": "Unhealthy findings by severity",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "barchart",
+        "noDataMessage": "No unhealthy Defender assessments in scope - either the posture is clean or Defender for Cloud is not enabled on these subscriptions."
+      },
+      "name": "arg-68"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Top 10 SRE Agent Recommendations\n\nPrioritized, auditable actions the **SRE Agent** has produced for this page, ranked by `RecommendationScore`. Each row is evidence-backed and carries its agent action type, approval requirement, and lifecycle status.\n\n- **Approval required = true** -> the agent will *not* act without human sign-off (always true for SLO, alert, remediation, health-model, access, or panel-deletion changes).\n- Use the **Evidence / Incident / PR / Runbook** links to drill into the supporting data.\n- Source table: `SREAgentRecommendations_CL`. If empty, no active recommendations exist for this page, or the workspace parameter is not yet set - see *Configuration* in the README."
+      },
+      "name": "top10-explainer"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where WorkbookName == \"Security & Identity Observability\" and WorkbookPage == \"Security & Identity Observability\"\n| where Status in (\"New\",\"Pending approval\",\"Approved\",\"In progress\",\"Failed\")\n| where isnull(ExpiresOn) or ExpiresOn > now()\n| where \"{Severity}\" == \"All\" or \"{Severity}\" == \"\" or Severity == \"{Severity}\"\n| where \"{BusinessCriticality}\" == \"All\" or \"{BusinessCriticality}\" == \"\" or BusinessCriticality == \"{BusinessCriticality}\"\n| where \"{OwnerTeam}\" == \"*\" or \"{OwnerTeam}\" == \"\" or OwnerTeam =~ \"{OwnerTeam}\"\n| where \"{RecommendationStatus}\" in (\"Active\",\"All\",\"\") or Status == \"{RecommendationStatus}\"\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| order by RecommendationScore desc, Severity asc, LastUpdated desc\n| take 10\n| project\n    Rank,\n    Severity,\n    Recommendation = RecommendationText,\n    Scope = AffectedScope,\n    OwnerTeam,\n    Confidence = ConfidenceScore,\n    ['Agent action'] = AgentActionType,\n    ['Approval required'] = ApprovalRequired,\n    Status,\n    ['Last updated'] = LastUpdated,\n    Evidence = EvidenceLinks,\n    Runbook = RelatedWorkItem,\n    Incident = RelatedIncidentId,\n    PR = RelatedPullRequest,\n    RecommendationId",
+        "size": 0,
+        "title": "Top 10 SRE Agent Recommendations",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Evidence",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Evidence"
+              }
+            },
+            {
+              "columnMatch": "Incident",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Incident"
+              }
+            },
+            {
+              "columnMatch": "PR",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "PR"
+              }
+            },
+            {
+              "columnMatch": "Runbook",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Runbook"
+              }
+            }
+          ]
+        }
+      },
+      "name": "top10-recommendations"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n"
+      },
+      "name": "top10-divider"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n### Operating model (safe-update)\nLive data on this page refreshes automatically. Changes to the **workbook definition** follow the suite's safe-update model:\n\n| Change | How it happens |\n| --- | --- |\n| Live data refresh | Automatic |\n| Low-risk metadata (titles, descriptions, layout) | Agent may auto-apply, versioned |\n| Medium/high-risk panel or query changes | Pull request + human approval |\n| SLO, alert, remediation, health-scoring, access scope, panel deletion | **Mandatory approval** - agent records a recommendation only |\n\nEvery change is versioned, validated, auditable, and reversible. See `docs/operating-model.md`."
+      },
+      "name": "operating-model-footer"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<law>"
+  ],
+  "styleSettings": {
+    "paddingStyle": "wide"
+  },
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "suite": "SRE Agent Observability Workbooks",
+  "workbooks": [
+    {
+      "order": 1,
+      "file": "01-sre-agent-command-center.workbook.json",
+      "displayName": "SRE Agent Command Center",
+      "page": "Command Center"
+    },
+    {
+      "order": 2,
+      "file": "02-tenant-health-model.workbook.json",
+      "displayName": "Tenant Health Model",
+      "page": "Tenant Health Model"
+    },
+    {
+      "order": 3,
+      "file": "03-incident-triage-rca.workbook.json",
+      "displayName": "Incident Triage & RCA",
+      "page": "Incident Triage & RCA"
+    },
+    {
+      "order": 4,
+      "file": "04-automation-remediation.workbook.json",
+      "displayName": "Automation & Remediation",
+      "page": "Automation & Remediation"
+    },
+    {
+      "order": 5,
+      "file": "05-operations-command-center.workbook.json",
+      "displayName": "Operations Command Center",
+      "page": "Operations Command Center"
+    },
+    {
+      "order": 6,
+      "file": "06-application-reliability.workbook.json",
+      "displayName": "Application Reliability",
+      "page": "Application Reliability"
+    },
+    {
+      "order": 7,
+      "file": "07-enterprise-architecture-governance.workbook.json",
+      "displayName": "Enterprise Architecture & Governance",
+      "page": "Enterprise Architecture & Governance"
+    },
+    {
+      "order": 8,
+      "file": "08-observability-quality-cost.workbook.json",
+      "displayName": "Observability Quality & Cost",
+      "page": "Observability Quality & Cost"
+    },
+    {
+      "order": 9,
+      "file": "09-security-identity-observability.workbook.json",
+      "displayName": "Security & Identity Observability",
+      "page": "Security & Identity Observability"
+    },
+    {
+      "order": 10,
+      "file": "10-sre-agent-workbook-maintenance.workbook.json",
+      "displayName": "SRE Agent Workbook Maintenance",
+      "page": "Workbook Maintenance"
+    }
+  ]
+}
