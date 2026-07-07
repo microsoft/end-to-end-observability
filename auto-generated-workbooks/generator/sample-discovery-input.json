@@ -1,0 +1,38 @@
+{
+  "subscriptions": ["00000000-0000-0000-0000-000000000000"],
+  "generatedUtc": "2025-05-27T10:00:00Z",
+  "resources": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Compute/virtualMachines/vm-web-01",
+      "name": "vm-web-01",
+      "type": "microsoft.compute/virtualMachines",
+      "location": "eastus",
+      "resourceGroup": "rg-app",
+      "subscriptionId": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-api",
+      "name": "vmss-api",
+      "type": "microsoft.compute/virtualMachineScaleSets",
+      "location": "eastus",
+      "resourceGroup": "rg-app",
+      "subscriptionId": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-app/providers/Microsoft.Web/sites/app-portal",
+      "name": "app-portal",
+      "type": "microsoft.web/sites",
+      "location": "eastus",
+      "resourceGroup": "rg-app",
+      "subscriptionId": "00000000-0000-0000-0000-000000000000"
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-data/providers/Microsoft.Storage/storageAccounts/stobsdata01",
+      "name": "stobsdata01",
+      "type": "microsoft.storage/storageAccounts",
+      "location": "eastus",
+      "resourceGroup": "rg-data",
+      "subscriptionId": "00000000-0000-0000-0000-000000000000"
+    }
+  ]
+}

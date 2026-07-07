@@ -1,0 +1,9 @@
+# Example variables for the Auto-Generated Workbooks Terraform deployment.
+# Copy to env.tfvars and adjust for your environment, then:
+#   terraform init && terraform apply -var-file=env.tfvars
+
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+resource_group_name   = "rg-observability"
+location              = "eastus"
+workspace_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-observability"
+workbooks_dir         = "../generator/out"
