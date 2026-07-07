@@ -50,3 +50,24 @@ def test_keyvault_with_diag_but_no_workspace_sink():
     ]
     findings = evaluate(resources, rules)
     assert any(f.rule_id == "KV-002" for f in findings)
+
+
+def test_keyvault_without_diagnostics_does_not_trigger_workspace_link_rule():
+    rules = load_rules(RULES)
+    resources = [
+        {
+            "id": "/subscriptions/s/resourceGroups/rg/providers/Microsoft.KeyVault/vaults/kv1",
+            "name": "kv1",
+            "type": "microsoft.keyvault/vaults",
+            "subscriptionId": "s",
+            "resourceGroup": "rg",
+            "location": "eastus",
+            "tags": {},
+            "hasDiagnosticSettings": False,
+            "diagnosticSinkWorkspaceIds": [],
+        }
+    ]
+    findings = evaluate(resources, rules)
+    rule_ids = {f.rule_id for f in findings}
+    assert "KV-001" in rule_ids
+    assert "KV-002" not in rule_ids
