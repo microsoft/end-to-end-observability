@@ -85,7 +85,8 @@ def _matches_signal(resource: dict, signal: dict) -> bool:
             return not bool(resource.get("hasDiagnosticSettings"))
         if kind == "workspaceLink":
             sinks = resource.get("diagnosticSinkWorkspaceIds") or []
-            return bool(resource.get("hasDiagnosticSettings")) and not any(sinks)
+            workspace_sinks = [sink for sink in sinks if sink]
+            return bool(resource.get("hasDiagnosticSettings")) and not workspace_sinks
         if kind == "applicationInsights":
             # Heuristic: web/function apps surface APPINSIGHTS_* via siteConfig
             # appSettings; ARG doesn't always project them, so we treat the
