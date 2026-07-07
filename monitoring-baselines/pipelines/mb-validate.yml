@@ -1,0 +1,82 @@
+# -----------------------------------------------------------------------------
+# Monitoring Baselines - Validation Pipeline
+# Runs on pull requests to validate Terraform and parameter governance before merge.
+# -----------------------------------------------------------------------------
+name: Monitoring Baselines Validate
+
+on:
+  pull_request:
+    paths:
+      - 'monitoring-baselines/terraform/**'
+      - 'monitoring-baselines/scripts/**'
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: '1.9.0'
+  WORKING_DIR: 'monitoring-baselines/terraform'
+
+jobs:
+  parameter-lint:
+    name: Parameter Governance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate all parameter files
+        shell: pwsh
+        run: ./monitoring-baselines/scripts/validate-parameters.ps1 -All
+
+  terraform-validate:
+    name: Terraform Validate (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [sandbox, pre-prod, prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init (no backend)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Format Check
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform fmt -check -recursive
+
+  policy-diff:
+    name: Policy Parameter Diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect parameter file changes
+        shell: pwsh
+        run: |
+          $changed = git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'monitoring-baselines/terraform/environments/*.tfvars'
+          if ($changed) {
+            Write-Host "::notice::Parameter files changed - review policy category flags and private_endpoint_effect:"
+            $changed | ForEach-Object { Write-Host "  $_" }
+          } else {
+            Write-Host "No parameter file changes detected"
+          }
+
+      - name: Detect effect escalation to Deny
+        shell: pwsh
+        run: |
+          $diff = git diff origin/${{ github.base_ref }}...HEAD -- 'monitoring-baselines/terraform/environments/*.tfvars'
+          if ($diff -match '\+\s*private_endpoint_effect\s*=\s*"Deny"') {
+            Write-Host "::warning::A parameter file is escalating private_endpoint_effect to 'Deny' - this can block resource creation. Confirm change management approval."
+          }

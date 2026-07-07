@@ -1,0 +1,56 @@
+// ---------------------------------------------------------------------------
+// recommendation-score.kql
+// Sample, conceptual scoring logic for RecommendationScore. The SRE Agent should
+// compute this when it WRITES a recommendation to SREAgentRecommendations_CL; it
+// is shown here as KQL so the model is transparent, testable, and reviewable.
+//
+//   RecommendationScore =
+//       BusinessCriticality + Severity + UserImpact + Confidence + Recency
+//     + BlastRadius + ComplianceRisk + AutomationReadiness - RemediationRisk
+//
+// Each term is normalized to a documented 0..N band (see docs/scoring-model.md).
+// This query recomputes a score from raw inputs so you can validate the agent's
+// output or backfill scores for existing rows.
+// ---------------------------------------------------------------------------
+SREAgentRecommendations_CL
+| where TimeGenerated > ago(30d)
+| summarize arg_max(LastUpdated, *) by RecommendationId
+// --- Map categorical inputs to numeric bands -------------------------------
+| extend BusinessCriticalityW = case(
+    BusinessCriticality == "Mission critical", 25,
+    BusinessCriticality == "High", 18,
+    BusinessCriticality == "Medium", 10,
+    BusinessCriticality == "Low", 4,
+    0)
+| extend SeverityW = case(
+    Severity == "Sev0", 25,
+    Severity == "Sev1", 20,
+    Severity == "Sev2", 12,
+    Severity == "Sev3", 6,
+    Severity == "Sev4", 2,
+    0)
+// ConfidenceScore is 0..1 -> 0..15.
+| extend ConfidenceW = toreal(ConfidenceScore) * 15.0
+// Recency: newer recommendations score higher (0..10 over a 7-day half-life).
+| extend AgeHours = datetime_diff('hour', now(), todatetime(LastUpdated))
+| extend RecencyW = 10.0 * exp(-1.0 * (toreal(AgeHours) / 168.0))
+// RemediationRisk is SUBTRACTED.
+| extend RemediationRiskW = case(
+    RemediationRisk == "High", 20,
+    RemediationRisk == "Medium", 10,
+    RemediationRisk == "Low", 3,
+    0)
+// UserImpact / BlastRadius / ComplianceRisk / AutomationReadiness are expected as
+// agent-provided numeric columns; default to 0 when absent in this sample.
+| extend UserImpactW = toreal(column_ifexists("UserImpact", 0.0))
+| extend BlastRadiusW = toreal(column_ifexists("BlastRadius", 0.0))
+| extend ComplianceRiskW = toreal(column_ifexists("ComplianceRisk", 0.0))
+| extend AutomationReadinessW = iff(tobool(RollbackAvailable), 8.0, 2.0)
+// --- Compose ----------------------------------------------------------------
+| extend ComputedScore = round(
+      BusinessCriticalityW + SeverityW + UserImpactW + ConfidenceW + RecencyW
+    + BlastRadiusW + ComplianceRiskW + AutomationReadinessW - RemediationRiskW, 2)
+| project RecommendationId, WorkbookName, Severity, BusinessCriticality,
+          ConfidenceScore, RemediationRisk, RecommendationScore, ComputedScore,
+          Drift = round(toreal(RecommendationScore) - ComputedScore, 2)
+| order by ComputedScore desc

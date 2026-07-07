@@ -1,0 +1,20 @@
+// ---------------------------------------------------------------------------
+// inventory.kql (Azure Resource Graph)
+// Tenant-wide resource inventory used by the Enterprise Architecture &
+// Governance and Tenant Health Model workbooks. Run in the Resource Graph
+// Explorer or via `az graph query`.
+// ---------------------------------------------------------------------------
+
+// Resources by type, region and environment tag.
+resources
+| extend env = tostring(tags['Environment']), owner = tostring(tags['Owner'])
+| summarize Count = count() by type, location, env
+| order by Count desc
+
+// ---------------------------------------------------------------------------
+// Subscriptions and management groups (account topology).
+// ---------------------------------------------------------------------------
+// resourcecontainers
+// | where type =~ 'microsoft.resources/subscriptions'
+// | project subscriptionId, name, state = tostring(properties.state)
+// | order by name asc

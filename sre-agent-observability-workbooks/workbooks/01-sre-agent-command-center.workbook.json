@@ -1,0 +1,768 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# SRE Agent Command Center\n\nCentral landing page for **agent-detected tenant health**, active incidents, recommendations, confidence, evidence, and automation state. Start your day here: triage the Top 10, confirm pending approvals, and follow drilldowns into the specialized workbooks.\n\n> **SRE Agent at the center.** This page is an operating surface for both humans and the SRE Agent. Set the **Subscriptions** and **Log Analytics workspace** parameters, then act on the Top 10 recommendations below."
+      },
+      "name": "page-header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "param-timerange",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time range",
+            "type": 4,
+            "isRequired": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "value": {
+              "durationMs": 604800000
+            }
+          },
+          {
+            "id": "param-subscriptions",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "label": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "param-loganalyticsworkspaceid",
+            "version": "KqlParameterItem/1.0",
+            "name": "LogAnalyticsWorkspaceId",
+            "label": "Log Analytics workspace",
+            "type": 5,
+            "isRequired": true,
+            "query": "resources | where type =~ 'microsoft.operationalinsights/workspaces' | project value = id, label = name, selected = false | order by label asc",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "queryType": 1,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            }
+          },
+          {
+            "id": "param-managementgroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ManagementGroup",
+            "label": "Management group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-resourcegroup",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroup",
+            "label": "Resource group",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-region",
+            "version": "KqlParameterItem/1.0",
+            "name": "Region",
+            "label": "Region",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-environment",
+            "version": "KqlParameterItem/1.0",
+            "name": "Environment",
+            "label": "Environment",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Production\", \"label\": \"Production\", \"selected\": false}, {\"value\": \"Pre-Production\", \"label\": \"Pre-Production\", \"selected\": false}, {\"value\": \"Development\", \"label\": \"Development\", \"selected\": false}, {\"value\": \"Test\", \"label\": \"Test\", \"selected\": false}, {\"value\": \"Sandbox\", \"label\": \"Sandbox\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-workload",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workload",
+            "label": "Workload / application",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-ownerteam",
+            "version": "KqlParameterItem/1.0",
+            "name": "OwnerTeam",
+            "label": "Owner team",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-businesscriticality",
+            "version": "KqlParameterItem/1.0",
+            "name": "BusinessCriticality",
+            "label": "Business criticality",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Mission Critical\", \"label\": \"Mission Critical\", \"selected\": false}, {\"value\": \"Business Critical\", \"label\": \"Business Critical\", \"selected\": false}, {\"value\": \"High\", \"label\": \"High\", \"selected\": false}, {\"value\": \"Medium\", \"label\": \"Medium\", \"selected\": false}, {\"value\": \"Low\", \"label\": \"Low\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-resourcetype",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceType",
+            "label": "Resource type",
+            "type": 1,
+            "isRequired": false,
+            "value": "*"
+          },
+          {
+            "id": "param-severity",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "label": "Severity",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"All\", \"label\": \"All\", \"selected\": true}, {\"value\": \"Sev0 - Critical\", \"label\": \"Sev0 - Critical\", \"selected\": false}, {\"value\": \"Sev1 - High\", \"label\": \"Sev1 - High\", \"selected\": false}, {\"value\": \"Sev2 - Medium\", \"label\": \"Sev2 - Medium\", \"selected\": false}, {\"value\": \"Sev3 - Low\", \"label\": \"Sev3 - Low\", \"selected\": false}, {\"value\": \"Sev4 - Informational\", \"label\": \"Sev4 - Informational\", \"selected\": false}]",
+            "value": "All"
+          },
+          {
+            "id": "param-recommendationstatus",
+            "version": "KqlParameterItem/1.0",
+            "name": "RecommendationStatus",
+            "label": "Recommendation status",
+            "type": 2,
+            "isRequired": false,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\": \"Active\", \"label\": \"Active\", \"selected\": true}, {\"value\": \"All\", \"label\": \"All\", \"selected\": false}, {\"value\": \"New\", \"label\": \"New\", \"selected\": false}, {\"value\": \"Pending approval\", \"label\": \"Pending approval\", \"selected\": false}, {\"value\": \"Approved\", \"label\": \"Approved\", \"selected\": false}, {\"value\": \"In progress\", \"label\": \"In progress\", \"selected\": false}, {\"value\": \"Applied\", \"label\": \"Applied\", \"selected\": false}, {\"value\": \"Validated\", \"label\": \"Validated\", \"selected\": false}, {\"value\": \"Rejected\", \"label\": \"Rejected\", \"selected\": false}, {\"value\": \"Suppressed\", \"label\": \"Suppressed\", \"selected\": false}, {\"value\": \"Expired\", \"label\": \"Expired\", \"selected\": false}, {\"value\": \"Failed\", \"label\": \"Failed\", \"selected\": false}, {\"value\": \"Rolled back\", \"label\": \"Rolled back\", \"selected\": false}]",
+            "value": "Active"
+          }
+        ]
+      },
+      "name": "shared-parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Status at a glance\n\nTenant posture from live alerts, plus the agent's active recommendation load. Drill into the Top 10 and the sections below."
+      },
+      "name": "sec-5"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend sev = tostring(properties.essentials.severity),\n         cond = tostring(properties.essentials.monitorCondition)\n| where cond == 'Fired'\n| summarize Crit = countif(sev in ('Sev0','Sev1')), Warn = countif(sev in ('Sev2','Sev3')), Total = count()\n| extend Posture = case(Crit > 0, 'CRITICAL', Warn > 0, 'DEGRADED', Total > 0, 'ELEVATED', 'HEALTHY')\n| project Posture, ['Active alerts'] = Total",
+        "size": 4,
+        "title": "Alert posture",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Posture",
+            "formatter": 18,
+            "formatOptions": {
+              "thresholdsOptions": "colors",
+              "thresholdsGrid": [
+                {
+                  "operator": "==",
+                  "thresholdValue": "CRITICAL",
+                  "representation": "red",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "DEGRADED",
+                  "representation": "orange",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "==",
+                  "thresholdValue": "ELEVATED",
+                  "representation": "yellow",
+                  "text": "{0}"
+                },
+                {
+                  "operator": "Default",
+                  "thresholdValue": null,
+                  "representation": "green",
+                  "text": "{0}"
+                }
+              ]
+            }
+          },
+          "leftContent": {
+            "columnMatch": "Active alerts",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "full"
+        }
+      },
+      "name": "arg-1"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend sev = tostring(properties.essentials.severity),\n         cond = tostring(properties.essentials.monitorCondition)\n| where cond == 'Fired'\n| summarize Alerts = count() by Severity = sev\n| order by Severity asc",
+        "size": 3,
+        "title": "Fired alerts by severity",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Severity",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Alerts",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "arg-2"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend sev = tostring(properties.essentials.severity),\n         cond = tostring(properties.essentials.monitorCondition)\n| where cond == 'Fired'\n| summarize Alerts = count() by Severity = sev\n| order by Severity asc",
+        "size": 1,
+        "title": "Alert severity mix",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "piechart"
+      },
+      "name": "arg-3"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where Status in ('New','Pending approval','Approved','In progress','Failed')\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| summarize Recommendations = count() by Severity\n| order by Severity asc",
+        "size": 3,
+        "title": "Active agent recommendations by severity",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Severity",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Recommendations",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "style": "decimal",
+                "maximumFractionDigits": 0
+              }
+            }
+          },
+          "showBorder": true,
+          "size": "auto"
+        }
+      },
+      "name": "la-4"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Top 10 SRE Agent Recommendations\n\nPrioritized, auditable actions the **SRE Agent** has produced for this page, ranked by `RecommendationScore`. Each row is evidence-backed and carries its agent action type, approval requirement, and lifecycle status.\n\n- **Approval required = true** -> the agent will *not* act without human sign-off (always true for SLO, alert, remediation, health-model, access, or panel-deletion changes).\n- Use the **Evidence / Incident / PR / Runbook** links to drill into the supporting data.\n- Source table: `SREAgentRecommendations_CL`. If empty, no active recommendations exist for this page, or the workspace parameter is not yet set - see *Configuration* in the README."
+      },
+      "name": "top10-explainer"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where WorkbookName == \"SRE Agent Command Center\" and WorkbookPage == \"Command Center\"\n| where Status in (\"New\",\"Pending approval\",\"Approved\",\"In progress\",\"Failed\")\n| where isnull(ExpiresOn) or ExpiresOn > now()\n| where \"{Severity}\" == \"All\" or \"{Severity}\" == \"\" or Severity == \"{Severity}\"\n| where \"{BusinessCriticality}\" == \"All\" or \"{BusinessCriticality}\" == \"\" or BusinessCriticality == \"{BusinessCriticality}\"\n| where \"{OwnerTeam}\" == \"*\" or \"{OwnerTeam}\" == \"\" or OwnerTeam =~ \"{OwnerTeam}\"\n| where \"{RecommendationStatus}\" in (\"Active\",\"All\",\"\") or Status == \"{RecommendationStatus}\"\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| order by RecommendationScore desc, Severity asc, LastUpdated desc\n| take 10\n| project\n    Rank,\n    Severity,\n    Recommendation = RecommendationText,\n    Scope = AffectedScope,\n    OwnerTeam,\n    Confidence = ConfidenceScore,\n    ['Agent action'] = AgentActionType,\n    ['Approval required'] = ApprovalRequired,\n    Status,\n    ['Last updated'] = LastUpdated,\n    Evidence = EvidenceLinks,\n    Runbook = RelatedWorkItem,\n    Incident = RelatedIncidentId,\n    PR = RelatedPullRequest,\n    RecommendationId",
+        "size": 0,
+        "title": "Top 10 SRE Agent Recommendations",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Evidence",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Evidence"
+              }
+            },
+            {
+              "columnMatch": "Incident",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Incident"
+              }
+            },
+            {
+              "columnMatch": "PR",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "PR"
+              }
+            },
+            {
+              "columnMatch": "Runbook",
+              "formatter": 7,
+              "formatOptions": {
+                "linkTarget": "Url",
+                "linkLabel": "Runbook"
+              }
+            }
+          ]
+        }
+      },
+      "name": "top10-recommendations"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n"
+      },
+      "name": "top10-divider"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Tenant health summary\n\nResource Health rollup across the selected subscriptions. **Unknown is not healthy** - treat Unknown/empty as risk and investigate telemetry coverage."
+      },
+      "name": "sec-7"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "healthresources\n| where type =~ 'microsoft.resourcehealth/availabilitystatuses'\n| extend state = tostring(properties.availabilityState)\n| summarize Count = count() by state\n| order by Count desc",
+        "size": 0,
+        "title": "Resource health state (tenant)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "piechart"
+      },
+      "name": "arg-6"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Agent health summary\n\nIs the SRE Agent itself healthy and producing recommendations? Stale output (no rows in the last few hours) means the agent or its pipeline is degraded."
+      },
+      "name": "sec-10"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated {TimeRange}\n| summarize Recommendations = count(), LastSeen = max(TimeGenerated) by CreatedBy\n| order by Recommendations desc",
+        "size": 0,
+        "title": "SRE Agent recommendation output (last 24h)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-8"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - Agent heartbeat / runtime telemetry**\n>\n> Bind the SRE Agent's own AppRequests/AppTraces or container heartbeat to show agent uptime, error rate, and queue depth.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-9"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Active incidents\n\nFired, non-closed Azure Monitor alerts grouped by severity. Click through to **Incident Triage & RCA** for correlated evidence and root-cause candidates."
+      },
+      "name": "sec-12"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend sev = tostring(properties.essentials.severity),\n         cond = tostring(properties.essentials.monitorCondition),\n         state = tostring(properties.essentials.alertState)\n| where cond == 'Fired' and state != 'Closed'\n| summarize Alerts = count() by sev\n| order by sev asc",
+        "size": 0,
+        "title": "Active alerts by severity",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "barchart"
+      },
+      "name": "arg-11"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Health state by management group / subscription / workload\n\nWhere is the risk concentrated? Resource and unhealthy counts per subscription highlight which scope to drill into."
+      },
+      "name": "sec-15"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| summarize Resources = count() by Subscription\n| order by Resources desc",
+        "size": 0,
+        "title": "Resources by subscription",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-13"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "healthresources\n| where type =~ 'microsoft.resourcehealth/availabilitystatuses'\n| extend state = tostring(properties.availabilityState)\n| where state in ('Unavailable','Degraded','Unknown')\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| summarize Count = count() by Subscription, state\n| order by Count desc",
+        "size": 0,
+        "title": "Unhealthy / degraded resources by subscription",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-14"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Critical alerts\n\nSev0/Sev1 alerts currently firing. These should map to a Top 10 recommendation or an open incident; if not, alert hygiene needs attention."
+      },
+      "name": "sec-17"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "alertsmanagementresources\n| where type =~ 'microsoft.alertsmanagement/alerts'\n| extend sev = tostring(properties.essentials.severity),\n         cond = tostring(properties.essentials.monitorCondition),\n         name = tostring(properties.essentials.alertRule),\n         target = tostring(properties.essentials.targetResource),\n         fired = todatetime(properties.essentials.startDateTime)\n| where cond == 'Fired' and sev in ('Sev0','Sev1')\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project fired, sev, name, target, Subscription\n| order by fired desc\n| take 50",
+        "size": 0,
+        "title": "Critical (Sev0/Sev1) fired alerts",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-16"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Service Health issues\n\nActive Azure platform Service Health events (outages, advisories, planned maintenance) affecting the tenant. Platform issues should suppress auto-remediation."
+      },
+      "name": "sec-19"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "servicehealthresources\n| where type =~ 'microsoft.resourcehealth/events'\n| extend eventType = tostring(properties.EventType),\n         status = tostring(properties.Status),\n         eventTitle = tostring(properties.Title)\n| where status =~ 'Active'\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| project eventType, eventTitle, Subscription\n| take 50",
+        "size": 0,
+        "title": "Active Service Health events",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-18"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Resource Health issues\n\nIndividual resources reporting Unavailable/Degraded right now - the concrete targets behind the rollup above."
+      },
+      "name": "sec-21"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "healthresources\n| where type =~ 'microsoft.resourcehealth/availabilitystatuses'\n| extend state = tostring(properties.availabilityState),\n         summary = tostring(properties.summary)\n| where state in ('Unavailable','Degraded')\n| project resourceId = tostring(properties.targetResourceId), state, summary\n| take 100",
+        "size": 0,
+        "title": "Unavailable / degraded resources",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-20"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Agent confidence summary\n\nDistribution of agent confidence on its active recommendations. Low average confidence in a category means more human review is warranted."
+      },
+      "name": "sec-23"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where Status in ('New','Pending approval','Approved','In progress','Failed')\n| summarize AvgConfidence = round(avg(ConfidenceScore), 2), Count = count() by Category\n| order by Count desc",
+        "size": 0,
+        "title": "Average confidence by category",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-22"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Pending approvals\n\nRecommendations waiting on a human decision. Approving here authorizes the agent to act per its `AgentActionType`."
+      },
+      "name": "sec-25"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentRecommendations_CL\n| where TimeGenerated > ago(30d)\n| where Status == 'Pending approval'\n| summarize arg_max(LastUpdated, *) by RecommendationId\n| project LastUpdated, Severity, RecommendationText, AffectedScope, OwnerTeam, AgentActionType, RemediationRisk, RollbackAvailable\n| order by LastUpdated desc",
+        "size": 0,
+        "title": "Recommendations pending approval",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-24"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Automation actions - running / completed / failed\n\nExecution state of agent-initiated automation. Failures and blocked actions feed the **Automation & Remediation** workbook."
+      },
+      "name": "sec-28"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SREAgentActions_CL\n| where TimeGenerated {TimeRange}\n| summarize Count = count() by Outcome\n| order by Count desc",
+        "size": 0,
+        "title": "Automation action outcomes",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{LogAnalyticsWorkspaceId}"
+        ],
+        "visualization": "table"
+      },
+      "name": "la-26"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - SREAgentActions_CL**\n>\n> Custom table for agent automation runs (fields: ActionId, ActionType, TargetResourceId, Outcome [Running/Succeeded/Failed/Blocked], Approver, RollbackAvailable, StartedOn, CompletedOn). Documented in docs/data-sources.md.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-27"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Recent changes\n\nResource configuration changes in the window - a leading indicator for new incidents. Correlate spikes here with the incident timeline."
+      },
+      "name": "sec-30"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resourcechanges\n| extend changeType = tostring(properties.changeType),\n         changeTime = todatetime(properties.changeAttributes.timestamp),\n         target = tostring(properties.targetResourceId)\n| project changeTime, changeType, target\n| order by changeTime desc\n| take 50",
+        "size": 0,
+        "title": "Recent resource changes",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-29"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Repeated incidents\n\nRecurring problems (same ProblemId/signature) indicate an unaddressed root cause and are strong automation candidates."
+      },
+      "name": "sec-32"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "> **Placeholder - Repeated incident signatures**\n>\n> Bind your incident/ITSM table (or AppExceptions ProblemId) to count recurrences per signature over the window and flag the top offenders.\n>\n> Supply the tenant-specific data source, then replace this tile with the documented query. See `docs/data-sources.md`."
+      },
+      "name": "ph-31"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Unknown health due to missing telemetry\n\nResources with **no diagnostic settings or stale heartbeat** report Unknown health. Unknown is a risk, not a pass - these drive coverage recommendations in **Observability Quality & Cost**."
+      },
+      "name": "sec-34"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "healthresources\n| where type =~ 'microsoft.resourcehealth/availabilitystatuses'\n| where tostring(properties.availabilityState) == 'Unknown'\n| join kind=leftouter (resourcecontainers\n    | where type =~ 'microsoft.resources/subscriptions'\n    | project subscriptionId, Subscription = name) on subscriptionId\n| summarize Unknown = count() by Subscription\n| order by Unknown desc",
+        "size": 0,
+        "title": "Resources reporting Unknown health",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "table"
+      },
+      "name": "arg-33"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "\n---\n### Operating model (safe-update)\nLive data on this page refreshes automatically. Changes to the **workbook definition** follow the suite's safe-update model:\n\n| Change | How it happens |\n| --- | --- |\n| Live data refresh | Automatic |\n| Low-risk metadata (titles, descriptions, layout) | Agent may auto-apply, versioned |\n| Medium/high-risk panel or query changes | Pull request + human approval |\n| SLO, alert, remediation, health-scoring, access scope, panel deletion | **Mandatory approval** - agent records a recommendation only |\n\nEvery change is versioned, validated, auditable, and reversible. See `docs/operating-model.md`."
+      },
+      "name": "operating-model-footer"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.OperationalInsights/workspaces/<law>"
+  ],
+  "styleSettings": {
+    "paddingStyle": "wide"
+  },
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

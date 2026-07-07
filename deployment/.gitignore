@@ -1,0 +1,12 @@
+# Never commit the filled-in config - it holds real tenant/subscription IDs.
+config/deployment.parameters.json
+
+# Terraform plan artifacts written by the orchestrator
+*.tfplan
+
+# Terraform working artifacts under the vendored module (never commit)
+**/.terraform/
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.backup
+**/zz_deployment_local_backend_override.tf

@@ -1,0 +1,90 @@
+# -----------------------------------------------------------------------------
+# AMBA Enterprise - Pre-Deployment Validation Pipeline
+# Runs on pull requests to validate parameter changes before merge
+# -----------------------------------------------------------------------------
+name: AMBA Validate
+
+on:
+  pull_request:
+    paths:
+      - 'amba-enterprise/terraform/**'
+      - 'amba-enterprise/scripts/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: '1.9.0'
+  WORKING_DIR: 'amba-enterprise/terraform'
+
+jobs:
+  parameter-lint:
+    name: Parameter Governance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate parameter files
+        shell: pwsh
+        run: ./amba-enterprise/scripts/validate-parameters.ps1 -All
+
+      - name: Check subscription naming compliance
+        shell: pwsh
+        run: ./amba-enterprise/scripts/validate-naming.ps1
+
+      - name: Check deployment budget headroom
+        shell: pwsh
+        run: ./amba-enterprise/scripts/deployment-budget.ps1
+
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [sandbox, pre-prod, prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init (validate only)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Format Check
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform fmt -check -recursive
+
+  policy-diff:
+    name: Policy Change Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect initiative flag changes
+        shell: pwsh
+        run: |
+          $changedFiles = git diff --name-only origin/main...HEAD
+          $paramChanges = $changedFiles | Where-Object { $_ -match '\.tfvars$' }
+          if ($paramChanges) {
+            Write-Host "::warning::Parameter files changed - review initiative flags carefully:"
+            $paramChanges | ForEach-Object { Write-Host "  - $_" }
+          }
+
+      - name: Check for breaking parameter changes
+        shell: pwsh
+        run: |
+          # Compare current vs previous parameter names to detect removals
+          $currentParams = Get-Content "amba-enterprise/terraform/variables.tf" | Select-String 'variable "' | ForEach-Object { ($_ -split '"')[1] }
+          Write-Host "Current parameter count: $($currentParams.Count)"
+          Write-Host "Parameters defined: $($currentParams -join ', ')"

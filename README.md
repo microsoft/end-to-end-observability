@@ -1,122 +1,230 @@
-# End-to-end Azure Observability Accelerator
+# End-to-End Observability
 
-A solution accelerator that helps customers **discover**, **deploy**, and **govern**
-their Azure monitoring infrastructure and policies.
+Enterprise Azure observability platform providing monitoring, alerting, and telemetry collection for Azure Landing Zone (ALZ) environments. Deploys and enforces observability standards at scale using Azure Policy, Terraform, and GitHub Actions.
 
-## Components
+---
 
-| Component | Status | Purpose |
+## Architecture
+
+The platform follows a hybrid deployment model: **Terraform** orchestrates Azure Policy deployment at the management group level, while **Azure Policy + remediation tasks** deploy and enforce monitoring resources across all subscriptions.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ALZ Management Group Hierarchy               │
+│                                                                 │
+│  ┌──────────────────────┐    ┌──────────────────────────────┐   │
+│  │   AMBA Enterprise    │    │   Monitoring Baselines        │   │
+│  │   (Alerting)         │    │   (Telemetry Collection)      │   │
+│  │                      │    │                               │   │
+│  │  • Alert Rules       │    │  • AMA Deployment             │   │
+│  │  • Action Groups     │    │  • Diagnostic Settings        │   │
+│  │  • Alert Processing  │    │  • Private Endpoint Posture   │   │
+│  └──────────┬───────────┘    └──────────────┬────────────────┘   │
+│             │          Shared UAMI           │                   │
+│             └──────────────┬─────────────────┘                   │
+│                            ▼                                     │
+│              ┌─────────────────────────┐                         │
+│              │    Azure SRE Agent      │                         │
+│              │  (AI-Assisted Ops)      │                         │
+│              └─────────────────────────┘                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Repository Structure
+
+| Directory | Purpose |
+|---|---|
+| [`amba-enterprise/`](amba-enterprise/) | Enterprise AMBA (Azure Monitor Baseline Alerts) — alerting infrastructure across ALZ |
+| [`monitoring-baselines/`](monitoring-baselines/) | Telemetry collection & monitoring posture enforcement via built-in Azure Policy |
+| [`sre-agent-pre-req/`](sre-agent-pre-req/) | Azure SRE Agent integration checklist and onboarding guide |
+| [`discovery/`](discovery/) | Read-only ARG-based scan of an Azure estate; emits monitoring gap recommendations |
+| [`utility-iot-observability/`](utility-iot-observability/) | Utility industry IoT observability reference implementation |
+| [`test-data/`](test-data/) | Synthetic test data generator for workbook and dashboard validation |
+
+---
+
+## Modules
+
+### AMBA Enterprise
+
+Deploys alerting infrastructure (alert rules, action groups, alert processing rules) across an ALZ management group hierarchy using the official [AMBA framework](https://azure.github.io/azure-monitor-baseline-alerts/).
+
+- **14 toggleable initiatives** covering Connectivity, Identity, Management, Service Health, Hybrid VM, Key Management, Load Balancing, Network Changes, Recovery Services, Storage, VM, VMSS, Web, and Notification Assets
+- **42 Azure resource types** with metric, log, and activity log alerts
+- Ring-based deployment promotion (sandbox → pre-prod → prod)
+- Daily drift detection with auto-created GitHub issues
+- Deployment budget monitoring (Azure 800-deployment limit)
+- Brownfield subscription onboarding with preflight inventory scanning
+
+See [`amba-enterprise/README.md`](amba-enterprise/README.md) for full details.
+
+### Monitoring Baselines
+
+Enforces monitoring baselines via a custom Azure Policy initiative built from **built-in** policy definitions. Deliberately separated from AMBA to decouple telemetry governance from the AMBA release lifecycle.
+
+Three policy groups:
+- **Azure Monitor Agent (AMA):** 6 DeployIfNotExists policies for Linux/Windows VMs, VMSS, and Arc machines
+- **Diagnostic Settings:** 8 DeployIfNotExists policies routing logs for Key Vault, NSG, Storage, SQL, App Service, Event Hub, Service Bus, and Recovery Services
+- **Private Endpoints:** 3 Audit/Deny policies for Storage, Key Vault, and Azure Monitor Private Link Scope
+
+See [`monitoring-baselines/README.md`](monitoring-baselines/README.md) for full details.
+
+### SRE Agent Integration
+
+Comprehensive, Microsoft Learn-verified checklist for onboarding [Azure SRE Agent](https://learn.microsoft.com/en-us/azure/sre-agent/) into the enterprise observability stack. Covers:
+
+- Pre-flight requirements (region, identity, networking, firewall allow-lists)
+- Agent deployment and RBAC verification
+- Run-mode configuration (Review vs Autonomous)
+- Integrations: Azure Monitor, App Insights, PagerDuty, ServiceNow, GitHub, Azure DevOps, ADX
+- Sample KQL queries for agent telemetry and cost tracking
+
+See [`sre-agent-pre-req/sre-agent-integration-checklist.md`](sre-agent-pre-req/sre-agent-integration-checklist.md).
+
+### Discovery
+
+Scans an Azure subscription or management group via **Azure Resource Graph (ARG)** and produces JSON + Markdown reports describing observability gaps and recommended remediations. Rules are **data, not code** — defined in YAML so customers can extend the rule set without forking the tool.
+
+- Read-only (`Reader` role at subscription or management group scope)
+- Single KQL pass covers an entire tenant — no throttled ARM loops
+- Joins resources to `microsoft.insights/diagnosticsettings` in one query
+- Extensible YAML rules engine: declare resource type, signals, severity, and remediations
+
+```pwsh
+python -m discovery scan --subscription <subId> --out-dir .\out
+```
+
+Outputs `discovery-report.json` (machine-readable) and `discovery-report.md` (human-readable).
+
+See [`discovery/`](discovery/) and the [architecture decision record](docs/adr/001-sre-agent-discovery-assessment.md) for full details.
+
+### Utility IoT Observability
+
+Research and reference implementation for electric, gas, and oil/gas pipeline monitoring targeting NY State utilities. Includes:
+
+- Synthetic data generator producing realistic 24-hour telemetry (2,304 records) with time-of-day patterns, seasonal variation, and device-specific fault signatures
+- Multi-mode Azure uploader (IoT Hub, Event Hub, Cosmos DB)
+- Deployment guide for IoT Hub, Event Hub, ADX, ADLS Gen2, Cosmos DB, Digital Twins, and Stream Analytics (see [`AZURE_DEPLOYMENT_GUIDE.md`](utility-iot-observability/AZURE_DEPLOYMENT_GUIDE.md))
+- Coverage of 25+ device types across smart meters, distribution transformers, substations, gas metering, and pipeline systems
+
+See [`utility-iot-observability/README.md`](utility-iot-observability/README.md).
+
+### Test Data
+
+Generates large-scale synthetic datasets (Azure Resource Graph-shaped) for testing workbook and Grafana dashboard visualizations without a live Azure tenant.
+
+- 11 subscriptions across 3 environment rings
+- Pre-generated output: 6,000 AMBA policy states, 6,000 monitoring baselines states, 3,000 alerts, 58 alert rules, and more
+
+---
+
+## Azure Services
+
+| Service | Usage |
+|---|---|
+| Azure Policy | Core enforcement for alerting and monitoring baselines |
+| Azure Monitor | Alerts, action groups, alert processing rules, workbooks |
+| Azure Monitor Agent (AMA) | Telemetry collection deployed via policy |
+| Log Analytics Workspace | Central destination for diagnostic settings |
+| User Assigned Managed Identity | Shared policy remediation identity |
+| Management Groups (ALZ) | Policy assignment scope |
+| IoT Hub / Event Hub | IoT device telemetry ingestion |
+| Azure Data Explorer (ADX) | Time-series analytics and KQL dashboards |
+| ADLS Gen2 / Cosmos DB | Cold storage and device metadata |
+| Azure Digital Twins | Device modeling (IoT reference) |
+| Stream Analytics | Real-time data processing (IoT reference) |
+| Azure SRE Agent | AI-assisted incident response |
+| Grafana | Dashboard visualization |
+
+---
+
+## Prerequisites
+
+- **Terraform** >= 1.9.0
+- **Azure CLI** authenticated with sufficient permissions
+- **PowerShell** 7+ for operational scripts
+- **Python** 3.x for IoT data generation and the Discovery tool
+- ALZ management group hierarchy already established
+- VM Insights DCR deployed on target VMs (for log-based alerts)
+- Subscription names: alphanumeric, underscore, and hyphen only
+
+---
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/microsoft/end-to-end-observability.git
+cd end-to-end-observability
+```
+
+### 2. Deploy AMBA Enterprise
+
+```bash
+cd amba-enterprise/terraform
+cp environments/sandbox.tfvars terraform.tfvars  # adjust values
+terraform init
+terraform plan
+terraform apply
+```
+
+### 3. Deploy Monitoring Baselines
+
+```bash
+cd monitoring-baselines/terraform
+cp environments/sandbox.tfvars terraform.tfvars  # adjust values
+terraform init
+terraform plan
+terraform apply
+```
+
+### 4. Generate test data (optional)
+
+```powershell
+cd test-data
+./generate-test-data.ps1
+./validate-data.ps1
+```
+
+See each module's README plus the onboarding guides ([AMBA greenfield](amba-enterprise/docs/onboarding-greenfield.md), [AMBA brownfield](amba-enterprise/docs/onboarding-brownfield.md), [Monitoring Baselines](monitoring-baselines/docs/onboarding.md)) for detailed deployment guidance.
+
+---
+
+## CI/CD Pipelines
+
+Both AMBA Enterprise and Monitoring Baselines include GitHub Actions workflow files under their respective `pipelines/` directories (GitHub Actions will only execute workflows placed in `.github/workflows/`).
+
+| Pipeline | Trigger | Purpose |
 |---|---|---|
-| **Discovery** (`discovery/`) | In progress (this branch) | Read-only scan of an existing Azure estate; emits monitoring recommendations. |
-| Deploy | Planned | Provisions recommended monitoring infrastructure (Bicep / azd). |
-| Govern | Planned | Azure Policy assignments and drift detection. |
+| `*-deploy.yml` | Push to `main` | Full validate → plan → apply with ring-based promotion |
+| `*-validate.yml` | Pull request | Parameter governance, `terraform validate/fmt`, policy diff |
+| `*-drift-detection.yml` | Daily schedule | Drift detection via `terraform plan`, auto-creates issues on drift |
 
 ---
 
-## Discovery tool (`discovery/`)
+## Contributing
 
-Scans an Azure subscription or management group via **Azure Resource Graph (ARG)**
-and produces JSON + Markdown reports describing observability gaps and
-recommended remediations.
+This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA). For details, visit <https://cla.opensource.microsoft.com>.
 
-### Why Azure Resource Graph?
-
-ARG was chosen over `az` CLI loops or per-resource ARM REST calls because:
-
-- **Scale**: a single KQL query covers an entire tenant; CLI loops would issue
-  thousands of throttled ARM calls.
-- **Joinable inventory**: ARG lets us join resources to their
-  `microsoft.insights/diagnosticsettings` extension resources in one pass,
-  which is exactly the data needed to detect monitoring gaps.
-- **Read-only safety**: ARG is query-only; the tool only ever needs the
-  `Reader` role at the chosen scope.
-- **Performance**: sub-second on estates with 100k+ resources.
-
-Targeted ARM/Monitor API calls are reserved for the small set of follow-up
-deep dives that ARG cannot answer (Log Analytics table-level retention,
-emitted metric definitions, Advisor recommendations).
-
-### Architecture
-
-```
-discovery/
-├── __main__.py        # `python -m discovery`
-├── cli.py             # argparse entry point
-├── auth.py            # DefaultAzureCredential
-├── graph_client.py    # azure-mgmt-resourcegraph + paging
-├── queries.py         # KQL queries (inventory + diagnostic settings)
-├── rules_engine.py    # YAML rules -> findings
-├── report.py          # JSON + Markdown writers
-├── rules/
-│   └── default.yaml   # shipped recommendation rules
-└── tests/
-    └── test_rules_engine.py
-```
-
-Rules are **data, not code** — see [discovery/rules/default.yaml](discovery/rules/default.yaml).
-Customers and downstream components can extend the rule set without forking
-the tool.
-
-### Permissions
-
-- `Reader` at the subscription or management group scope.
-- No write permissions are ever required by discovery.
-
-### Quick start
-
-```pwsh
-# 1. Create a virtual environment
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Sign in (any DefaultAzureCredential source works)
-az login
-
-# 4. Run a scan against one or more subscriptions
-python -m discovery scan `
-    --subscription <subId> `
-    --out-dir .\out
-
-# Or scope to a management group
-python -m discovery scan `
-    --management-group <mgId> `
-    --out-dir .\out
-```
-
-Outputs:
-
-- `out/discovery-report.json` — machine-readable, consumed by the (future)
-  deploy component to generate Bicep/Policy.
-- `out/discovery-report.md` — human-readable summary grouped by resource type.
-
-### Running the tests
-
-Unit tests (no Azure required):
-
-```pwsh
-pip install pytest
-pytest discovery/tests
-```
-
-Integration tests against a real test subscription — see
-[discovery/tests/README.md](discovery/tests/README.md) for the full deploy-fixture → scan → assert → cleanup loop.
-
-### Extending the rule set
-
-Add a rule to [discovery/rules/default.yaml](discovery/rules/default.yaml) (or
-point `--rules` at your own file). Each rule declares a `resourceType`, a list
-of `signals` that must all match, a `severity`, and a list of `recommend`
-actions. Supported signals are documented at the top of
-[discovery/rules_engine.py](discovery/rules_engine.py).
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information, see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
 
 ---
 
-## Roadmap
+## Security
 
-- [x] Discovery: ARG sweep + rules-as-data engine + reports
-- [ ] Discovery: deep-dive enrichment (Log Analytics tables, Advisor, Resource Health)
-- [ ] Deploy: Bicep modules generated from `discovery-report.json`
-- [ ] Govern: Azure Policy assignments + drift detection
+To report a security vulnerability, please follow the [Microsoft Security Response Center (MSRC) process](https://aka.ms/security.md). **Do not report security vulnerabilities through public GitHub issues.**
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

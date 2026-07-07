@@ -1,0 +1,83 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Application Operational Workbook\n\nAuto-generated from resource discovery. Source: `{{sourceSubscriptions}}` — inventory `{{inventoryTimestamp}}`.\n\nCovers App Service, Functions, Container Apps, and AKS.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 86400000 }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## Application Inventory" },
+      "name": "section-inventory"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ ('microsoft.web/sites','microsoft.app/containerapps','microsoft.containerservice/managedclusters')\n| summarize Count = count() by type, location\n| order by Count desc",
+        "size": 1,
+        "title": "Application resources by type and region",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{{crossComponentResources}}"],
+        "visualization": "barchart"
+      },
+      "name": "app-inventory"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## Request Health (Log Analytics)" },
+      "name": "section-health"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppRequests\n| where TimeGenerated {TimeRange}\n| summarize Requests = count(), Failures = countif(Success == false) by bin(TimeGenerated, 5m)\n| extend FailureRate = round(100.0 * Failures / Requests, 2)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Request volume and failure rate",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "timechart"
+      },
+      "name": "request-health"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppExceptions\n| where TimeGenerated {TimeRange}\n| summarize ExceptionCount = count() by ProblemId, ExceptionType\n| top 10 by ExceptionCount desc",
+        "size": 0,
+        "title": "Top 10 exceptions",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "table"
+      },
+      "name": "top-exceptions"
+    }
+  ],
+  "fallbackResourceIds": ["{{workspaceResourceId}}"],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

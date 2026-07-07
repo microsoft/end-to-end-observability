@@ -1,0 +1,18 @@
+# Generated workbook output — produced by generator/generate_workbooks.py
+generator/out/
+
+# Live discovery captures (real tenant inventory pulled from the SRE Agent /
+# Resource Graph). Never commit these — they contain real subscription and
+# resource IDs. The sanitized generator/sample-discovery-input.json is the
+# committed input-contract example.
+agent-discovery.*.json
+
+# Terraform working files
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/env.tfvars
+
+# Bicep build output
+bicep/*.json
