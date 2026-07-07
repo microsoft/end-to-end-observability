@@ -1,0 +1,83 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Network Operational Workbook\n\nAuto-generated from resource discovery. Source: `{{sourceSubscriptions}}` — inventory `{{inventoryTimestamp}}`.\n\nCovers VNets, NSGs, Load Balancers, Application Gateway, Front Door, and Public IPs.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 86400000 }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## Network Inventory" },
+      "name": "section-inventory"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ ('microsoft.network/virtualnetworks','microsoft.network/networksecuritygroups','microsoft.network/loadbalancers','microsoft.network/applicationgateways','microsoft.network/publicipaddresses')\n| summarize Count = count() by type, location\n| order by Count desc",
+        "size": 1,
+        "title": "Network resources by type and region",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{{crossComponentResources}}"],
+        "visualization": "barchart"
+      },
+      "name": "network-inventory"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## NSG Flow Activity (Log Analytics)" },
+      "name": "section-flow"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "NTANetAnalytics\n| where TimeGenerated {TimeRange}\n| where SubType == 'FlowLog'\n| summarize Allowed = countif(FlowStatus == 'Allowed'), Denied = countif(FlowStatus == 'Denied') by bin(TimeGenerated, 15m)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Allowed vs denied flows",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "timechart"
+      },
+      "name": "nsg-flows"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureDiagnostics\n| where TimeGenerated {TimeRange}\n| where ResourceType == 'APPLICATIONGATEWAYS'\n| where Category == 'ApplicationGatewayAccessLog'\n| summarize Requests = count() by httpStatus_d\n| order by Requests desc",
+        "size": 0,
+        "title": "Application Gateway responses by HTTP status",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "piechart"
+      },
+      "name": "appgw-status"
+    }
+  ],
+  "fallbackResourceIds": ["{{workspaceResourceId}}"],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

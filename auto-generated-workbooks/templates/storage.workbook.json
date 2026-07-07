@@ -1,0 +1,83 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Storage Operational Workbook\n\nAuto-generated from resource discovery. Source: `{{sourceSubscriptions}}` — inventory `{{inventoryTimestamp}}`.\n\nCovers Storage Accounts, Managed Disks, SQL, and Cosmos DB.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 86400000 }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## Storage Inventory" },
+      "name": "section-inventory"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ ('microsoft.storage/storageaccounts','microsoft.compute/disks','microsoft.sql/servers/databases','microsoft.documentdb/databaseaccounts')\n| summarize Count = count() by type, location\n| order by Count desc",
+        "size": 1,
+        "title": "Storage resources by type and region",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{{crossComponentResources}}"],
+        "visualization": "barchart"
+      },
+      "name": "storage-inventory"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## Storage Transactions (Log Analytics)" },
+      "name": "section-tx"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "StorageBlobLogs\n| where TimeGenerated {TimeRange}\n| summarize Transactions = count(), Errors = countif(toint(StatusCode) >= 400) by bin(TimeGenerated, 15m)\n| extend ErrorRate = round(100.0 * Errors / Transactions, 2)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Blob transactions and error rate",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "timechart"
+      },
+      "name": "blob-transactions"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureMetrics\n| where TimeGenerated {TimeRange}\n| where ResourceProvider == 'MICROSOFT.STORAGE'\n| where MetricName == 'UsedCapacity'\n| summarize UsedBytes = max(Maximum) by Resource\n| extend UsedGB = round(UsedBytes / 1024.0 / 1024.0 / 1024.0, 2)\n| project Resource, UsedGB\n| order by UsedGB desc",
+        "size": 0,
+        "title": "Used capacity by storage account (GB)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "table"
+      },
+      "name": "capacity"
+    }
+  ],
+  "fallbackResourceIds": ["{{workspaceResourceId}}"],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

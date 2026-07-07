@@ -1,0 +1,83 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Infrastructure Operational Workbook\n\nAuto-generated from resource discovery. Source: `{{sourceSubscriptions}}` — inventory `{{inventoryTimestamp}}`.\n\nCovers virtual machines, scale sets, and Arc-enabled servers.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 86400000 }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## Compute Inventory" },
+      "name": "section-inventory"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ ('microsoft.compute/virtualmachines','microsoft.compute/virtualmachinescalesets','microsoft.hybridcompute/machines')\n| extend powerState = tostring(properties.extended.instanceView.powerState.displayStatus)\n| summarize Count = count() by type, location\n| order by Count desc",
+        "size": 1,
+        "title": "Compute resources by type and region",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{{crossComponentResources}}"],
+        "visualization": "barchart"
+      },
+      "name": "compute-inventory"
+    },
+    {
+      "type": 1,
+      "content": { "json": "## VM Performance (Log Analytics)" },
+      "name": "section-perf"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "InsightsMetrics\n| where TimeGenerated {TimeRange}\n| where Origin == 'vm.azm.ms'\n| where Namespace == 'Processor' and Name == 'UtilizationPercentage'\n| summarize AvgCpu = avg(Val) by Computer, bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+        "size": 0,
+        "title": "Average CPU utilization (%)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "timechart"
+      },
+      "name": "vm-cpu"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Heartbeat\n| where TimeGenerated {TimeRange}\n| summarize LastHeartbeat = max(TimeGenerated) by Computer\n| extend Status = iff(LastHeartbeat < ago(5m), 'Stale', 'Healthy')\n| project Computer, LastHeartbeat, Status\n| order by Status asc, Computer asc",
+        "size": 0,
+        "title": "Agent heartbeat health",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{{workspaceResourceId}}"],
+        "visualization": "table"
+      },
+      "name": "heartbeat"
+    }
+  ],
+  "fallbackResourceIds": ["{{workspaceResourceId}}"],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
