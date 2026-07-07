@@ -586,7 +586,7 @@ Referenced frameworks:
 
 The SRE Agent deploys via **Bicep + Azure Developer CLI (`azd up`)**:
 
-- Resource type: `Microsoft.App/agents` (API version `2025-05-01-preview`)
+- Resource type: `Microsoft.App/agents` (API version `2026-01-01`)
 - Provisioning time: ~8–12 minutes
 - Required role: **Owner** on subscription
 - Official lab: [github.com/microsoft/sre-agent/tree/main/labs](https://github.com/microsoft/sre-agent/tree/main/labs)

@@ -33,16 +33,16 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     scan = sub.add_parser("scan", help="Run a discovery sweep.")
-    scan.add_argument(
+    scope = scan.add_mutually_exclusive_group(required=True)
+    scope.add_argument(
         "--subscription",
         action="append",
-        default=[],
         help="Subscription ID to scan (repeatable).",
     )
-    scan.add_argument(
+    scope.add_argument(
         "--management-group",
         action="append",
-        default=[],
+        dest="management_group",
         help="Management group ID to scan (repeatable).",
     )
     scan.add_argument(
@@ -72,8 +72,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     scope = GraphScope(
-        subscriptions=tuple(args.subscription),
-        management_groups=tuple(args.management_group),
+        subscriptions=tuple(args.subscription or ()),
+        management_groups=tuple(args.management_group or ()),
     )
     log.info("Querying Azure Resource Graph (scope=%s)", scope)
     client = GraphClient(scope)
