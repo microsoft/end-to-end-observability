@@ -33,13 +33,13 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     scan = sub.add_parser("scan", help="Run a discovery sweep.")
-    scope = scan.add_mutually_exclusive_group(required=True)
-    scope.add_argument(
+    scope_group = scan.add_mutually_exclusive_group(required=True)
+    scope_group.add_argument(
         "--subscription",
         action="append",
         help="Subscription ID to scan (repeatable).",
     )
-    scope.add_argument(
+    scope_group.add_argument(
         "--management-group",
         action="append",
         dest="management_group",
