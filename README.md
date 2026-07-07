@@ -39,6 +39,7 @@ The platform follows a hybrid deployment model: **Terraform** orchestrates Azure
 | [`amba-enterprise/`](amba-enterprise/) | Enterprise AMBA (Azure Monitor Baseline Alerts) — alerting infrastructure across ALZ |
 | [`monitoring-baselines/`](monitoring-baselines/) | Telemetry collection & monitoring posture enforcement via built-in Azure Policy |
 | [`sre-agent-pre-req/`](sre-agent-pre-req/) | Azure SRE Agent integration checklist and onboarding guide |
+| [`discovery/`](discovery/) | Transitional reference implementation (slated for deprecation per ADR-001) for ARG-based monitoring gap recommendations |
 | [`utility-iot-observability/`](utility-iot-observability/) | Utility industry IoT observability reference implementation |
 | [`test-data/`](test-data/) | Synthetic test data generator for workbook and dashboard validation |
 
@@ -81,6 +82,23 @@ Comprehensive, Microsoft Learn-verified checklist for onboarding [Azure SRE Agen
 - Sample KQL queries for agent telemetry and cost tracking
 
 See [`sre-agent-pre-req/sre-agent-integration-checklist.md`](sre-agent-pre-req/sre-agent-integration-checklist.md).
+
+### Discovery
+
+Scans an Azure subscription or management group via **Azure Resource Graph (ARG)** and produces JSON + Markdown reports describing observability gaps and recommended remediations. This is a transitional reference implementation while discovery capabilities are migrated into SRE Agent-native tooling per ADR-001. Rules are **data, not code** — defined in YAML so customers can extend the rule set without forking the tool.
+
+- Read-only (`Reader` role at subscription or management group scope)
+- Single KQL pass covers an entire tenant — no throttled ARM loops
+- Joins resources to `microsoft.insights/diagnosticsettings` in one query
+- Extensible YAML rules engine: declare resource type, signals, severity, and remediations
+
+```pwsh
+python -m discovery scan --subscription <subId> --out-dir .\out
+```
+
+Outputs `discovery-report.json` (machine-readable) and `discovery-report.md` (human-readable).
+
+See [`discovery/`](discovery/) and the [architecture decision record](docs/adr/001-sre-agent-discovery-assessment.md) for full details.
 
 ### Utility IoT Observability
 
@@ -127,7 +145,7 @@ Generates large-scale synthetic datasets (Azure Resource Graph-shaped) for testi
 - **Terraform** >= 1.9.0
 - **Azure CLI** authenticated with sufficient permissions
 - **PowerShell** 7+ for operational scripts
-- **Python** 3.x for IoT data generation
+- **Python** 3.x for IoT data generation and the Discovery tool
 - ALZ management group hierarchy already established
 - VM Insights DCR deployed on target VMs (for log-based alerts)
 - Subscription names: alphanumeric, underscore, and hyphen only

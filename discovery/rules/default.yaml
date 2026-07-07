@@ -1,0 +1,87 @@
+# Default discovery rules for the Azure observability accelerator.
+#
+# Schema:
+#   id:           unique short identifier (used in reports)
+#   resourceType: ARM type, lowercase, no version
+#   description:  one-line explanation surfaced in the report
+#   severity:     low | medium | high
+#   signals:      list of checks that must ALL match
+#   recommend:    list of monitoring actions to surface to the customer
+#
+# Signals supported by rules_engine.py:
+#   - missing: diagnosticSettings
+#   - missing: workspaceLink
+#   - missing: applicationInsights
+#   - tagAbsent: <tagName>
+#   - propertyEquals: { path: "...", value: "..." }
+
+- id: APPSVC-001
+  resourceType: microsoft.web/sites
+  description: App Service / Function App without diagnostic settings.
+  severity: high
+  signals:
+    - missing: diagnosticSettings
+  recommend:
+    - enableDiagnosticSettingsToLogAnalytics
+    - enableApplicationInsightsAutoInstrumentation
+    - createAvailabilityTest
+
+- id: AKS-001
+  resourceType: microsoft.containerservice/managedclusters
+  description: AKS cluster without diagnostic settings (control plane logs missing).
+  severity: high
+  signals:
+    - missing: diagnosticSettings
+  recommend:
+    - enableDiagnosticSettingsToLogAnalytics
+    - enableContainerInsights
+    - enablePrometheusManagedService
+
+- id: SQL-001
+  resourceType: microsoft.sql/servers/databases
+  description: Azure SQL database without diagnostic settings.
+  severity: high
+  signals:
+    - missing: diagnosticSettings
+  recommend:
+    - enableDiagnosticSettingsToLogAnalytics
+    - enableSqlAuditing
+    - createMetricAlertOnDtuCpu
+
+- id: STG-001
+  resourceType: microsoft.storage/storageaccounts
+  description: Storage account without diagnostic settings.
+  severity: medium
+  signals:
+    - missing: diagnosticSettings
+  recommend:
+    - enableDiagnosticSettingsToLogAnalytics
+    - enableStorageMetricsAndLogs
+
+- id: KV-001
+  resourceType: microsoft.keyvault/vaults
+  description: Key Vault without diagnostic settings (audit gap).
+  severity: high
+  signals:
+    - missing: diagnosticSettings
+  recommend:
+    - enableDiagnosticSettingsToLogAnalytics
+    - createAlertOnVaultAccessPolicyChange
+
+- id: KV-002
+  resourceType: microsoft.keyvault/vaults
+  description: Key Vault has diagnostic settings but no Log Analytics workspace sink.
+  severity: medium
+  signals:
+    - missing: workspaceLink
+  recommend:
+    - addLogAnalyticsWorkspaceSink
+
+- id: TAG-001
+  resourceType: microsoft.web/sites
+  description: App Service missing the `owner` tag (governance signal).
+  severity: low
+  signals:
+    - tagAbsent: owner
+  recommend:
+    - applyOwnerTag
