@@ -1,0 +1,200 @@
+{
+  "generatedAt": "2026-06-10T12:26:50.8079455-05:00",
+  "seed": 42,
+  "environmentsGenerated": [
+    "sandbox",
+    "pre-prod",
+    "prod"
+  ],
+  "totals": {
+    "ambaPolicyStates": 6000,
+    "monitoringBaselinesPolicyStates": 6000,
+    "ambaAlerts": 3000,
+    "staleAlertsOver24h": 1054,
+    "alertProcessingRules": 22,
+    "actionGroups": 18,
+    "alertRuleDefinitions": 58,
+    "remediationTasks": 23,
+    "deployedResources": 98,
+    "subscriptions": 11
+  },
+  "ambaComplianceByInitiative": [
+    {
+      "Name": "Alerting-Storage",
+      "Total": 763,
+      "NonCompliant": 109,
+      "CompliancePercent": 85.7
+    },
+    {
+      "Name": "Alerting-Connectivity",
+      "Total": 764,
+      "NonCompliant": 106,
+      "CompliancePercent": 86.1
+    },
+    {
+      "Name": "Alerting-KeyManagement",
+      "Total": 746,
+      "NonCompliant": 95,
+      "CompliancePercent": 87.3
+    },
+    {
+      "Name": "Alerting-LoadBalancing",
+      "Total": 742,
+      "NonCompliant": 94,
+      "CompliancePercent": 87.3
+    },
+    {
+      "Name": "Alerting-Web",
+      "Total": 756,
+      "NonCompliant": 92,
+      "CompliancePercent": 87.8
+    },
+    {
+      "Name": "Alerting-VMSS",
+      "Total": 709,
+      "NonCompliant": 83,
+      "CompliancePercent": 88.3
+    },
+    {
+      "Name": "Alerting-VM",
+      "Total": 773,
+      "NonCompliant": 84,
+      "CompliancePercent": 89.1
+    },
+    {
+      "Name": "Alerting-RecoveryServices",
+      "Total": 747,
+      "NonCompliant": 79,
+      "CompliancePercent": 89.4
+    }
+  ],
+  "monitoringBaselinesComplianceByInitiative": [
+    {
+      "Name": "Monitoring-Baselines-sandbox",
+      "Total": 2000,
+      "NonCompliant": 714,
+      "CompliancePercent": 64.3
+    },
+    {
+      "Name": "Monitoring-Baselines-pre-prod",
+      "Total": 2000,
+      "NonCompliant": 504,
+      "CompliancePercent": 74.8
+    },
+    {
+      "Name": "Monitoring-Baselines-prod",
+      "Total": 2000,
+      "NonCompliant": 378,
+      "CompliancePercent": 81.1
+    }
+  ],
+  "monitoringBaselinesComplianceByCategory": [
+    {
+      "Name": "private-endpoints",
+      "Total": 1103,
+      "NonCompliant": 443,
+      "CompliancePercent": 59.8
+    },
+    {
+      "Name": "diagnostic-settings",
+      "Total": 2662,
+      "NonCompliant": 683,
+      "CompliancePercent": 74.3
+    },
+    {
+      "Name": "azure-monitor-agent",
+      "Total": 2235,
+      "NonCompliant": 470,
+      "CompliancePercent": 79.0
+    }
+  ],
+  "subscriptionBreakdown": [
+    {
+      "Subscription": "contoso-lz-app-prod-01",
+      "Ring": "prod",
+      "AmbaStates": 522,
+      "MbStates": 323,
+      "Alerts": 270
+    },
+    {
+      "Subscription": "contoso-lz-app-prod-02",
+      "Ring": "prod",
+      "AmbaStates": 535,
+      "MbStates": 276,
+      "Alerts": 263
+    },
+    {
+      "Subscription": "contoso-lz-data-prod-01",
+      "Ring": "prod",
+      "AmbaStates": 585,
+      "MbStates": 305,
+      "Alerts": 250
+    },
+    {
+      "Subscription": "contoso-lz-shared-prod-01",
+      "Ring": "prod",
+      "AmbaStates": 487,
+      "MbStates": 263,
+      "Alerts": 286
+    },
+    {
+      "Subscription": "contoso-lz-app-preprod-01",
+      "Ring": "pre-prod",
+      "AmbaStates": 561,
+      "MbStates": 403,
+      "Alerts": 283
+    },
+    {
+      "Subscription": "contoso-lz-data-preprod-01",
+      "Ring": "pre-prod",
+      "AmbaStates": 558,
+      "MbStates": 398,
+      "Alerts": 261
+    },
+    {
+      "Subscription": "contoso-lz-sandbox-01",
+      "Ring": "sandbox",
+      "AmbaStates": 554,
+      "MbStates": 427,
+      "Alerts": 289
+    },
+    {
+      "Subscription": "contoso-lz-sandbox-02",
+      "Ring": "sandbox",
+      "AmbaStates": 535,
+      "MbStates": 377,
+      "Alerts": 289
+    },
+    {
+      "Subscription": "contoso-platform-connectivity",
+      "Ring": "platform",
+      "AmbaStates": 547,
+      "MbStates": 1093,
+      "Alerts": 270
+    },
+    {
+      "Subscription": "contoso-platform-management",
+      "Ring": "platform",
+      "AmbaStates": 571,
+      "MbStates": 1032,
+      "Alerts": 265
+    },
+    {
+      "Subscription": "contoso-platform-identity",
+      "Ring": "platform",
+      "AmbaStates": 545,
+      "MbStates": 1103,
+      "Alerts": 274
+    }
+  ],
+  "files": {
+    "ambaPolicyStates": "C:\\src\\end-to-end-observability\\test-data\\output\\amba-policy-states.jsonl",
+    "monitoringBaselinesPolicyStates": "C:\\src\\end-to-end-observability\\test-data\\output\\monitoring-baselines-policy-states.jsonl",
+    "ambaAlerts": "C:\\src\\end-to-end-observability\\test-data\\output\\amba-alerts.jsonl",
+    "alertProcessingRules": "C:\\src\\end-to-end-observability\\test-data\\output\\amba-action-rules.jsonl",
+    "actionGroups": "C:\\src\\end-to-end-observability\\test-data\\output\\amba-action-groups.jsonl",
+    "alertRuleDefinitions": "C:\\src\\end-to-end-observability\\test-data\\output\\amba-alert-rules.jsonl",
+    "remediationTasks": "C:\\src\\end-to-end-observability\\test-data\\output\\remediation-tasks.jsonl",
+    "deployedResources": "C:\\src\\end-to-end-observability\\test-data\\output\\amba-deployed-resources.jsonl"
+  }
+}

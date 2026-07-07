@@ -1,0 +1,228 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Monitoring Baselines - Posture Workbook\n\nShows compliance with the Monitoring Baselines initiative: **Azure Monitor Agent (AMA)**, **diagnostic settings**, and **private endpoint** policies. Use the non-compliant drill-down tables to identify the exact resources with monitoring or logging gaps.\n\n> This workbook is part of the `monitoring-baselines` component and is independent of the AMBA alerting workbook.\n\n---"
+      },
+      "name": "header"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "sub-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "value": []
+          },
+          {
+            "id": "initiative-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "InitiativeName",
+            "type": 2,
+            "isRequired": true,
+            "value": "Monitoring-Baselines-prod",
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[{\"value\":\"Monitoring-Baselines-sandbox\",\"label\":\"Sandbox\"},{\"value\":\"Monitoring-Baselines-pre-prod\",\"label\":\"Pre-Prod\"},{\"value\":\"Monitoring-Baselines-prod\",\"label\":\"Production\"}]"
+          },
+          {
+            "id": "time-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 2592000000 }
+          }
+        ]
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Compliance Summary by Category"
+      },
+      "name": "section-summary"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "policyresources\n| where type == 'microsoft.policyinsights/policystates'\n| where properties.policySetDefinitionName == '{InitiativeName}'\n| extend group = tostring(properties.policyDefinitionGroupNames[0])\n| extend complianceState = tostring(properties.complianceState)\n| summarize Total = count(), NonCompliant = countif(complianceState == 'NonCompliant') by group\n| extend CompliancePercent = round(100.0 * (Total - NonCompliant) / Total, 1)\n| project Category = group, Total, NonCompliant, CompliancePercent\n| order by CompliancePercent asc",
+        "size": 3,
+        "title": "Compliance % by Policy Category (AMA / Diagnostic Settings / Private Endpoints)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": { "columnMatch": "Category" },
+          "leftContent": {
+            "columnMatch": "CompliancePercent",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "redGreen"
+            },
+            "numberFormat": { "unit": 1, "options": { "style": "decimal", "maximumFractionDigits": 1 } }
+          },
+          "secondaryContent": { "columnMatch": "NonCompliant" },
+          "showBorder": true
+        }
+      },
+      "name": "compliance-by-category"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Non-Compliant Resources: Azure Monitor Agent (AMA)\n\nResources missing the Azure Monitor Agent extension. These will be auto-remediated by DeployIfNotExists or can be remediated on demand."
+      },
+      "name": "section-ama"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "policyresources\n| where type == 'microsoft.policyinsights/policystates'\n| where properties.policySetDefinitionName == '{InitiativeName}'\n| where properties.policyDefinitionGroupNames has 'azure-monitor-agent'\n| where properties.complianceState == 'NonCompliant'\n| extend resourceId = tostring(properties.resourceId)\n| extend resourceType = tostring(properties.resourceType)\n| extend subscriptionId = tostring(properties.subscriptionId)\n| extend rg = tostring(properties.resourceGroup)\n| extend lastEvaluated = todatetime(properties.timestamp)\n| project ResourceName = tostring(split(resourceId, '/')[-1]), resourceType, rg, subscriptionId, lastEvaluated, resourceId\n| order by lastEvaluated desc",
+        "size": 0,
+        "title": "Non-Compliant Resources - Missing AMA",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "resourceId", "formatter": 5 },
+            { "columnMatch": "ResourceName", "formatter": 1 }
+          ]
+        }
+      },
+      "name": "ama-noncompliant"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Non-Compliant Resources: Diagnostic Settings\n\nResources not routing platform logs/metrics to the central Log Analytics workspace."
+      },
+      "name": "section-diag"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "policyresources\n| where type == 'microsoft.policyinsights/policystates'\n| where properties.policySetDefinitionName == '{InitiativeName}'\n| where properties.policyDefinitionGroupNames has 'diagnostic-settings'\n| where properties.complianceState == 'NonCompliant'\n| extend resourceId = tostring(properties.resourceId)\n| extend resourceType = tostring(properties.resourceType)\n| extend subscriptionId = tostring(properties.subscriptionId)\n| extend rg = tostring(properties.resourceGroup)\n| extend lastEvaluated = todatetime(properties.timestamp)\n| project ResourceName = tostring(split(resourceId, '/')[-1]), resourceType, rg, subscriptionId, lastEvaluated, resourceId\n| order by lastEvaluated desc",
+        "size": 0,
+        "title": "Non-Compliant Resources - Missing Diagnostic Settings",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "resourceId", "formatter": 5 },
+            { "columnMatch": "ResourceName", "formatter": 1 }
+          ]
+        }
+      },
+      "name": "diag-noncompliant"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Non-Compliant Resources: Private Endpoints\n\nMonitoring-adjacent resources not using private link (flagged when effect is Audit, blocked when effect is Deny)."
+      },
+      "name": "section-pe"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "policyresources\n| where type == 'microsoft.policyinsights/policystates'\n| where properties.policySetDefinitionName == '{InitiativeName}'\n| where properties.policyDefinitionGroupNames has 'private-endpoints'\n| where properties.complianceState == 'NonCompliant'\n| extend resourceId = tostring(properties.resourceId)\n| extend resourceType = tostring(properties.resourceType)\n| extend subscriptionId = tostring(properties.subscriptionId)\n| extend rg = tostring(properties.resourceGroup)\n| extend lastEvaluated = todatetime(properties.timestamp)\n| project ResourceName = tostring(split(resourceId, '/')[-1]), resourceType, rg, subscriptionId, lastEvaluated, resourceId\n| order by lastEvaluated desc",
+        "size": 0,
+        "title": "Non-Compliant Resources - Missing Private Endpoint",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            { "columnMatch": "resourceId", "formatter": 5 },
+            { "columnMatch": "ResourceName", "formatter": 1 }
+          ]
+        }
+      },
+      "name": "pe-noncompliant"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Compliance Trend (30 days)"
+      },
+      "name": "section-trend"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "policyresources\n| where type == 'microsoft.policyinsights/policystates'\n| where properties.policySetDefinitionName == '{InitiativeName}'\n| extend complianceState = tostring(properties.complianceState)\n| extend evalTime = todatetime(properties.timestamp)\n| summarize Total = count(), Compliant = countif(complianceState == 'Compliant') by bin(evalTime, 1d)\n| extend CompliancePercent = round(100.0 * Compliant / Total, 1)\n| project evalTime, CompliancePercent\n| order by evalTime asc",
+        "size": 0,
+        "title": "Overall Compliance Trend",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "timechart"
+      },
+      "name": "compliance-trend"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Active Remediation Tasks"
+      },
+      "name": "section-remediation"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "policyresources\n| where type == 'microsoft.policyinsights/remediations'\n| where properties.policyAssignmentId has 'mon-baselines'\n| extend remediationState = tostring(properties.provisioningState)\n| extend createdOn = todatetime(properties.createdOn)\n| extend resourceCount = toint(properties.deploymentStatus.totalDeployments)\n| project RemediationName = name, remediationState, resourceCount, createdOn\n| order by createdOn desc",
+        "size": 0,
+        "title": "Monitoring Baselines Remediation Tasks",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": ["{Subscriptions}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "remediationState",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  { "operator": "==", "thresholdValue": "Succeeded", "representation": "success", "text": "{0}{1}" },
+                  { "operator": "==", "thresholdValue": "Failed", "representation": "failed", "text": "{0}{1}" },
+                  { "operator": "Default", "thresholdValue": null, "representation": "pending", "text": "{0}{1}" }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "name": "remediation-tasks"
+    }
+  ],
+  "fallbackResourceIds": [],
+  "styleSettings": {},
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

@@ -1,0 +1,163 @@
+# -----------------------------------------------------------------------------
+# Monitoring Baselines - Deployment Pipeline
+# Deploys the AMA / diagnostic settings / private endpoint policy initiative
+# via Terraform per environment ring.
+# Sequence: validate -> plan -> apply (with manual approval for prod)
+# -----------------------------------------------------------------------------
+name: Monitoring Baselines Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'monitoring-baselines/terraform/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment ring'
+        required: true
+        type: choice
+        options:
+          - sandbox
+          - pre-prod
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_VERSION: '1.9.0'
+  WORKING_DIR: 'monitoring-baselines/terraform'
+
+jobs:
+  validate:
+    name: Validate Parameters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate parameter governance
+        shell: pwsh
+        run: ./monitoring-baselines/scripts/validate-parameters.ps1 -Environment ${{ inputs.environment || 'sandbox' }}
+
+  plan:
+    name: Terraform Plan (${{ inputs.environment || 'sandbox' }})
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'sandbox' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ secrets.TF_STATE_RG }}" \
+            -backend-config="storage_account_name=${{ secrets.TF_STATE_SA }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=monitoring-baselines-${{ inputs.environment || 'sandbox' }}.tfstate"
+
+      - name: Terraform Plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform plan \
+            -var-file="environments/${{ inputs.environment || 'sandbox' }}.tfvars" \
+            -var="management_subscription_id=${{ secrets.MANAGEMENT_SUBSCRIPTION_ID }}" \
+            -var="user_assigned_managed_identity_resource_id=${{ secrets.AMBA_UAMI_RESOURCE_ID }}" \
+            -var="log_analytics_workspace_id=${{ secrets.CENTRAL_LAW_RESOURCE_ID }}" \
+            -out=tfplan
+
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ inputs.environment || 'sandbox' }}
+          path: ${{ env.WORKING_DIR }}/tfplan
+
+  apply:
+    name: Terraform Apply (${{ inputs.environment || 'sandbox' }})
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'sandbox' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ inputs.environment || 'sandbox' }}
+          path: ${{ env.WORKING_DIR }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ secrets.TF_STATE_RG }}" \
+            -backend-config="storage_account_name=${{ secrets.TF_STATE_SA }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=monitoring-baselines-${{ inputs.environment || 'sandbox' }}.tfstate"
+
+      - name: Terraform Apply
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform apply tfplan
+
+  post-deploy-validation:
+    name: Post-Deployment Validation
+    needs: apply
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify Initiative Exists
+        shell: pwsh
+        run: |
+          $env = "${{ inputs.environment || 'sandbox' }}"
+          $initiative = az policy set-definition list --management-group "${{ secrets.ENTERPRISE_PREFIX }}" --query "[?name=='Monitoring-Baselines-$env']" | ConvertFrom-Json
+          Write-Host "Found $($initiative.Count) Monitoring Baselines initiative(s) for $env"
+          if ($initiative.Count -eq 0) { throw "Monitoring Baselines initiative not found" }
+
+      - name: Verify Policy Assignment
+        shell: pwsh
+        run: |
+          $env = "${{ inputs.environment || 'sandbox' }}"
+          $assignment = az policy assignment list --scope "/providers/Microsoft.Management/managementGroups/${{ secrets.LANDING_ZONE_MG }}" --query "[?name=='mon-baselines-$env']" | ConvertFrom-Json
+          Write-Host "Found $($assignment.Count) Monitoring Baselines assignment(s)"
+          if ($assignment.Count -eq 0) { throw "Monitoring Baselines assignment not found" }
+
+      - name: Verify Remediation Role Assignments
+        shell: pwsh
+        run: |
+          $roleAssignments = az role assignment list --scope "/providers/Microsoft.Management/managementGroups/${{ secrets.LANDING_ZONE_MG }}" --query "[?contains(roleDefinitionName, 'Monitoring') || contains(roleDefinitionName, 'Log Analytics')]" | ConvertFrom-Json
+          Write-Host "Found $($roleAssignments.Count) remediation role assignments"
+          if ($roleAssignments.Count -eq 0) { Write-Host "::warning::No remediation role assignments found - DeployIfNotExists remediation may fail" }

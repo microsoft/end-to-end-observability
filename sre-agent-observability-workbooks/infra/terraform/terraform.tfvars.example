@@ -1,0 +1,19 @@
+# ---------------------------------------------------------------------------
+# terraform.tfvars.example — copy to terraform.tfvars and fill in.
+# ---------------------------------------------------------------------------
+
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+resource_group_name   = "rg-observability"
+location              = "eastus"
+workspace_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-observability/providers/Microsoft.OperationalInsights/workspaces/law-observability"
+
+# workbooks_dir defaults to ../../workbooks (the builder output). Override only if
+# you build the workbooks somewhere else.
+# workbooks_dir = "../../workbooks"
+
+tags = {
+  workload  = "sre-agent-observability-workbooks"
+  managedBy = "sre-agent"
+  suite     = "SRE Agent Observability Workbooks"
+  env       = "prod"
+}
