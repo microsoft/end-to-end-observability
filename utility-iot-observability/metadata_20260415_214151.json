@@ -11,7 +11,7 @@
     "pipeline_stations": 3
   },
   "output_files": {
-    "jsonl": "C:\\Users\\azureadmin\\.openclaw\\workspace\\research\\utility-synthetic-data/utility_telemetry_20260415_214151.jsonl",
-    "csv": "C:\\Users\\azureadmin\\.openclaw\\workspace\\research\\utility-synthetic-data/utility_telemetry_20260415_214151.csv"
+    "jsonl": "utility_telemetry_20260415_214151.jsonl",
+    "csv": "utility_telemetry_20260415_214151.csv"
   }
 }

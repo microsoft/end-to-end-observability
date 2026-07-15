@@ -91,7 +91,7 @@ Subscription names must use only alphanumerics, underscores, and hyphens
 Self-contained Python. Regenerate synthetic telemetry with
 `python generate_synthetic_data.py .` (writes timestamped JSONL + CSV + metadata).
 Upload via `python upload_to_azure.py --mode iothub --connection-string "..." --data-file <jsonl>`.
-Marked **private/proprietary**; never commit real utility data.
+Synthetic data only — never commit real utility data.
 
 ## monitoring-baselines
 
@@ -150,9 +150,8 @@ reports). Default sequence:
 
 ## Work items (Azure DevOps)
 
-User stories and tasks for this repo come from the Azure DevOps project
-**"End-to-End Observability"** in the `jahunte` organization
-(`https://dev.azure.com/jahunte`). Subproject READMEs reference these directly
+User stories and tasks for this repo are tracked in an Azure DevOps project named
+**"End-to-End Observability"**. Subproject READMEs reference these directly
 (e.g. `auto-generated-workbooks` implements Story **#33**, Epic **#34**).
 
 **Work-item-driven workflow — follow this on every change:**

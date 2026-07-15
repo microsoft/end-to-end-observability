@@ -1,14 +1,10 @@
 # Contributing
 
-This is a **private repository** with restricted access. Only authorized team members can view, clone, or contribute.
+Contributions are welcome. This project is part of the open-source `end-to-end-observability` repository and is licensed under MIT.
 
-## Access Request
+## For Contributors
 
-If you need access to this repository, contact the repository owner.
-
-## For Authorized Contributors
-
-1. Clone the repo (you have permission)
+1. Fork or clone the repo
 2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Make changes, commit with clear messages
 4. Push and open a pull request
