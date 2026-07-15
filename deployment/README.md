@@ -6,7 +6,7 @@ it in the order the repo requires, so a new client is onboarded the same way eve
 time with minimal manual steps.
 
 > **Work item:** User Story **#65 — End-to-End SRE Agent Testing**
-> (`the project's Azure DevOps board`, project *End-to-End Observability*).
+> (tracked in the project's Azure DevOps board, project *End-to-End Observability*).
 
 ## Contents
 

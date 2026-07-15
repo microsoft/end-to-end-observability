@@ -4,7 +4,7 @@
 
 Complete observability solution for electric utilities, natural gas distribution, and oil/gas pipelines deployed in NY State on Azure.
 
-> ⚠️ reference package — This repo contains utility-industry reference architectures and synthetic telemetry. Synthetic data only.
+> ℹ️ **Synthetic data only** — this package contains utility-industry reference architectures and *synthetically generated* telemetry. It contains no real customer, operational, or proprietary utility data.
 
 ## 📦 What's Included
 
@@ -236,4 +236,4 @@ MIT (see LICENSE file)
 **Generated:** 2026-04-15  
 **Research cost:** $0.042 (Exa API)  
 **Status:** Strong baseline with clear V2 expansion path ✅
-**Access:** Private (synthetic data only)
+**Data:** Synthetic only — no real customer or operational utility data
