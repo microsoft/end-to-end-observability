@@ -1,0 +1,25 @@
+{
+  "version": "4",
+  "status": "firing",
+  "receiver": "agentic-itops",
+  "alerts": [
+    {
+      "status": "firing",
+      "fingerprint": "9f2c1ab44de0",
+      "startsAt": "2026-09-14T13:45:00+00:00",
+      "labels": {
+        "alertname": "HighCpuUsage",
+        "severity": "critical",
+        "instance": "vm-pump-ctrl-07",
+        "service": "rg-refinery-midstream",
+        "env": "prod",
+        "metric": "node_cpu_seconds_total",
+        "arm_id": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-pump-ctrl-07"
+      },
+      "annotations": {
+        "summary": "CPU saturation on midstream pump controller",
+        "description": "Node CPU above 90% for 5m"
+      }
+    }
+  ]
+}

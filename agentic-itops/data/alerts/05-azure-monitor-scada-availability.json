@@ -1,0 +1,22 @@
+{
+  "schemaId": "azureMonitorCommonAlertSchema",
+  "data": {
+    "essentials": {
+      "alertId": "/subscriptions/.../alerts/bbbb2222",
+      "alertRule": "Heartbeat missing - SCADA historian",
+      "severity": "Sev0",
+      "signalType": "Log",
+      "monitorCondition": "Fired",
+      "monitorService": "Log Analytics",
+      "alertTargetIDs": [
+        "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-scada-01"
+      ],
+      "targetResource": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-scada-01",
+      "targetResourceType": "Microsoft.Compute/virtualMachines",
+      "targetResourceRegion": "centralus",
+      "alertState": "New",
+      "startDateTime": "2026-09-14T13:47:00+00:00",
+      "description": "No heartbeat from SCADA historian for 10 minutes. Restarting the collector service is the documented fix."
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "columns": [
+    "TimeGenerated",
+    "Message"
+  ],
+  "rows": [
+    [
+      "2026-09-14T13:37:00+00:00",
+      "no specific fixture matched this query intent"
+    ]
+  ]
+}

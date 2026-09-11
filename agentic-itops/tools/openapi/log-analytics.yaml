@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: Log Analytics Query
+  version: 1.0.0
+  description: Read-only KQL execution against the customer's Log Analytics workspace.
+servers:
+- url: ${AGENTIC_ITOPS_SKILL_BASE_URL}
+  description: Azure Function host for the code skills
+paths:
+  /query:
+    post:
+      operationId: runKqlQuery
+      summary: Run a KQL query
+      description: Executes a read-only KQL query. Returns columns and rows. An empty result set
+        is a real answer and should be reported as such -- do not invent rows, and do not assume
+        an empty result means the query was wrong.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - query
+              properties:
+                query:
+                  type: string
+                  description: KQL text.
+                timespan:
+                  type: string
+                  description: ISO-8601 duration, e.g. PT1H or P1D.
+                  default: PT1H
+      responses:
+        '200':
+          description: Query result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns:
+                    type: array
+                    items:
+                      type: string
+                  rows:
+                    type: array
+                    items:
+                      type: array
+                  row_count:
+                    type: integer
+components:
+  schemas: {}

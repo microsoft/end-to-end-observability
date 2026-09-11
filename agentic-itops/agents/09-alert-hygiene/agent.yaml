@@ -1,0 +1,32 @@
+name: alert-hygiene
+display_name: Alert Hygiene Analyst
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+description: Turns the computed noise backlog into customer-readable recommendations. Deliverable
+  inside an ADR, before any security gate.
+instructions_file: instructions.md
+tools:
+- type: openapi
+  name: alert_hygiene
+  spec: ../../tools/openapi/alert-hygiene.yaml
+  auth: managed_identity
+output_schema:
+  type: object
+  required:
+  - executive_summary
+  - recommendations
+  properties:
+    executive_summary:
+      type: string
+    estimated_volume_reduction_pct:
+      type: number
+    recommendations:
+      type: array
+    do_not_touch:
+      type: array
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

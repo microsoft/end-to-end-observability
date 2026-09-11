@@ -1,0 +1,10 @@
+{"case_id": "ret-pump-cpu", "query": "Percentage CPU saturation rg-refinery-midstream pump controller", "expect_doc_id": "RB-014"}
+{"case_id": "ret-scada-heartbeat", "query": "Heartbeat missing SCADA historian availability rg-refinery-midstream", "expect_doc_id": "RB-021"}
+{"case_id": "ret-portal-5xx", "query": "customer portal 5xx error_rate after deployment rg-app-portal", "expect_doc_id": "RB-008"}
+{"case_id": "ret-disk-capacity", "query": "disk free space capacity exhaustion", "expect_doc_id": "RB-003"}
+{"case_id": "ret-memory-oom", "query": "memory pressure OOMKilled container restart saturation", "expect_doc_id": "RB-030"}
+{"case_id": "ret-certificate", "query": "certificate expiring security rotation", "expect_doc_id": "RB-047"}
+{"case_id": "ret-iot-telemetry-gap", "query": "stale sensor telemetry gap data_quality midstream flow", "expect_doc_id": "RB-061"}
+{"case_id": "ret-postmortem-recall", "query": "pump controller cpu polling extension upgrade postmortem", "expect_doc_id": "PM-2026-06-03"}
+{"case_id": "ret-alert-fatigue-postmortem", "query": "missed disk capacity alert during alert storm network in noise", "expect_doc_id": "PM-2026-08-22"}
+{"case_id": "ret-no-match-is-correct", "comment": "nothing in the corpus covers this; inventing a runbook is the failure", "query": "quantum flux capacitor desynchronization in the tachyon manifold", "expect_doc_id": "NONE"}

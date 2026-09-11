@@ -1,0 +1,42 @@
+name: triage-dedup
+display_name: Triage and Deduplication
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+description: Clusters normalized signals into a single incident, applies business-context
+  severity, and suppresses known-noise patterns.
+instructions_file: instructions.md
+tools:
+- type: openapi
+  name: resource_graph
+  spec: ../../tools/openapi/resource-graph.yaml
+  auth: managed_identity
+output_schema:
+  type: object
+  required:
+  - incident_fingerprint
+  - adjusted_severity
+  - suppress
+  - reasoning
+  properties:
+    incident_fingerprint:
+      type: string
+    adjusted_severity:
+      type: string
+      enum:
+      - critical
+      - high
+      - medium
+      - low
+      - info
+    severity_changed_because:
+      type: string
+    suppress:
+      type: boolean
+    reasoning:
+      type: string
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

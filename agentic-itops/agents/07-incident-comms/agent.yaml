@@ -1,0 +1,27 @@
+name: incident-comms
+display_name: Incident Communications
+model: gpt-4o
+temperature: 0.4
+top_p: 0.95
+description: Drafts audience-appropriate incident updates. Drafts only; never sends.
+instructions_file: instructions.md
+tools: []
+output_schema:
+  type: object
+  required:
+  - engineer_update
+  - executive_update
+  properties:
+    engineer_update:
+      type: string
+    executive_update:
+      type: string
+    customer_update:
+      type: string
+    withheld:
+      type: array
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

@@ -1,0 +1,117 @@
+# Change-Safety Gate -- default policy
+#
+# This file is the authorization boundary for agent-initiated change.
+# It is evaluated by code (agentic_itops/safety_gate.py), never by a model.
+#
+# Posture guidance:
+#   read_only: true   -> the posture BEFORE the AI Workload Security
+#                        Assessment for production change authority has
+#                        passed. Agents recommend; humans act. Ship the
+#                        Catalyst and the first pathway activities here.
+#   read_only: false  -> only after AIWSA #2 clears, and only with the
+#                        scopes below narrowed to the agreed blast radius.
+#
+# Everything not explicitly allowed is denied.
+
+version: "1.0-sample"
+
+# Start here. Flip to false only after AIWSA #2 has passed.
+read_only: false
+
+# Verbs an agent may ever propose. Anything absent is denied outright.
+# Deliberately excludes: delete, purge, rotate_secret, modify_rbac,
+# disable_backup -- destructive or security-relevant verbs stay human.
+allowed_actions:
+  - restart
+  - scale_out
+  - scale_in
+  - drain_node
+  - failover
+  - clear_cache
+  - recycle_app_pool
+  - reprocess_queue
+  - enable_diagnostic_setting
+  - annotate_incident
+
+# Which resources are in scope at all.
+resource_scopes:
+  allow:
+    - "/subscriptions/*/resourcegroups/rg-refinery-*/*"
+    - "/subscriptions/*/resourcegroups/rg-data-*/*"
+    - "/subscriptions/*/resourcegroups/rg-app-*/*"
+  deny:
+    # Safety-critical and regulated systems are never agent-actionable,
+    # regardless of any other rule. This is the list a CISO reads first.
+    - "*/providers/microsoft.compute/virtualmachines/vm-scada-*"
+    - "*/providers/microsoft.compute/virtualmachines/vm-hmi-*"
+    - "*safety*"
+    - "*nuclear*"
+    - "*/providers/microsoft.keyvault/*"
+    - "*/providers/microsoft.sql/servers/*/databases/prod-ledger*"
+
+# Explicit denials evaluated before the allow-list.
+deny:
+  - id: no-failover-outside-prod
+    action: failover
+    environment: dev
+    reason: "failover drills in dev are human-initiated by convention"
+
+  - id: no-bulk-restart
+    action: restart
+    min_affected: 10
+    reason: "restarting 10 or more resources at once is never auto-authorized"
+
+  - id: ot-boundary
+    resource_pattern: "*vm-scada-*"
+    reason: "OT boundary: operational technology assets are out of scope for agent action"
+
+# Approval required, by environment and action.
+#   none | auto           -> allowed without a human
+#   anything else         -> escalate, and name the approver role
+approval_tiers:
+  prod:
+    restart: on_call_engineer
+    scale_out: none
+    scale_in: on_call_engineer
+    clear_cache: none
+    recycle_app_pool: on_call_engineer
+    failover: incident_commander
+    drain_node: on_call_engineer
+    reprocess_queue: service_owner
+    enable_diagnostic_setting: none
+    annotate_incident: none
+    "*": on_call_engineer
+  staging:
+    "*": none
+    failover: service_owner
+  test:
+    "*": none
+  dev:
+    "*": none
+  default:
+    "*": on_call_engineer
+
+# How much may change at once without a human.
+blast_radius:
+  max_affected_auto: 3      # above this, escalate
+  hard_deny_above: 25       # above this, no approval tier can authorize
+
+# Recurring or fixed windows in which change escalates regardless.
+change_freezes:
+  - name: "Weekend production freeze"
+    environments: [prod]
+    days: [saturday, sunday]
+
+  - name: "Weeknight peak-load window"
+    environments: [prod]
+    days: [monday, tuesday, wednesday, thursday, friday]
+    start_time: "16:00"
+    end_time: "20:00"
+
+  # Fixed-window example -- replace with the customer's real calendar.
+  - name: "Quarter-end financial close"
+    environments: [prod]
+    start: "2026-09-28T00:00:00+00:00"
+    end: "2026-10-02T23:59:59+00:00"
+
+freeze_approval_tier: change_advisory_board

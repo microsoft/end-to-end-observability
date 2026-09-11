@@ -1,0 +1,47 @@
+name: industry-signal-pack
+display_name: Industry Signal Pack
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+description: 'Parameterized vertical context: what critical means, which control framework
+  applies, which assets are safety-critical. One skill, many configs.'
+instructions_file: instructions.md
+tools:
+- type: azure_ai_search
+  name: search_knowledge
+  index: agentic-itops-knowledge
+  query_type: vector_semantic_hybrid
+  top_k: 3
+parameters:
+  industry:
+    type: string
+    enum:
+    - energy_utilities
+    - manufacturing
+    - financial_services
+    - healthcare
+    - retail_supply_chain
+    - public_sector
+    default: energy_utilities
+output_schema:
+  type: object
+  required:
+  - industry
+  - criticality_adjustment
+  - control_frameworks
+  properties:
+    industry:
+      type: string
+    criticality_adjustment:
+      type: string
+    control_frameworks:
+      type: array
+    safety_critical_asset_classes:
+      type: array
+    additional_prohibitions:
+      type: array
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

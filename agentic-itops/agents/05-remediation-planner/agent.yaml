@@ -1,0 +1,54 @@
+name: remediation-planner
+display_name: Remediation Planner
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+description: Turns a diagnosis into a concrete, reviewable plan with blast radius and rollback.
+  Proposes only; never authorizes.
+instructions_file: instructions.md
+tools:
+- type: azure_ai_search
+  name: search_knowledge
+  index: agentic-itops-knowledge
+  query_type: vector_semantic_hybrid
+  top_k: 3
+- type: openapi
+  name: resource_graph
+  spec: ../../tools/openapi/resource-graph.yaml
+  auth: managed_identity
+output_schema:
+  type: object
+  required:
+  - proposed_action
+  - target_resource_id
+  - classification
+  - rollback
+  properties:
+    proposed_action:
+      type: string
+    target_resource_id:
+      type: string
+    source_runbook:
+      type: string
+    classification:
+      type: string
+      enum:
+      - mitigation
+      - fix
+    blast_radius:
+      type: object
+    preconditions:
+      type: array
+    rollback:
+      type: string
+    expected_outcome:
+      type: string
+    follow_up:
+      type: string
+    rationale:
+      type: string
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

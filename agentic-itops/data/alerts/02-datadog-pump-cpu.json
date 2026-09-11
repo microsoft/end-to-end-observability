@@ -1,0 +1,19 @@
+{
+  "source": "datadog",
+  "alert_id": "dd-88213",
+  "event_title": "[Triggered] High CPU on vm-pump-ctrl-07",
+  "event_msg": "system.cpu.user over 90% for 10 minutes",
+  "alert_type": "error",
+  "alert_transition": "Triggered",
+  "date": "2026-09-14T13:44:00+00:00",
+  "hostname": "vm-pump-ctrl-07",
+  "metric": "system.cpu.user",
+  "value": 92.7,
+  "tags": [
+    "env:prod",
+    "service:rg-refinery-midstream",
+    "arm_id:/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-pump-ctrl-07",
+    "region:centralus",
+    "team:midstream-ops"
+  ]
+}

@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: Signal Normalizer
+  version: 1.0.0
+  description: Normalizes heterogeneous alert payloads into canonical incident envelopes and correlates
+    them by fingerprint. Deterministic.
+servers:
+- url: ${AGENTIC_ITOPS_SKILL_BASE_URL}
+  description: Azure Function host for the code skills
+paths:
+  /normalize:
+    post:
+      operationId: normalizeSignals
+      summary: Normalize and correlate a batch of raw alert payloads
+      description: Accepts raw payloads from Azure Monitor, Datadog, Splunk, Prometheus Alertmanager
+        or ServiceNow and returns canonical incidents. Signals describing the same symptom on
+        the same resource collapse into ONE incident even when they came from different tools.
+        Treat each returned incident as a single problem regardless of how many signals it contains.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - payloads
+              properties:
+                payloads:
+                  type: array
+                  items:
+                    type: object
+                  description: Raw alert payloads, any supported source.
+      responses:
+        '200':
+          description: Canonical incidents plus a normalization report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incidents:
+                    type: array
+                    items:
+                      type: object
+                  report:
+                    type: object
+                  failures:
+                    type: array
+                    items:
+                      type: object
+components:
+  schemas: {}

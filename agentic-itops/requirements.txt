@@ -1,0 +1,10 @@
+# Core. The offline path needs nothing but PyYAML -- that is deliberate,
+# so the repo is runnable on a laptop with no Azure anything.
+PyYAML>=6.0.1
+
+# Tests and evaluations
+pytest>=8.0.0
+
+# --- live mode only -------------------------------------------------
+# Install when setting AGENTIC_ITOPS_LIVE_AZURE=1 or LIVE_SEARCH=1.
+#   pip install -r requirements-live.txt

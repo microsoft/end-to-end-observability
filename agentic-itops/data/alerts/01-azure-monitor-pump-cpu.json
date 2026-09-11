@@ -1,0 +1,34 @@
+{
+  "schemaId": "azureMonitorCommonAlertSchema",
+  "data": {
+    "essentials": {
+      "alertId": "/subscriptions/.../alerts/aaaa1111",
+      "alertRule": "Percentage CPU - AMBA",
+      "severity": "Sev1",
+      "signalType": "Metric",
+      "monitorCondition": "Fired",
+      "monitorService": "Platform",
+      "alertTargetIDs": [
+        "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-pump-ctrl-07"
+      ],
+      "targetResource": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-pump-ctrl-07",
+      "targetResourceType": "Microsoft.Compute/virtualMachines",
+      "targetResourceRegion": "centralus",
+      "alertState": "New",
+      "startDateTime": "2026-09-14T13:42:00+00:00",
+      "description": "Sustained CPU above threshold on midstream pump controller"
+    },
+    "alertContext": {
+      "condition": {
+        "allOf": [
+          {
+            "metricName": "Percentage CPU",
+            "metricValue": 94.2,
+            "threshold": 85.0,
+            "operator": "GreaterThan"
+          }
+        ]
+      }
+    }
+  }
+}

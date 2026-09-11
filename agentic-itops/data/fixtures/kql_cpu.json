@@ -1,0 +1,35 @@
+{
+  "columns": [
+    "TimeGenerated",
+    "Computer",
+    "AvgCpu"
+  ],
+  "rows": [
+    [
+      "2026-09-14T13:02:00+00:00",
+      "vm-pump-ctrl-07",
+      41.2
+    ],
+    [
+      "2026-09-14T13:12:00+00:00",
+      "vm-pump-ctrl-07",
+      44.8
+    ],
+    [
+      "2026-09-14T13:22:00+00:00",
+      "vm-pump-ctrl-07",
+      78.5
+    ],
+    [
+      "2026-09-14T13:32:00+00:00",
+      "vm-pump-ctrl-07",
+      91.3
+    ],
+    [
+      "2026-09-14T13:42:00+00:00",
+      "vm-pump-ctrl-07",
+      94.2
+    ]
+  ],
+  "note": "step change between T-30 and T-20 correlates with the config deployment"
+}

@@ -1,0 +1,86 @@
+openapi: 3.0.3
+info:
+  title: Change Safety Gate
+  version: 1.0.0
+  description: Authorization boundary for agent-initiated change. Deterministic policy evaluation.
+    This endpoint decides; callers do not.
+servers:
+- url: ${AGENTIC_ITOPS_SKILL_BASE_URL}
+  description: Azure Function host for the code skills
+paths:
+  /evaluate:
+    post:
+      operationId: evaluateChangeRequest
+      summary: Decide whether a proposed action is permitted
+      description: Evaluates a proposed remediation against policy and returns allow, deny or
+        escalate with an audit record. THIS DECISION IS FINAL. Do not attempt to work around a
+        denial, do not re-submit a denied request with altered wording, and do not present a denial
+        to a user as a caveat or a warning -- report it as the refusal it is. A deny result means
+        the action must not be taken.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - action
+              - resource_id
+              properties:
+                action:
+                  type: string
+                  description: One verb from the allowed action list.
+                resource_id:
+                  type: string
+                  description: ARM resource id.
+                environment:
+                  type: string
+                  enum:
+                  - prod
+                  - staging
+                  - test
+                  - dev
+                  - unknown
+                service:
+                  type: string
+                estimated_affected:
+                  type: integer
+                  description: How many resources the action would touch.
+                  default: 1
+                incident_fingerprint:
+                  type: string
+                justification:
+                  type: string
+      responses:
+        '200':
+          description: The decision, with reasons and an audit id
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - effect
+                - audit_id
+                properties:
+                  effect:
+                    type: string
+                    enum:
+                    - allow
+                    - deny
+                    - escalate
+                  approval_tier:
+                    type: string
+                  reasons:
+                    type: array
+                    items:
+                      type: string
+                  matched_rules:
+                    type: array
+                    items:
+                      type: string
+                  audit_id:
+                    type: string
+                  policy_version:
+                    type: string
+components:
+  schemas: {}

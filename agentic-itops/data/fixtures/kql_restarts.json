@@ -1,0 +1,22 @@
+{
+  "columns": [
+    "TimeGenerated",
+    "Computer",
+    "RestartCount",
+    "Reason"
+  ],
+  "rows": [
+    [
+      "2026-09-14T13:24:00+00:00",
+      "vm-pump-ctrl-07",
+      3,
+      "polling service watchdog"
+    ],
+    [
+      "2026-09-14T13:33:00+00:00",
+      "vm-pump-ctrl-07",
+      4,
+      "polling service watchdog"
+    ]
+  ]
+}

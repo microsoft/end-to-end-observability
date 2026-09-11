@@ -1,0 +1,15 @@
+{
+  "columns": [
+    "TimeGenerated",
+    "Computer",
+    "LastSeen"
+  ],
+  "rows": [
+    [
+      "2026-09-14T13:32:00+00:00",
+      "vm-scada-01",
+      "2026-09-14T13:27:00+00:00"
+    ]
+  ],
+  "note": "historian stopped reporting 15 minutes before the alert fired"
+}

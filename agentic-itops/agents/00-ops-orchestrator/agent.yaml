@@ -1,0 +1,49 @@
+name: ops-orchestrator
+display_name: Ops Orchestrator
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+
+description: >
+  Front door for the Agentic ITOps loop. Receives a normalized incident,
+  delegates to specialist agents, assembles a recommendation, and hands
+  the proposed action to the Change-Safety Gate. Never executes change.
+
+# Foundry connected-agents pattern: these are bound as tools on this
+# agent, so delegation needs no orchestration code.
+connected_agents:
+  - rca-investigator
+  - runbook-memory
+  - remediation-planner
+  - incident-comms
+
+tools:
+  - type: openapi
+    name: signal_normalizer
+    spec: ../../tools/openapi/signal-normalizer.yaml
+    auth: managed_identity
+  - type: openapi
+    name: change_safety_gate
+    spec: ../../tools/openapi/change-safety-gate.yaml
+    auth: managed_identity
+
+instructions_file: instructions.md
+
+# Least privilege. The orchestrator reasons and routes; it holds no
+# write permission on anything.
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+    - Monitoring Reader
+    - Reader
+
+output_schema:
+  type: object
+  required: [incident_fingerprint, summary, hypotheses, proposed_action, gate_decision]
+  properties:
+    incident_fingerprint: { type: string }
+    summary: { type: string }
+    hypotheses: { type: array }
+    proposed_action: { type: string }
+    gate_decision: { type: string, enum: [allow, deny, escalate] }
+    handoff: { type: string }

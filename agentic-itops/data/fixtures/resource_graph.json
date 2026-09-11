@@ -1,0 +1,77 @@
+{
+  "resources": [
+    {
+      "id": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-pump-ctrl-07",
+      "name": "vm-pump-ctrl-07",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "centralus",
+      "resourceGroup": "rg-refinery-midstream",
+      "subscriptionId": "55555555-5555-5555-5555-555555555555",
+      "tags": {
+        "env": "prod",
+        "criticality": "high",
+        "owner": "midstream-ops"
+      },
+      "owner": "midstream-ops@contoso.com",
+      "dependencies": {
+        "upstream": [
+          "vm-scada-01 (historian)",
+          "iot-hub-midstream"
+        ],
+        "downstream": [
+          "app-flow-dashboard",
+          "adx-refinery-telemetry"
+        ]
+      },
+      "criticality": "high"
+    },
+    {
+      "id": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-scada-01",
+      "name": "vm-scada-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "centralus",
+      "resourceGroup": "rg-refinery-midstream",
+      "subscriptionId": "55555555-5555-5555-5555-555555555555",
+      "tags": {
+        "env": "prod",
+        "criticality": "safety",
+        "zone": "ot"
+      },
+      "owner": "ot-engineering@contoso.com",
+      "dependencies": {
+        "upstream": [
+          "plc-network-segment-a"
+        ],
+        "downstream": [
+          "vm-pump-ctrl-07",
+          "vm-pump-ctrl-08"
+        ]
+      },
+      "criticality": "safety-critical",
+      "note": "OT zone. Agent action is denied by policy regardless of severity."
+    },
+    {
+      "id": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-app-portal/providers/Microsoft.Web/sites/app-customer-portal",
+      "name": "app-customer-portal",
+      "type": "Microsoft.Web/sites",
+      "location": "eastus2",
+      "resourceGroup": "rg-app-portal",
+      "subscriptionId": "55555555-5555-5555-5555-555555555555",
+      "tags": {
+        "env": "prod",
+        "criticality": "high"
+      },
+      "owner": "portal-team@contoso.com",
+      "dependencies": {
+        "upstream": [
+          "sql-portal-prod",
+          "redis-portal-prod"
+        ],
+        "downstream": [
+          "external customers"
+        ]
+      },
+      "criticality": "high"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+name: rca-investigator
+display_name: RCA Investigator
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+description: Forms ranked, evidence-backed root cause hypotheses using change history, telemetry
+  and resource topology.
+instructions_file: instructions.md
+tools:
+- type: openapi
+  name: change_history
+  spec: ../../tools/openapi/change-history.yaml
+  auth: managed_identity
+- type: openapi
+  name: log_analytics
+  spec: ../../tools/openapi/log-analytics.yaml
+  auth: managed_identity
+- type: openapi
+  name: resource_graph
+  spec: ../../tools/openapi/resource-graph.yaml
+  auth: managed_identity
+- type: mcp
+  name: azure_monitor
+  server_label: azure-monitor
+  server_url: ${AZURE_MONITOR_MCP_URL}
+  auth: managed_identity
+  note: stub server in tools/mcp/azure_monitor_mcp_stub.py
+output_schema:
+  type: object
+  required:
+  - hypotheses
+  properties:
+    hypotheses:
+      type: array
+    timeline:
+      type: array
+    notable_absence:
+      type: string
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: Resource Context
+  version: 1.0.0
+  description: Resource metadata, dependencies, criticality and ownership.
+servers:
+- url: ${AGENTIC_ITOPS_SKILL_BASE_URL}
+  description: Azure Function host for the code skills
+paths:
+  /resource:
+    get:
+      operationId: getResourceContext
+      summary: Get context for a resource
+      description: 'Returns metadata, tags, upstream and downstream dependencies, ownership and
+        criticality. Check `criticality` before proposing any action: a resource marked safety-critical
+        or sitting in an OT zone is outside agent authority regardless of severity.'
+      parameters:
+      - name: resource_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: ARM resource id, or bare resource name.
+      responses:
+        '200':
+          description: Resource context; `found` is false when unknown
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas: {}

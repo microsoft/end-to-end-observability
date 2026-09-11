@@ -1,0 +1,31 @@
+name: runbook-memory
+display_name: Runbook and Institutional Memory
+model: gpt-4o
+temperature: 0.2
+top_p: 0.95
+description: Answers whether this has been seen before, what was done about it, and what the
+  documentation prohibits.
+instructions_file: instructions.md
+tools:
+- type: azure_ai_search
+  name: search_knowledge
+  index: agentic-itops-knowledge
+  query_type: vector_semantic_hybrid
+  top_k: 3
+output_schema:
+  type: object
+  required:
+  - runbooks
+  - postmortems
+  properties:
+    runbooks:
+      type: array
+    postmortems:
+      type: array
+    coverage_gap:
+      type: string
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader

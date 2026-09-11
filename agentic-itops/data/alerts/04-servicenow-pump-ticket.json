@@ -1,0 +1,16 @@
+{
+  "sys_id": "a1b2c3d4e5f6",
+  "number": "INC0042817",
+  "short_description": "Pump controller 07 CPU saturation - setpoint changes lagging",
+  "description": "Midstream control room reports lag on pump 07 setpoint changes. Suspect CPU saturation on the controller VM.",
+  "state": "2",
+  "impact": "2",
+  "priority": "2",
+  "cmdb_ci": "vm-pump-ctrl-07",
+  "business_service": "rg-refinery-midstream",
+  "environment": "prod",
+  "arm_id": "/subscriptions/55555555-5555-5555-5555-555555555555/resourceGroups/rg-refinery-midstream/providers/Microsoft.Compute/virtualMachines/vm-pump-ctrl-07",
+  "opened_at": "2026-09-14T13:53:00+00:00",
+  "assignment_group": "Midstream Operations",
+  "caller_id": "control.room.operator"
+}

@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  title: Alert Hygiene Analysis
+  version: 1.0.0
+  description: Noise scoring over alert history. Produces a tuning backlog.
+servers:
+- url: ${AGENTIC_ITOPS_SKILL_BASE_URL}
+  description: Azure Function host for the code skills
+paths:
+  /analyze:
+    post:
+      operationId: analyzeAlertHygiene
+      summary: Score alert rules for noise and produce a tuning backlog
+      description: 'Computes firing volume, self-resolve rate, flap ratio and a weighted noise
+        score per rule over the supplied alert history. Runs entirely on exported history -- no
+        live incident and no production access required. Note the limitation: this shows what
+        fired and what resolved, not what an engineer did in response.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - payloads
+              properties:
+                payloads:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Ranked findings with rationale
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas: {}

@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: Change History
+  version: 1.0.0
+  description: Recent changes touching a resource or service. The highest-yield question in incident
+    response.
+servers:
+- url: ${AGENTIC_ITOPS_SKILL_BASE_URL}
+  description: Azure Function host for the code skills
+paths:
+  /changes:
+    get:
+      operationId: getRecentChanges
+      summary: List recent changes for a resource or service
+      description: Returns deployments, configuration writes and infrastructure changes, most
+        recent first, each with a correlation hint. Call this BEFORE querying telemetry. A change
+        landing after symptom onset is not the cause, however close the timestamps look.
+      parameters:
+      - name: resource_id
+        in: query
+        schema:
+          type: string
+      - name: service
+        in: query
+        schema:
+          type: string
+      - name: hours
+        in: query
+        schema:
+          type: integer
+          default: 24
+        description: Lookback window.
+      responses:
+        '200':
+          description: Changes, most recent first
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas: {}

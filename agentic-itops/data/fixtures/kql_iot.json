@@ -1,0 +1,29 @@
+{
+  "columns": [
+    "TimeGenerated",
+    "DeviceId",
+    "FlowRate",
+    "SuctionPressure"
+  ],
+  "rows": [
+    [
+      "2026-09-14T13:17:00+00:00",
+      "pump-07",
+      812.4,
+      41.2
+    ],
+    [
+      "2026-09-14T13:27:00+00:00",
+      "pump-07",
+      640.1,
+      22.8
+    ],
+    [
+      "2026-09-14T13:37:00+00:00",
+      "pump-07",
+      588.7,
+      18.4
+    ]
+  ],
+  "note": "falling suction pressure alongside flow drop is the cavitation signature"
+}
