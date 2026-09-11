@@ -6,3 +6,7 @@ __pycache__/
 venv/
 *.egg-info/
 results.json
+
+# Deployment state written by scripts/deploy_to_foundry.py.
+# Environment-specific: endpoint and agent names for one project.
+.foundry-agents.json

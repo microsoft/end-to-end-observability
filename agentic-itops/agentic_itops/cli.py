@@ -192,6 +192,8 @@ def cmd_demo(args: argparse.Namespace) -> int:
 
         print("\n-- PROPOSED REMEDIATION " + "-" * 53)
         print(f"  action:    {result.plan.get('proposed_action')}")
+        if result.plan.get("coerced"):
+            print(f"  note:      {result.plan['coerced']}")
         print(f"  rationale: {result.plan.get('rationale')}")
 
         print("\n-- CHANGE-SAFETY GATE (code, not a model) " + "-" * 35)
@@ -204,8 +206,17 @@ def cmd_demo(args: argparse.Namespace) -> int:
         print(f"  audit id: {decision['audit_id']}  policy: {decision['policy_version']}")
 
         print("\n-- COMMS DRAFT " + "-" * 62)
-        print(f"  engineer: {result.comms.get('engineer_update', '')}")
-        print(f"  exec:     {result.comms.get('executive_update', '')}")
+        engineer = result.comms.get("engineer_update", "")
+        executive = result.comms.get("executive_update", "")
+        if engineer or executive:
+            print(f"  engineer: {engineer}")
+            print(f"  exec:     {executive}")
+        else:
+            # The agent did not return the expected schema. Showing the
+            # raw response is far better than rendering blank lines and
+            # letting a demo look broken for no visible reason.
+            raw = (result.comms.get("output") or result.comms.get("error") or "").strip()
+            print(f"  [unstructured response]\n  {raw[:400] or '(empty)'}")
 
         print("\n  NO ACTION WAS TAKEN. Execution is handed to Azure SRE Agent")
         print("  only after a human approves. Foundry is the brain; SRE Agent is the hands.")

@@ -191,16 +191,37 @@ def _first_action_in(text: str) -> str:
 
 
 class FoundryReasoner:
-    """Calls Azure AI Foundry Agent Service.
+    """Calls agents deployed in an Azure AI Foundry project.
 
-    Requires ``AZURE_AI_FOUNDRY_PROJECT_ENDPOINT`` and agents already
-    created from ``agents/*/agent.yaml`` (see scripts/provision_agents.py).
+    Uses the **Responses API** with an ``agent_reference``, which is the
+    surface the current Foundry project resource exposes. The older
+    Assistants/threads API returns 404 against these projects, and the
+    preview ``azure-ai-agents`` operations have moved between releases --
+    the OpenAI-compatible Responses path is the stable one.
+
+    Agent names come from ``.foundry-agents.json``, written by
+    ``scripts/deploy_to_foundry.py``.
     """
 
     name = "foundry"
 
-    def __init__(self, endpoint: str | None = None) -> None:
-        self.endpoint = endpoint or os.environ["AZURE_AI_FOUNDRY_PROJECT_ENDPOINT"]
+    def __init__(self, endpoint: str | None = None, state_path: Path | None = None) -> None:
+        state_file = state_path or (Path(__file__).resolve().parents[1] / ".foundry-agents.json")
+        state: dict[str, Any] = {}
+        if state_file.exists():
+            state = json.loads(state_file.read_text(encoding="utf-8"))
+
+        self.endpoint = (
+            endpoint
+            or state.get("endpoint")
+            or os.environ.get("AZURE_AI_FOUNDRY_PROJECT_ENDPOINT")
+        )
+        if not self.endpoint:
+            raise RuntimeError(
+                "no Foundry endpoint. Deploy with scripts/deploy_to_foundry.py or set "
+                "AZURE_AI_FOUNDRY_PROJECT_ENDPOINT."
+            )
+        self.agents: dict[str, str] = state.get("agents", {})
         self._client = None
 
     def _get_client(self):
@@ -208,34 +229,27 @@ class FoundryReasoner:
             from azure.ai.projects import AIProjectClient  # noqa: PLC0415
             from azure.identity import DefaultAzureCredential  # noqa: PLC0415
 
-            self._client = AIProjectClient(
-                endpoint=self.endpoint, credential=DefaultAzureCredential()
-            )
+            project = AIProjectClient(endpoint=self.endpoint, credential=DefaultAzureCredential())
+            self._client = project.get_openai_client()
         return self._client
 
     def run(self, agent: str, context: str, payload: dict[str, Any]) -> dict[str, Any]:
+        agent_name = self.agents.get(agent, agent)
         client = self._get_client()
-        agent_id = os.environ.get(f"AGENT_ID_{agent.replace('-', '_').upper()}")
-        if not agent_id:
-            raise RuntimeError(
-                f"no agent id configured for '{agent}'. Run scripts/provision_agents.py "
-                f"and export AGENT_ID_{agent.replace('-', '_').upper()}."
+
+        message = (
+            f"{context}\n\nStructured payload (JSON):\n"
+            f"{json.dumps(payload, default=str)[:6000]}"
+        )
+        try:
+            response = client.responses.create(
+                input=message,
+                extra_body={"agent_reference": {"type": "agent_reference", "name": agent_name}},
             )
+        except Exception as exc:
+            return {"agent": agent, "reasoner": self.name, "error": str(exc)[:400]}
 
-        message = f"{context}\n\nStructured payload:\n{json.dumps(payload, default=str)[:6000]}"
-        thread = client.agents.threads.create()
-        client.agents.messages.create(thread_id=thread.id, role="user", content=message)
-        run = client.agents.runs.create_and_process(thread_id=thread.id, agent_id=agent_id)
-
-        if run.status == "failed":
-            return {"agent": agent, "reasoner": self.name, "error": str(run.last_error)}
-
-        messages = list(client.agents.messages.list(thread_id=thread.id))
-        text = ""
-        for msg in messages:
-            if msg.role == "assistant" and msg.text_messages:
-                text = msg.text_messages[-1].text.value
-                break
+        text = response.output_text or ""
         return {"agent": agent, "reasoner": self.name, "output": text, **_try_json(text)}
 
 
@@ -346,8 +360,25 @@ class OpsOrchestrator:
         )
 
         # 6. THE GATE. Code, always. The planner does not get a vote.
+        #
+        # Coerce a missing or null action to the lowest-impact verb. A
+        # live agent can return the key absent or explicitly null, and
+        # letting that reach the gate as the string "None" would produce
+        # a denial for the wrong reason -- which reads as the gate
+        # working when actually the planner failed.
+        proposed = result.plan.get("proposed_action") or "annotate_incident"
+        if result.plan.get("proposed_action") != proposed:
+            # Record the coercion so the console, the gate and the audit
+            # record all agree on what was actually submitted. Leaving
+            # the plan showing null while the gate evaluated something
+            # else is exactly the kind of divergence that makes an
+            # incident record untrustworthy after the fact.
+            result.plan["proposed_action"] = proposed
+            result.plan["coerced"] = (
+                "planner returned no action; defaulted to the lowest-impact verb"
+            )
         request = ChangeRequest(
-            action=str(result.plan.get("proposed_action", "annotate_incident")),
+            action=str(proposed),
             resource_id=primary.resource.id,
             environment=primary.environment,
             service=primary.service,

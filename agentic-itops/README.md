@@ -172,6 +172,7 @@ agentic-itops/
 |---|---|
 | [architecture.md](docs/architecture.md) | design decisions, prompt-vs-code, MCP vs OpenAPI |
 | [walkthrough.md](docs/walkthrough.md) | run it end to end, with expected output |
+| [deploying-to-azure.md](docs/deploying-to-azure.md) | live Foundry deployment, and the API gotchas |
 | [hackathon-guide.md](docs/hackathon-guide.md) | the two-day build plan and pre-work |
 | [governance.md](docs/governance.md) | AIWSA mapping, the gate, the untrusted-input posture |
 | [evaluations/README.md](evaluations/README.md) | what is measured and why |
