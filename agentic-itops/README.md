@@ -5,16 +5,40 @@ solution: agents run IT operations, humans govern. Azure AI Foundry is the
 framework; Azure SRE Agent is the Catalyst that opens the door and the
 incident-response component inside it.
 
-Everything here **runs offline**. No Azure subscription, no Foundry project,
-no credentials. That is deliberate — the portfolio needs to be demonstrable
-and testable before any tenant decision is made.
+Everything here **runs without Azure** — no subscription, no Foundry
+project, no credentials. That is enforced by a test, not just claimed
+([`tests/test_offline_guarantee.py`](tests/test_offline_guarantee.py)).
+
+What that does and does not prove is worth being precise about, because
+the honest answer is "half the system":
+
+| | Offline | Needs Azure |
+|---|---|---|
+| Signal Normalizer, adapters, correlation | **really tested** | — |
+| Change-Safety Gate, policy evaluation | **really tested** | — |
+| Alert Hygiene scoring | **really tested** | — |
+| Knowledge retrieval (BM25) | **really tested** | hybrid semantic ranking |
+| Agent loop wiring, contracts, gate enforcement | **really tested** | — |
+| **Quality of model reasoning** | **not tested** | yes |
+| Tool-call behaviour, auth, live data shapes | **not tested** | yes |
+
+The deterministic half is genuinely exercised: normalization has exactly
+one correct answer, the gate is a pure function, and both have real test
+suites. The probabilistic half is only *wired* offline — `StubReasoner`
+is deterministic templating, not a model, and says nothing about whether
+GPT-4o produces good hypotheses.
+
+That boundary is not theoretical. Deploying to a real project
+([docs/deploying-to-azure.md](docs/deploying-to-azure.md)) immediately
+surfaced three defects the offline suite could not have caught — see
+[architecture.md](docs/architecture.md#what-offline-testing-proves).
 
 ```bash
 cd agentic-itops
 pip install -r requirements.txt
 
 python -m agentic_itops demo          # the full incident loop
-python -m pytest tests -q             # 60 unit tests
+python -m pytest tests -q             # 67 unit tests
 python evaluations/run_evals.py       # 41 evaluation cases
 ```
 

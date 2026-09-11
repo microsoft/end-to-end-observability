@@ -159,12 +159,60 @@ Azure resource exists. It exposes nothing that mutates.
 ## Offline-first
 
 Every tool has two implementations behind one signature: a stub that answers
-from `data/fixtures`, and a live path behind an environment variable.
+from `data/fixtures`, and a live path behind an environment variable. Azure
+SDK imports are function-local so the offline path never loads them, and
+`tests/test_offline_guarantee.py` enforces that with an import guard rather
+than leaving it to discipline.
 
 This is not only developer convenience. It means the portfolio can be
 demonstrated, evaluated and reviewed **before the tenant decision is made** —
 which matters when that decision has been open for weeks and is blocking
 everything else.
+
+## What offline testing proves
+
+It is worth being exact, because "it all runs offline" invites more
+confidence than it deserves.
+
+**Genuinely tested.** Normalization, correlation, severity and symptom
+mapping, policy evaluation, noise scoring, BM25 retrieval, and the loop's
+control flow. These are deterministic — each has exactly one correct
+answer — so a stub input and a live input exercise identical code. An
+Azure Monitor payload is the same JSON whether it arrived by webhook or
+was read from a file.
+
+**Not tested.** The quality of model reasoning. `StubReasoner` is
+deterministic templating: it produces structurally valid output so the
+loop and the governance behaviour can be exercised, and it makes no claim
+to intelligence. Also untested offline: whether the model calls the right
+tool with the right arguments, whether real Log Analytics rows look like
+the fixtures, and anything involving identity, RBAC or network.
+
+### Evidence for where the line sits
+
+The first live deployment surfaced three defects the offline suite could
+not have caught, all in the seam between deterministic code and a real
+model:
+
+1. **`incident-comms` returned markdown, not JSON.** Its instructions
+   lacked the explicit Output section every other agent has. The stub
+   always returned a correct dict, so the gap was invisible.
+2. **A planner returning no action reached the gate as the string
+   `"None"`**, producing a denial for the *wrong reason*. This is the
+   dangerous one: it still looked like the gate working correctly.
+3. **The console rendered blank lines** when an agent returned an
+   unexpected shape, so a real failure looked like an empty result.
+
+None of these are normalization or policy bugs — those layers were
+correct. All three live where a probabilistic component meets a
+deterministic contract, which is exactly the region a stub cannot
+explore.
+
+The conclusion is not that offline testing is worthless. It is that
+offline testing covers the half of the system where correctness is
+decidable, and that the other half needs a real project and graded
+examples. Evaluating the prompt-hosted agents belongs in Azure AI Foundry
+Evaluations, and is not yet built.
 
 ## Adding a source
 

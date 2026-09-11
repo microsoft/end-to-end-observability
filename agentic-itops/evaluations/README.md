@@ -132,13 +132,19 @@ evaluation time) and `policy_override`.
 
 ## Not covered yet
 
-- **No model-output evaluation.** `StubReasoner` is deterministic by design
-  — it makes the loop testable offline but says nothing about hypothesis
-  quality. Evaluating the prompt-hosted agents needs a Foundry project and
-  graded examples, and belongs in Azure AI Foundry Evaluations rather than
-  here.
+- **No model-output evaluation.** `StubReasoner` is deterministic
+  templating, not a model. It makes the loop and the governance behaviour
+  testable offline and says nothing about hypothesis quality. Evaluating
+  the prompt-hosted agents needs a Foundry project and graded examples,
+  and belongs in Azure AI Foundry Evaluations rather than here.
+
+  The limitation is concrete, not hypothetical: the first live deployment
+  found three defects this suite could not catch, all in the seam where a
+  probabilistic component meets a deterministic contract. See
+  `docs/architecture.md`, "What offline testing proves".
 - **No adversarial suite.** Prompt-injection resistance is argued
   structurally (the gate is code, actions are allow-listed) rather than
   tested. It should be tested.
 - **Retrieval corpus is 11 documents.** Real coverage needs a customer's
   actual runbooks.
+
