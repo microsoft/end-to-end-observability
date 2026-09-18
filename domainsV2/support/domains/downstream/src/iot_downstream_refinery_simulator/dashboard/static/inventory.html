@@ -1,0 +1,1533 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Local-only Downstream Refinery Inventory Studio: synthetic stock movement, storerooms, process areas and equipment fitment"
+    />
+    <title>Downstream Refinery Inventory Studio | Synthetic • Local Only</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f7f4ef;
+        --cp-bg-elevated: #fcfbf8;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f5f5f5;
+        --cp-border: #dedede;
+        --cp-border-strong: #919191;
+        --cp-text: #242424;
+        --cp-text-muted: #5c5c5c;
+        --cp-text-soft: #6f6f6f;
+        --cp-accent: #b11f4b;
+        --cp-accent-hover: #9a1a41;
+        --cp-accent-soft: rgba(177, 31, 75, 0.08);
+        --cp-accent-fg: #ffffff;
+        --cp-success: #16a34a;
+        --cp-danger: #dc2626;
+        --cp-warning: #f59e0b;
+        --cp-link: #0078d4;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+        --cp-overlay: rgba(255, 255, 255, 0.8);
+        --cp-panel: rgba(255, 255, 255, 0.86);
+        --cp-panel-strong: rgba(255, 255, 255, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.55);
+        --cp-highlight: rgba(177, 31, 75, 0.12);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3d3b3a;
+        --cp-bg-elevated: #343231;
+        --cp-surface: #292929;
+        --cp-surface-soft: #2e2e2e;
+        --cp-border: #474747;
+        --cp-border-strong: #5f5f5f;
+        --cp-text: #dedede;
+        --cp-text-muted: #919191;
+        --cp-text-soft: #b0b0b0;
+        --cp-accent: #fd8ea1;
+        --cp-accent-hover: #fb7b91;
+        --cp-accent-soft: rgba(253, 142, 161, 0.14);
+        --cp-accent-fg: #1a1a1a;
+        --cp-success: #4ade80;
+        --cp-danger: #f87171;
+        --cp-warning: #fbbf24;
+        --cp-link: #4da6ff;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+        --cp-overlay: rgba(41, 41, 41, 0.88);
+        --cp-panel: rgba(41, 41, 41, 0.72);
+        --cp-panel-strong: rgba(41, 41, 41, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.04);
+        --cp-highlight: rgba(253, 142, 161, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font: 15px/1.55 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
+      header.top {
+        border-bottom: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        padding: 22px 0 18px;
+        margin-bottom: 22px;
+      }
+      header.top h1 { margin: 0 0 4px; font-size: 22px; font-weight: 620; }
+      header.top p { margin: 0; color: var(--cp-text-muted); font-size: 13.5px; }
+      .banner {
+        border: 1px solid var(--cp-warning);
+        background: var(--cp-accent-soft);
+        color: var(--cp-text);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+      section {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 10px;
+        padding: 18px 20px 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px var(--cp-highlight);
+      }
+      h2 { margin: 0 0 4px; font-size: 16px; font-weight: 620; }
+      h3 { margin: 22px 0 8px; font-size: 13.5px; font-weight: 620; }
+      .sub { margin: 0 0 16px; color: var(--cp-text-muted); font-size: 13px; }
+      .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+      .stat {
+        flex: 1 1 140px;
+        border: 1px solid var(--cp-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--cp-surface-soft);
+      }
+      .stat .k { font-size: 11.5px; color: var(--cp-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .stat .v { font-size: 21px; font-weight: 640; margin-top: 2px; }
+      .stat .v.unknown { font-size: 15px; color: var(--cp-text-muted); font-weight: 500; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--cp-border); vertical-align: top; }
+      th { font-weight: 600; color: var(--cp-text-muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+      tbody tr:hover { background: var(--cp-surface-soft); }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        white-space: nowrap;
+      }
+      .muted { color: var(--cp-text-muted); }
+      .none { color: var(--cp-text-muted); font-style: italic; }
+
+      /* Neutral geography keeps selection distinct. Location types remain
+         named in text; off-site sources never acquire invented coordinates. */
+      :root {
+        --t-central_warehouse: var(--cp-text);
+        --t-satellite_crib: var(--cp-text-muted);
+        --t-climate_store: var(--cp-text-soft);
+        --t-lubricant_store: var(--cp-text-muted);
+        --t-flammable_store: var(--cp-text);
+        --t-cylinder_cage: var(--cp-text-muted);
+        --t-preservation_bay: var(--cp-text-soft);
+        --t-laydown_yard: var(--cp-text-muted);
+        --t-shop_bench: var(--cp-text);
+        --t-regional_distribution_centre: var(--cp-text-muted);
+        --t-vendor_consignment: var(--cp-text-soft);
+        --t-repair_vendor: var(--cp-text-muted);
+        --t-oem: var(--cp-text-soft);
+        --map-land: var(--cp-bg-elevated);
+        --map-line: var(--cp-border);
+        --map-edge: var(--cp-border-strong);
+        --map-sea: var(--cp-surface-soft);
+        --map-context: var(--cp-bg);
+        --map-fence: var(--cp-text-muted);
+        --map-area: var(--cp-surface-soft);
+        --map-area-edge: var(--cp-border-strong);
+        --map-pipe: var(--cp-text-muted);
+        --map-ground: var(--cp-bg-elevated);
+      }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0 0; font-size: 12px; }
+      .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--cp-text-muted); }
+      .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+      .legend p { margin: 0; }
+      .mapwrap {
+        border: 1px solid var(--cp-border);
+        border-radius: 8px;
+        background: var(--map-ground);
+        overflow: hidden;
+      }
+      svg.map { display: block; width: 100%; height: auto; }
+      svg.inset { display: block; width: 100%; height: auto; }
+
+      /* --- Real ground, regional inset ----------------------------------
+         Painted back to front, exactly as the midstream corridor map paints
+         it, and from the same cached file. Water is painted last because
+         neither the state nor the county polygons carve out the coastal bays,
+         so the water layer is what puts the bays back. Getting that order
+         wrong would place the refinery on open water. The group is
+         aria-hidden: it is the ground, and every fact the page asserts is
+         carried by the markers, the callouts and the tables. */
+      svg .geo-context { fill: var(--map-context); stroke: none; }
+      svg .geo-outline { fill: var(--map-land); stroke: var(--map-edge); stroke-width: 1.1; }
+      svg .geo-county { fill: none; stroke: var(--map-line); stroke-width: 0.8; opacity: 0.85; }
+      svg .geo-water { fill: var(--map-sea); stroke: none; }
+
+      /* --- Site plan: depth and motion ----------------------------------
+         Motion here is decorative. It carries one fact the page already
+         states in words — that crude arrives from the west and that stock is
+         dispatched from a store to an area — and otherwise represents
+         nothing: not a rate, not live movement, not a measured flow.
+
+         Three rules hold for every animation below:
+           1. Layout anchors never move. Only opacity, stroke-dashoffset and
+              small scales about an element's own centre are animated, never
+              translation and never on a group containing a callout, so the
+              label positions a checker measures are the positions drawn.
+           2. Every element that carries information is fully visible with
+              motion switched off. Any rule that starts an element hidden or
+              undrawn is reset in the prefers-reduced-motion block, not merely
+              stopped: a stopped reveal that never runs is an invisible map.
+           3. Nothing is said only by moving. The receipt line's direction is
+              also given by a static arrowhead and by the "Crude receipt"
+              caption, so a reader with motion off loses no fact. */
+      svg.map .fence {
+        fill: none; stroke: var(--map-fence); stroke-width: 1.6;
+        stroke-dasharray: 9 5; opacity: 0.85;
+      }
+      svg.map .fence-fill { fill: var(--map-ground); stroke: none; }
+      svg.map .area-block {
+        fill: var(--map-area); stroke: var(--map-area-edge); stroke-width: 1;
+        transition: fill 180ms ease;
+      }
+      svg.map .area:hover .area-block { fill: var(--map-area-edge); }
+      svg.map .area-label {
+        font-size: 11px; font-weight: 620; fill: var(--cp-text);
+        paint-order: stroke; stroke: var(--map-ground); stroke-width: 2.6px;
+        stroke-linejoin: round; pointer-events: none;
+      }
+      svg.map .equip-dot { fill: var(--map-area-edge); opacity: 0.55; }
+      svg.map .pipe-base {
+        stroke: var(--map-pipe); stroke-width: 8; stroke-linecap: round; opacity: 0.16;
+      }
+      svg.map .pipe-core {
+        stroke: var(--map-pipe); stroke-width: 2.4; stroke-linecap: round;
+        filter: url(#ds-glow);
+      }
+      svg.map .pipe-flow {
+        stroke: var(--map-pipe); stroke-width: 3.4; stroke-linecap: round;
+        stroke-dasharray: 2 16; opacity: 0.9;
+      }
+      @keyframes ds-flow { to { stroke-dashoffset: -18; } }
+      svg.map .haul {
+        stroke: var(--map-edge); stroke-width: 1.1; stroke-dasharray: 3 5; opacity: 0.5;
+        fill: none;
+      }
+      svg.map .haul-flow {
+        stroke-width: 1.8; stroke-linecap: round; fill: none;
+        stroke-dasharray: 1 11; opacity: 0.75;
+      }
+      /* The dash travels from the store out to the area, the direction a part
+         would move when it is issued. */
+      @keyframes ds-haul { to { stroke-dashoffset: -12; } }
+      svg.map .pulse {
+        fill: none; stroke-width: 1.6;
+        transform-box: fill-box; transform-origin: center;
+        opacity: 0.4;
+      }
+      @keyframes ds-pulse {
+        0% { transform: scale(0.8); opacity: 0.55; }
+        70%, 100% { transform: scale(2.4); opacity: 0; }
+      }
+      svg.map .enter {
+        transform-box: fill-box; transform-origin: center;
+        animation: ds-in 560ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+      }
+      @keyframes ds-in { from { opacity: 0; transform: scale(0.6); } }
+      svg .fade { animation: ds-fade 700ms ease-out both; }
+      @keyframes ds-fade { from { opacity: 0; } }
+      svg.map .draw {
+        stroke-dasharray: 1400; stroke-dashoffset: 1400;
+        animation: ds-draw 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes ds-draw { to { stroke-dashoffset: 0; } }
+
+      svg.map .loc .body {
+        transform-box: fill-box; transform-origin: center;
+        transition: transform 160ms ease, opacity 200ms ease;
+        cursor: pointer;
+      }
+      svg.map:has(.loc:hover) .loc:not(:hover) { opacity: 0.35; }
+      svg.map:has(.loc:hover) .pulse-layer { opacity: 0.2; }
+      svg.map .loc:hover .body { transform: scale(1.3); }
+      svg.map .body:focus-visible { outline: none; stroke: var(--cp-text); stroke-width: 2.8; }
+      svg.map .pulse-layer { transition: opacity 200ms ease; }
+      /* Callouts sit over the ground wash and the area blocks, so each carries
+         its own backing rather than relying on what it lands on. */
+      svg .callout {
+        paint-order: stroke; stroke: var(--map-ground); stroke-width: 2.8px;
+        stroke-linejoin: round; stroke-opacity: 0.9;
+      }
+      svg.inset .callout { stroke: var(--map-land); }
+
+      @media (prefers-reduced-motion: reduce) {
+        svg.map .pipe-flow,
+        svg.map .haul-flow,
+        svg.map .pulse,
+        svg.map .enter,
+        svg .fade,
+        svg.map .draw { animation: none; }
+        /* Reset, not merely stop: each of these starts hidden or undrawn. */
+        svg.map .enter, svg .fade { opacity: 1; transform: none; }
+        svg.map .draw { stroke-dasharray: none; stroke-dashoffset: 0; }
+        svg.map .pulse { opacity: 0.4; }
+        svg.map .loc .body, svg.map .pulse-layer, svg.map .area-block { transition: none; }
+      }
+
+      .bar { height: 9px; border-radius: 999px; background: var(--cp-surface-soft); overflow: hidden; }
+      .bar > i { display: block; height: 100%; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      input[type="search"], select {
+        font: inherit;
+        font-size: 13px;
+        padding: 6px 9px;
+        border-radius: 7px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        color: var(--cp-text);
+      }
+      .err {
+        border: 1px solid var(--cp-warning);
+        background: var(--cp-accent-soft);
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 13.5px;
+      }
+      details summary { cursor: pointer; font-size: 12.5px; color: var(--cp-text-muted); }
+      .fitlist { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; }
+      .split { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      @media (min-width: 900px) { .split { grid-template-columns: 1.05fr 1fr; } }
+      .offsite { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .offsite .card {
+        flex: 1 1 200px;
+        border: 1px dashed var(--cp-border);
+        border-radius: 8px;
+        padding: 9px 11px;
+        background: var(--cp-surface-soft);
+        font-size: 12.5px;
+      }
+      .offsite .card .n { font-weight: 620; font-size: 13px; }
+      .wrap { max-width: 1480px; }
+      header.top .wrap { padding-bottom: 0; }
+      header.top h1 { font-size: clamp(24px, 3vw, 36px); letter-spacing: -0.035em; }
+      section { border-radius: 16px; }
+      a { color: var(--cp-link); }
+      code { font-family: Consolas, "Courier New", Courier, monospace; }
+      button { font: inherit; cursor: pointer; padding: 8px 12px; min-height: 40px; border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface); color: var(--cp-text); }
+      button:hover { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+      button:disabled { cursor: default; opacity: 0.55; }
+      :focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 3px; }
+      .primary { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+      .primary:hover { background: var(--cp-accent-hover); }
+      .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cp-accent); }
+      .hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px; border-top: 4px solid var(--cp-accent); }
+      .hero > div { min-width: 0; }
+      #focus-part { display: block; width: 100%; max-width: 100%; margin: 8px 0 16px; }
+      .hero h2 { font-size: clamp(24px, 3vw, 36px); line-height: 1.15; margin: 8px 0 12px; }
+      .quantity { font-size: clamp(40px, 5vw, 64px); font-weight: 700; letter-spacing: -0.05em; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--cp-accent); }
+      .quantity small { font-size: 18px; letter-spacing: 0; }
+      .hero-focus { background: var(--cp-bg-elevated); padding: 20px; border-radius: 0.625rem; border: 1px solid var(--cp-border); }
+      .hero-focus h3 { margin-top: 0; }
+      .stages { display: grid; grid-template-columns: repeat(6, 1fr); list-style: none; padding: 0; gap: 4px; margin: 20px 0 0; }
+      .stages li { border-top: 3px solid var(--cp-border); padding-top: 8px; font-size: 12px; }
+      .stages [aria-current="step"] { border-color: var(--cp-accent); color: var(--cp-accent); font-weight: 700; }
+      .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+      .workspace > section, .workspace > aside { min-width: 0; }
+      .location-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 200px; overflow: auto; padding: 4px; }
+      .location-list button { text-align: left; flex: 1 1 160px; }
+      button[aria-pressed="true"] { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+      .location-list small { display: block; color: var(--cp-text-muted); }
+      .table-scroll { overflow-x: auto; }
+      .workspace .table-scroll { max-height: 480px; overflow: auto; }
+      .workspace .table-scroll th { position: sticky; top: 0; background: var(--cp-surface); }
+      #stock-body button { text-align: left; padding: 4px 8px; }
+      .status { display: inline-block; border: 1px solid var(--cp-border); border-radius: 0.625rem; padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+      .status.low, .status.out_of_stock { border-color: var(--cp-danger); }
+      .status.unknown { border-style: dashed; }
+      .controls label { display: grid; gap: 4px; font-size: 12px; color: var(--cp-text-muted); }
+      .controls input, .controls select { min-height: 40px; max-width: 100%; }
+      .controls label:first-child { flex: 1 1 220px; }
+      .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .detail-grid dt { font-size: 12px; color: var(--cp-text-muted); }
+      .detail-grid dd { margin: 0; overflow-wrap: anywhere; }
+      .history-list { padding-left: 20px; max-height: 250px; overflow: auto; font-size: 13px; }
+      .history-list li { margin-bottom: 8px; }
+      .section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+      .site-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
+      .site-layout .location-list { display: grid; max-height: 480px; }
+      svg.map .body[data-selected="true"] { fill: var(--cp-accent); stroke: var(--cp-accent); stroke-width: 3; }
+      #part-detail, #location-detail { overflow-wrap: anywhere; }
+      .stock-count { font-variant-numeric: tabular-nums; }
+      .summary-detail { margin-top: 16px; border-top: 1px solid var(--cp-border); padding-top: 12px; }
+      .summary-detail > summary { font-size: 14px; color: var(--cp-text); font-weight: 600; }
+      .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      @media (max-width: 1000px) { .workspace, .site-layout { grid-template-columns: 1fr; } .site-layout .location-list { display: flex; max-height: 220px; } }
+      @media (max-width: 650px) { .wrap { padding-left: 12px; padding-right: 12px; } section { padding: 16px; } .hero, .history-grid { grid-template-columns: 1fr; } .stages { grid-template-columns: repeat(3, 1fr); gap: 12px; } .detail-grid { grid-template-columns: 1fr; } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+      .domain-nav { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+      .domain-nav a { color: var(--cp-link); }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <div class="eyebrow">Downstream · Local review</div>
+        <h1>Downstream Refinery Inventory Studio</h1>
+        <p>
+          A fictional refinery. Real clarity about parts, process areas and stock movement.
+          Synthetic demonstration only — not connected to Azure.
+        </p>
+        <nav class="domain-nav" aria-label="Domain navigation">
+          <a href="/">All domains</a>
+          <a href="/downstream">Downstream refinery</a>
+          <a href="/downstream/review/inventory" aria-current="page">Downstream refinery inventory</a>
+          <a href="/downstream/portfolio">Downstream product portfolio</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap" id="root">
+      <p class="muted">Loading inventory…</p>
+    </main>
+
+    <script src="/downstream/review/inventory/studio.js"></script>
+    <script>
+      // On-site store types, in the order they are listed and coloured. Kept
+      // as one list so the map, the legend and the bars cannot disagree.
+      const SITE_TIERS = [
+        "central_warehouse",
+        "satellite_crib",
+        "climate_store",
+        "lubricant_store",
+        "flammable_store",
+        "cylinder_cage",
+        "preservation_bay",
+        "laydown_yard",
+        "shop_bench",
+      ];
+      const OFFSITE_TIERS = [
+        "regional_distribution_centre",
+        "vendor_consignment",
+        "repair_vendor",
+        "oem",
+      ];
+      const ALL_TIERS = [...SITE_TIERS, ...OFFSITE_TIERS];
+
+      // The regional inset's own state. The basemap is fetched beside the data
+      // and is optional: if it never arrives the site plan is unaffected and
+      // the inset says so rather than drawing a bare box.
+      const MAP = { basemap: null, data: null };
+
+      const esc = (value) =>
+        String(value ?? "").replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+        );
+      const humanize = (value) =>
+        String(value ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const tierColor = (type) =>
+        ALL_TIERS.includes(type) ? `var(--t-${type})` : "var(--t-oem)";
+      // Absence must never render as a zero.
+      const num = (value) =>
+        value === null || value === undefined
+          ? '<span class="none">unknown</span>'
+          : Number(value).toLocaleString();
+
+      // Nullish coerces to 0 through Number(), so it is rejected before
+      // coercion rather than silently drawn at the origin. Off-site rows carry
+      // null coordinates by design, and this is what keeps them off the plan
+      // instead of stacking them in the south-west corner.
+      function numOrNull(value) {
+        if (value === null || value === undefined || value === "") return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      // Round up to the next 1, 2 or 5 times a power of ten, so a scale bar
+      // lands on a figure a reader can hold in their head.
+      function niceCeil(value) {
+        if (!(value > 0)) return 1;
+        const pow = Math.pow(10, Math.floor(Math.log10(value)));
+        const unit = value / pow;
+        return (unit <= 1 ? 1 : unit <= 2 ? 2 : unit <= 5 ? 5 : 10) * pow;
+      }
+
+      /* ---------------------------------------------------------------
+         The site plan.
+
+         A refinery is a fenced site, so the subject here is a plan, not a
+         corridor: a rectangle a little over a kilometre across, with the
+         process areas laid out inside it and the stores placed among them.
+         Everything is drawn in site metres at one isotropic scale, so a
+         centimetre on the screen means the same distance anywhere in the
+         picture.
+
+         The plan is fictional and always was. No latitude, longitude or
+         address is published for any of it, and no marker identifies a real
+         facility. Area blocks are not asserted footprints: each is the
+         bounding box of the equipment the dataset places in that area, so the
+         block is a summary of drawn rows rather than a separate claim that
+         could contradict them.
+      --------------------------------------------------------------- */
+      function areaBoxes(data) {
+        const byArea = new Map();
+        (data.equipment || []).forEach((item) => {
+          const x = numOrNull(item.site_x_m);
+          const y = numOrNull(item.site_y_m);
+          if (x === null || y === null) return;
+          const entry = byArea.get(item.area_id) || {
+            area_id: item.area_id,
+            area_name: item.area_name,
+            xs: [],
+            ys: [],
+          };
+          entry.xs.push(x);
+          entry.ys.push(y);
+          byArea.set(item.area_id, entry);
+        });
+        return [...byArea.values()]
+          .map((entry) => {
+            // A pad so an area holding a single item is still a readable
+            // block rather than a zero-width line. It is drawing margin, not
+            // an assertion about the area's real size, and the page says so.
+            const pad = 26;
+            return {
+              area_id: entry.area_id,
+              area_name: entry.area_name,
+              count: entry.xs.length,
+              minX: Math.min(...entry.xs) - pad,
+              maxX: Math.max(...entry.xs) + pad,
+              minY: Math.min(...entry.ys) - pad,
+              maxY: Math.max(...entry.ys) + pad,
+            };
+          })
+          .sort((a, b) => String(a.area_id).localeCompare(String(b.area_id)));
+      }
+
+      function drawMap(data) {
+        const W = 1120;
+        const H = 620;
+        const fence = data.site_fence_m || {};
+        const fenceW = numOrNull(fence.width);
+        const fenceD = numOrNull(fence.depth);
+        const boxes = areaBoxes(data);
+
+        // Locations without a site position are not drawable. Off-site rows
+        // are expected to be among them; they are named in the off-site rail
+        // beneath the plan rather than dropped in silence.
+        const unplaced = [];
+        const placeable = (data.locations || []).filter((loc) => {
+          const ok =
+            numOrNull(loc.site_x_m) !== null && numOrNull(loc.site_y_m) !== null;
+          if (!ok) unplaced.push(loc);
+          return ok;
+        });
+
+        // The extent covers the fence when it is known and every drawn row
+        // regardless, so a marker can never fall outside the frame silently.
+        const xs = [
+          ...(fenceW !== null ? [0, fenceW] : []),
+          ...placeable.map((l) => Number(l.site_x_m)),
+          ...boxes.flatMap((b) => [b.minX, b.maxX]),
+        ];
+        const ys = [
+          ...(fenceD !== null ? [0, fenceD] : []),
+          ...placeable.map((l) => Number(l.site_y_m)),
+          ...boxes.flatMap((b) => [b.minY, b.maxY]),
+        ];
+        if (!xs.length || !ys.length) {
+          return `<svg class="map" viewBox="0 0 ${W} 120" role="img" aria-label="No site position is published for any row, so no plan can be drawn."><text x="16" y="60" font-size="13" fill="var(--cp-text-muted)">No site position is published for any row, so no plan can be drawn. This is unknown, not empty.</text></svg>`;
+        }
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const pad = { l: 46, r: 46, t: 64, b: 68 };
+        const spanX = Math.max(maxX - minX, 1);
+        const spanY = Math.max(maxY - minY, 1);
+        // One scale for both axes. Anisotropic fitting would make the picture
+        // fill the box and would make every distance in it a lie.
+        const k = Math.min(
+          (W - pad.l - pad.r) / spanX,
+          (H - pad.t - pad.b) / spanY
+        );
+        const originX = (pad.l + W - pad.r) / 2 - ((minX + maxX) / 2) * k;
+        // Site y increases north; SVG y increases downward, so it is negated
+        // once, here, and nowhere else.
+        const originY = (pad.t + H - pad.b) / 2 + ((minY + maxY) / 2) * k;
+        const X = (m) => originX + m * k;
+        const Y = (m) => originY - m * k;
+        const extentM = (W - pad.l - pad.r) / k;
+
+        const parts = [];
+        parts.push(
+          `<svg class="map" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(
+            `Plan of a fictional refinery site about ${Math.round(spanX)} by ` +
+              `${Math.round(spanY)} metres, showing ${boxes.length} process areas, ` +
+              `${(data.equipment || []).length} items of equipment and ` +
+              `${placeable.length} on-site storerooms. ` +
+              `${unplaced.length} further locations are off site and carry no ` +
+              `coordinate at all, so they are listed beneath the plan instead of ` +
+              `being drawn. Both axes use the same linear metre scale. Area blocks ` +
+              `are the bounding box of the equipment placed in each area, not an ` +
+              `asserted footprint. The site, its areas, its equipment and every ` +
+              `storeroom on it are fictional; no marker identifies a real facility, ` +
+              `and any coincidence with one is unintended. Movement in the drawing ` +
+              `is decorative: crude receipt runs from the west edge, which the ` +
+              `Crude receipt caption and a static arrowhead also state.`
+          )}">`
+        );
+
+        parts.push(
+          `<defs>
+             <linearGradient id="ds-sky" x1="0" y1="0" x2="0" y2="1">
+               <stop offset="0" stop-color="var(--cp-surface)" stop-opacity="0.9" />
+               <stop offset="0.45" stop-color="var(--map-ground)" stop-opacity="0.4" />
+               <stop offset="1" stop-color="var(--map-ground)" stop-opacity="0.95" />
+             </linearGradient>
+             <filter id="ds-glow" x="-8%" y="-400%" width="116%" height="900%">
+               <feGaussianBlur stdDeviation="3.2" result="b" />
+               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+             </filter>
+             <filter id="ds-pin" x="-60%" y="-60%" width="220%" height="220%">
+               <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" flood-opacity="0.28" />
+             </filter>
+             <marker id="ds-arrow" viewBox="0 0 10 10" refX="8" refY="5"
+                     markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+               <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--map-pipe)" />
+             </marker>
+           </defs>`,
+          `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#ds-sky)" />`
+        );
+
+        // The fence. Drawn from the generator's own site dimensions, so the
+        // boundary cannot drift from the frame the coordinates came from.
+        if (fenceW !== null && fenceD !== null) {
+          parts.push(
+            `<rect class="fence-fill fade" x="${X(0).toFixed(1)}" y="${Y(fenceD).toFixed(
+              1
+            )}" width="${(fenceW * k).toFixed(1)}" height="${(fenceD * k).toFixed(
+              1
+            )}" rx="4" />`,
+            `<rect class="fence draw" x="${X(0).toFixed(1)}" y="${Y(fenceD).toFixed(
+              1
+            )}" width="${(fenceW * k).toFixed(1)}" height="${(fenceD * k).toFixed(
+              1
+            )}" rx="4" />`,
+            `<text class="callout" x="${X(0).toFixed(1)}" y="${(Y(fenceD) - 8).toFixed(
+              1
+            )}" font-size="10.5" fill="var(--cp-text-muted)">Site boundary &#8212; ${Math.round(
+              fenceW
+            )} &#215; ${Math.round(fenceD)} m (fictional)</text>`
+          );
+        }
+
+        // Crude receipt. The direction is a fact the dataset carries — the
+        // site sits at the delivery end of the midstream corridor, to its west
+        // — but the pipeline's route across the last few hundred metres is
+        // not published, so the line is drawn to the western edge of the
+        // receipt area and captioned as schematic rather than surveyed.
+        const receipt = boxes.find((b) => b.area_id === "A01") || boxes[0];
+        if (receipt) {
+          const ry = (receipt.minY + receipt.maxY) / 2;
+          const x1 = X(minX) - 4;
+          const x2 = X(receipt.minX);
+          parts.push(
+            `<line class="pipe-base" x1="${x1.toFixed(1)}" y1="${Y(ry).toFixed(
+              1
+            )}" x2="${x2.toFixed(1)}" y2="${Y(ry).toFixed(1)}" />`,
+            `<line class="pipe-core draw" x1="${x1.toFixed(1)}" y1="${Y(ry).toFixed(
+              1
+            )}" x2="${x2.toFixed(1)}" y2="${Y(ry).toFixed(
+              1
+            )}" marker-end="url(#ds-arrow)" />`,
+            `<line class="pipe-flow" x1="${x1.toFixed(1)}" y1="${Y(ry).toFixed(
+              1
+            )}" x2="${x2.toFixed(1)}" y2="${Y(ry).toFixed(1)}" />`,
+            `<text class="callout" x="${(x1 + 2).toFixed(1)}" y="${(Y(ry) - 10).toFixed(
+              1
+            )}" font-size="10.5" fill="var(--cp-text-muted)">Crude receipt, by pipeline from the west (schematic)</text>`
+          );
+        }
+
+        // Process areas, as the bounding box of their own equipment.
+        boxes.forEach((box, index) => {
+          const w = (box.maxX - box.minX) * k;
+          const h = (box.maxY - box.minY) * k;
+          parts.push(
+            `<g class="area fade" style="animation-delay:${(index * 45).toFixed(
+              0
+            )}ms"><title>${esc(
+              `${box.area_id} ${box.area_name} — ${box.count} equipment item${
+                box.count === 1 ? "" : "s"
+              }`
+            )}</title>`,
+            `<rect class="area-block" x="${X(box.minX).toFixed(1)}" y="${Y(
+              box.maxY
+            ).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="6" />`,
+            `<text class="area-label" x="${(X(box.minX) + 6).toFixed(1)}" y="${(
+              Y(box.maxY) + 14
+            ).toFixed(1)}">${esc(box.area_id)}</text>`,
+            `</g>`
+          );
+        });
+
+        // Equipment, as faint dots. They are the texture of the plan and the
+        // evidence behind every area block; the tables carry them as text.
+        (data.equipment || []).forEach((item) => {
+          const x = numOrNull(item.site_x_m);
+          const y = numOrNull(item.site_y_m);
+          if (x === null || y === null) return;
+          parts.push(
+            `<circle class="equip-dot" cx="${X(x).toFixed(1)}" cy="${Y(y).toFixed(
+              1
+            )}" r="1.7"><title>${esc(
+              `${item.equipment_tag} — ${humanize(item.equipment_class)}`
+            )}</title></circle>`
+          );
+        });
+
+        // Pulses are collected and emitted in one layer beneath every marker
+        // and callout, so a growing ring can never paint over a label
+        // belonging to another storeroom.
+        const pulses = [];
+        const pulseSlot = parts.length;
+        parts.push("");
+
+        // Haul lines from the central warehouse to each area, drawn only from
+        // the one store that serves the whole site. Drawing all 168 travel
+        // rows would be a grey wash rather than a picture.
+        const hub = placeable.find((l) => l.location_type === "central_warehouse");
+        if (hub) {
+          const hx = X(Number(hub.site_x_m));
+          const hy = Y(Number(hub.site_y_m));
+          boxes.forEach((box) => {
+            const cx = X((box.minX + box.maxX) / 2);
+            const cy = Y((box.minY + box.maxY) / 2);
+            parts.push(
+              `<line class="haul" x1="${hx.toFixed(1)}" y1="${hy.toFixed(
+                1
+              )}" x2="${cx.toFixed(1)}" y2="${cy.toFixed(1)}" />`,
+              `<line class="haul-flow" x1="${hx.toFixed(1)}" y1="${hy.toFixed(
+                1
+              )}" x2="${cx.toFixed(1)}" y2="${cy.toFixed(
+                1
+              )}" stroke="${tierColor("central_warehouse")}" />`
+            );
+          });
+        }
+
+        // Storerooms. Records that share a point are grouped and listed rather
+        // than drawn on top of one another, so a marker is never a silent
+        // stack of several.
+        const groups = new Map();
+        placeable.forEach((loc) => {
+          const key = `${Number(loc.site_x_m).toFixed(2)}|${Number(
+            loc.site_y_m
+          ).toFixed(2)}`;
+          const entry = groups.get(key) || { x: Number(loc.site_x_m), y: Number(loc.site_y_m), rows: [] };
+          entry.rows.push(loc);
+          groups.set(key, entry);
+        });
+
+        // Callout placement.
+        //
+        // The cold-zone stores sit shoulder to shoulder along the north edge,
+        // so a label printed at a fixed offset from every marker would collide
+        // with its neighbours and the reader would be left with two codes
+        // overprinted into an unreadable smear. Each label is therefore tried
+        // in turn at several offsets around its own marker and kept at the
+        // first that lands clear of everything already placed.
+        //
+        // A label that fits nowhere is dropped rather than overprinted, and
+        // the count of dropped labels is declared on the map. Dropping is a
+        // legitimate outcome — the store is still reachable through its marker
+        // tooltip and is still listed in full in the table below — but it must
+        // never be a silent one.
+        const placed = [];
+        // Space the map has already spent. A label printed under the scale bar
+        // or over an area code is not a placed label.
+        const reserve = (left, top, right, bottom) =>
+          placed.push({ left, top, right, bottom });
+        const textW = (text) => text.length * 6.6;
+        reserve(W - 150, 8, W - 60, 40); // scale bar and its caption
+        reserve(0, H - 22, W, H); // the fictional-site footer
+        boxes.forEach((box) => {
+          const lx = X(box.minX) + 6;
+          const ly = Y(box.maxY) + 14;
+          reserve(lx, ly - 9, lx + textW(box.area_id), ly + 3);
+        });
+
+        const fits = (box) => {
+          if (box.left < 1 || box.right > W - 1 || box.top < 1 || box.bottom > H - 1) {
+            return false;
+          }
+          return !placed.some(
+            (other) =>
+              box.left < other.right - 1 &&
+              other.left < box.right - 1 &&
+              box.top < other.bottom - 1 &&
+              other.top < box.bottom - 1
+          );
+        };
+
+        let dropped = 0;
+        const markerRows = [...groups.values()].sort((a, b) => a.x - b.x || a.y - b.y);
+        const drawn = markerRows.map((group, index) => {
+          const cx = X(group.x);
+          const cy = Y(group.y);
+          const r = group.rows.length > 1 ? 8 : 6;
+          const label =
+            group.rows.length > 1
+              ? `${group.rows.length} stores`
+              : group.rows[0].location_code;
+          const w = textW(label);
+          // Right, left, above, below, then the four diagonals. Anchoring is
+          // recorded with the offset so a left-hand label is measured from the
+          // same edge the browser will draw it from.
+          const candidates = [
+            { dx: r + 4, dy: 3.5, anchor: "start" },
+            { dx: -(r + 4), dy: 3.5, anchor: "end" },
+            { dx: 0, dy: -(r + 6), anchor: "middle" },
+            { dx: 0, dy: r + 13, anchor: "middle" },
+            { dx: r + 4, dy: -(r + 4), anchor: "start" },
+            { dx: -(r + 4), dy: -(r + 4), anchor: "end" },
+            { dx: r + 4, dy: r + 12, anchor: "start" },
+            { dx: -(r + 4), dy: r + 12, anchor: "end" },
+          ];
+          for (const candidate of candidates) {
+            const x = cx + candidate.dx;
+            const y = cy + candidate.dy;
+            const left =
+              candidate.anchor === "end"
+                ? x - w
+                : candidate.anchor === "middle"
+                ? x - w / 2
+                : x;
+            const box = { left, top: y - 9, right: left + w, bottom: y + 3 };
+            if (fits(box)) {
+              placed.push(box);
+              return { group, cx, cy, r, label, index, x, y, anchor: candidate.anchor };
+            }
+          }
+          dropped += 1;
+          return { group, cx, cy, r, label, index, x: null, y: null, anchor: null };
+        });
+
+        drawn.forEach((item) => {
+          const { group, cx, cy, r, index } = item;
+          const lead = group.rows[0];
+          const colour = tierColor(lead.location_type);
+          pulses.push(
+            `<circle class="pulse" cx="${cx.toFixed(1)}" cy="${cy.toFixed(
+              1
+            )}" r="${r}" stroke="${colour}" style="animation-delay:${(
+              index * 240
+            ).toFixed(0)}ms" />`
+          );
+          const title = group.rows
+            .map(
+              (row) =>
+                `${row.location_code} — ${row.location_name} (${humanize(
+                  row.location_type
+                )})`
+            )
+            .join("\n");
+          parts.push(
+            `<g class="loc enter" style="animation-delay:${(index * 60).toFixed(
+              0
+            )}ms">`,
+            `<circle class="body" tabindex="0" role="button" aria-label="${esc(title)}" data-locations="${esc(JSON.stringify(group.rows.map(row => row.location_id)))}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(
+              1
+            )}" r="${r}" fill="${colour}" stroke="var(--map-ground)" stroke-width="1.6" filter="url(#ds-pin)"><title>${esc(
+              title
+            )}</title></circle>`,
+            group.rows.length > 1
+              ? `<text x="${cx.toFixed(1)}" y="${(cy + 3.2).toFixed(
+                  1
+                )}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--map-ground)" pointer-events="none">${
+                  group.rows.length
+                }</text>`
+              : "",
+            item.x === null
+              ? ""
+              : `<text class="callout" x="${item.x.toFixed(1)}" y="${item.y.toFixed(
+                  1
+                )}" text-anchor="${item.anchor}" font-size="10.5" fill="var(--cp-text)">${esc(
+                  item.label
+                )}</text>`,
+            `</g>`
+          );
+        });
+
+        if (dropped) {
+          parts.push(
+            `<text x="8" y="${
+              H - 22
+            }" font-size="10.5" fill="var(--cp-text-muted)">${dropped} callout${
+              dropped === 1 ? "" : "s"
+            } could not be placed clear and ${
+              dropped === 1 ? "is" : "are"
+            } not labelled here; every store is named in its marker tooltip and in the table below.</text>`
+          );
+        }
+
+        parts[pulseSlot] = `<g class="pulse-layer" aria-hidden="true">${pulses.join(
+          ""
+        )}</g>`;
+
+        // Scale bar, in metres, derived from the same k as everything else.
+        const barM = Math.max(niceCeil(extentM / 5), 1);
+        const barPx = barM * k;
+        const barY = 30;
+        const barX = W - 74 - barPx;
+        parts.push(
+          `<g class="scalebar" aria-hidden="true">
+             <line x1="${barX.toFixed(1)}" y1="${barY}" x2="${(barX + barPx).toFixed(
+            1
+          )}" y2="${barY}" stroke="var(--cp-text-muted)" stroke-width="1.6" />
+             <line x1="${barX.toFixed(1)}" y1="${barY - 4}" x2="${barX.toFixed(
+            1
+          )}" y2="${barY + 4}" stroke="var(--cp-text-muted)" stroke-width="1.6" />
+             <line x1="${(barX + barPx).toFixed(1)}" y1="${barY - 4}" x2="${(
+            barX + barPx
+          ).toFixed(1)}" y2="${
+            barY + 4
+          }" stroke="var(--cp-text-muted)" stroke-width="1.6" />
+             <text x="${(barX + barPx / 2).toFixed(1)}" y="${
+            barY - 8
+          }" text-anchor="middle" font-size="10.5" fill="var(--cp-text-muted)">${barM.toLocaleString()} m</text>
+           </g>`
+        );
+
+        parts.push(
+          `<text x="8" y="${
+            H - 8
+          }" font-size="10.5" fill="var(--cp-text-muted)">The site, its areas, its equipment and every storeroom on it are fictional: no marker identifies a real facility, and any coincidence with one is unintended.</text>`
+        );
+        parts.push("</svg>");
+        return parts.join("");
+      }
+
+      /* ---------------------------------------------------------------
+         The regional inset.
+
+         The site plan says where things are inside the fence. It says nothing
+         about where the fence is, and the distances that matter to an off-site
+         part are regional. The inset answers that by drawing the same
+         public-domain US Census geography the midstream corridor map draws,
+         from the same cached file, with the site footprint marked on it in the
+         shared planar grid frame the dataset publishes.
+
+         The geography is real. The refinery is not. Placing a fictional
+         footprint on real land is a drawing decision, not a claim that a
+         refinery is there.
+      --------------------------------------------------------------- */
+      function drawInset(data) {
+        const base = MAP.basemap;
+        const W = 520;
+        const H = 300;
+        if (!base) {
+          return `<p class="none">The regional background could not be loaded, so
+            the site is not shown in its regional frame. The site plan above is
+            unaffected: it is drawn in site metres and needs no basemap.</p>`;
+        }
+        const pts = (data.locations || [])
+          .map((l) => ({ e: numOrNull(l.grid_east_km), n: numOrNull(l.grid_north_km) }))
+          .filter((p) => p.e !== null && p.n !== null);
+        if (!pts.length) {
+          return `<p class="none">No row carries a position in the shared planar
+            grid, so the site cannot be placed in its regional frame. This is
+            unknown, not zero.</p>`;
+        }
+        const siteE = [Math.min(...pts.map((p) => p.e)), Math.max(...pts.map((p) => p.e))];
+        const siteN = [Math.min(...pts.map((p) => p.n)), Math.max(...pts.map((p) => p.n))];
+        const cE = (siteE[0] + siteE[1]) / 2;
+        const cN = (siteN[0] + siteN[1]) / 2;
+        // A window wide enough to show the coast the site sits back from.
+        const halfKm = 26;
+        const pad = { l: 10, r: 10, t: 34, b: 30 };
+        const k = Math.min(
+          (W - pad.l - pad.r) / (halfKm * 2),
+          (H - pad.t - pad.b) / (halfKm * 2)
+        );
+        // The basemap's axes are kilometres east and kilometres *south* of the
+        // corridor origin, matching SVG's downward y. The dataset gives north,
+        // so it is negated once, here, and nowhere else.
+        const originX = (pad.l + W - pad.r) / 2 - cE * k;
+        const originY = (pad.t + H - pad.b) / 2 - -cN * k;
+        const X = (e) => originX + e * k;
+        const Y = (n) => originY + -n * k;
+
+        const layer = (d, cls) =>
+          d ? `<path class="${cls}" d="${d}" vector-effect="non-scaling-stroke" />` : "";
+        const out = [];
+        out.push(
+          `<svg class="inset fade" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(
+            `Regional view about ${halfKm * 2} kilometres across, showing the real ` +
+              `public-domain US Census land, county and water outlines for the ` +
+              `${base.setting || base.region || "coast"}, with the fictional refinery ` +
+              `site marked on them. The geography is real; the refinery is not, and ` +
+              `no marker identifies a real facility.`
+          )}">`,
+          `<rect x="0" y="0" width="${W}" height="${H}" fill="var(--map-sea)" />`,
+          `<g class="basemap" transform="translate(${originX.toFixed(
+            3
+          )} ${originY.toFixed(3)}) scale(${k.toFixed(6)})" aria-hidden="true">`,
+          layer(base.context, "geo-context"),
+          layer(base.outline, "geo-outline"),
+          layer(base.counties, "geo-county"),
+          layer(base.water, "geo-water"),
+          `</g>`
+        );
+        // The footprint is tiny at this extent, so it is marked as well as
+        // drawn: a ring the reader can actually see, around a box that is the
+        // true size. The box is the fact; the ring is a pointer to it.
+        const w = Math.max((siteE[1] - siteE[0]) * k, 2);
+        const h = Math.max((siteN[1] - siteN[0]) * k, 2);
+        out.push(
+          `<circle cx="${X(cE).toFixed(1)}" cy="${Y(cN).toFixed(
+            1
+          )}" r="15" fill="none" stroke="var(--cp-accent)" stroke-width="1.4" opacity="0.75" />`,
+          `<rect x="${X(siteE[0]).toFixed(1)}" y="${Y(siteN[1]).toFixed(
+            1
+          )}" width="${w.toFixed(1)}" height="${h.toFixed(
+            1
+          )}" fill="var(--cp-accent)" stroke="var(--cp-accent)" stroke-width="1" />`,
+          `<text class="callout" x="${(X(cE) + 20).toFixed(1)}" y="${(
+            Y(cN) + 4
+          ).toFixed(
+            1
+          )}" font-size="11" fill="var(--cp-text)">Refinery site (fictional)</text>`,
+          `<text x="10" y="18" font-size="10.5" fill="var(--cp-text-muted)">Real public-domain geography; the site drawn on it is fictional.</text>`,
+          `<text x="10" y="${
+            H - 8
+          }" font-size="10" fill="var(--cp-text-muted)">Simplified for display. Not for navigation, surveying or any operational decision.</text>`,
+          `</svg>`
+        );
+        return out.join("");
+      }
+
+      function legend(data) {
+        const present = new Set((data.locations || []).map((l) => l.location_type));
+        const chips = ALL_TIERS.filter((t) => present.has(t))
+          .map(
+            (t) =>
+              `<span><i style="background:${tierColor(t)}"></i>${esc(humanize(t))}</span>`
+          )
+          .join("");
+        return `<div class="legend">${chips}
+          <span><i style="background:var(--map-pipe)"></i>Crude receipt</span>
+          <span><p>Area blocks are the bounding box of the equipment the dataset
+          places in each area, plus a small drawing margin. They are a summary of
+          the rows below, not an asserted plot boundary, and no block is a
+          surveyed footprint.</p></span>
+          <span><p>A marker carrying a number holds that many storerooms at one
+          point, named in its tooltip and in the table below.</p></span>
+          <span><p>Off-site locations carry no coordinate at all. They are listed
+          beneath the plan rather than drawn on it, because putting them
+          somewhere would invent a position the dataset does not have.</p></span>
+          <span><p>The receipt and issue paths are static, decorative context,
+          not a live position, rate or measured flow. Playback changes quantities
+          only after Play or Step; it never moves the site geometry. Reduced
+          motion disables nonessential transitions.</p></span></div>`;
+      }
+
+      function render(data) {
+        const root = document.getElementById("root");
+        const html = [];
+        html.push(
+          `<div class="banner"><strong>Local only.</strong> Every part, location,
+           position and quantity here is fictional and synthetic. Nothing is a
+           real part number, a real place or an operational stock position.
+           Alerts are local demo events — no Azure connection, no notifications,
+           no operational decisions or stocking-policy recommendations.</div>`
+        );
+        html.push(`<section class="hero" aria-labelledby="demo-title">
+          <div><div class="eyebrow">Depletion → exception → replenishment</div>
+            <h2 id="demo-title">Follow a part.<br>See the shortage happen.</h2>
+            <p class="sub">Six deterministic frames. Equal to the per-position demo
+              threshold: no new alert. Below: fired. Empty: the same episode.
+              Replenishment resolves it. Follow the quantities in the selected part's UoM.</p>
+            <div class="controls">
+              <button class="primary" id="play" type="button">Play</button>
+              <button id="step" type="button">Step</button><button id="reset" type="button">Reset</button>
+              <label>Frame interval<select id="speed"><option value="500">0.5 seconds</option><option value="1000" selected>1 second</option><option value="2000">2 seconds</option><option value="4000">4 seconds</option></select></label>
+            </div>
+            <p id="playback-state" class="sub" role="status"></p>
+            <ol id="stages" class="stages"></ol>
+          </div>
+          <div class="hero-focus"><label for="focus-part">Demo focus · part + location</label>
+            <select id="focus-part"></select><h3 id="focus-name"></h3>
+            <div class="quantity" id="focus-quantity"></div>
+            <p id="focus-status"></p><p id="focus-narrative" class="sub"></p>
+            <button id="focus-location" type="button">Inspect this location</button>
+          </div>
+        </section>`);
+        html.push(`<div class="workspace">
+          <section aria-labelledby="stock-heading">
+            <div class="section-heading"><div><div class="eyebrow">Current frame · shortage first</div>
+              <h2 id="stock-heading">Stock workspace</h2></div><span id="stock-count" class="stock-count"></span></div>
+            <div class="controls">
+              <label>Search parts<input type="search" id="q" placeholder="Name, part key or stock code"></label>
+              <label>Demo stock status<select id="stock-status"><option value="">All statuses</option><option value="out_of_stock">Out of stock</option><option value="low">Below demo threshold</option><option value="healthy">At / above demo threshold</option><option value="unknown">Unknown</option></select></label>
+              <label>Criticality<select id="crit"><option value="">All criticality</option><option value="V">V — vital</option><option value="E">E — essential</option><option value="D">D — desirable</option></select></label>
+            </div>
+            <div class="section-heading"><span id="location-scope"></span><button id="clear-location" type="button">All locations</button></div>
+            <p class="sub">Quantities keep their own UoM; no mixed-unit total.
+              Serialized spares below the threshold are demo-rule matches, not evidence
+              of an unsafe stock level or a recommended stocking policy.</p>
+            <div class="table-scroll"><table id="stock"><thead><tr><th>Part / class</th><th>Location</th><th>Current quantity</th><th>Demo status</th></tr></thead><tbody id="stock-body"></tbody></table></div>
+          </section>
+          <aside><section aria-labelledby="detail-heading"><div class="eyebrow">Part × location</div><h2 id="detail-heading">Inspect the position</h2><div id="part-detail"></div></section>
+            <section><h2>Local alert context</h2><div id="alert-summary"></div><p class="sub">All-stock active count; filters do not suppress alerts. Select an alert to inspect its position.</p><ol id="active-alerts" class="history-list"></ol></section>
+          </aside>
+        </div>`);
+        html.push(`<section>
+          <div class="section-heading"><div><div class="eyebrow">Site context · fixed metre geometry</div><h2>Find the storeroom. Understand its process context.</h2></div><span>${num((data.equipment || []).length)} equipment · ${num((data.areas || []).length)} process areas</span></div>
+          <p class="sub">Select a map marker or location below to scope the stock
+            workspace. The fictional site uses one isotropic metre scale.
+            Map counts mean storerooms, never a sum of incompatible stock units.</p>
+          <div class="site-layout"><div><div class="mapwrap" id="mapwrap">${drawMap(data)}</div>
+              <details class="summary-detail"><summary>Map meaning and location types</summary>${legend(data)}</details></div>
+            <div><h3>On-site storerooms</h3><div id="onsite-rail" class="location-list"></div></div></div>
+          <h3>Off-site sources · no site coordinates</h3><p class="sub">Regional, vendor and repair stock is not placed outside the fence: its coordinates are unknown, not zero.</p>
+          <div id="offsite-rail" class="location-list"></div>
+          <div id="location-detail" class="summary-detail"></div>
+          <details class="summary-detail"><summary>Regional inset and coordinate provenance</summary>
+            <p class="sub">Site frame <code>${esc(data.site_frame)}</code>; shared planar frame
+              <code>${esc(data.grid_frame)}</code>; position claim <code>${esc(data.position_claim)}</code>.
+              Real, simplified public-domain geography; fictional facility.
+              Not for navigation, surveying or operational decisions.</p>
+            <div class="mapwrap" id="insetwrap">${drawInset(data)}</div>
+          </details>
+        </section>`);
+        html.push(`<section>
+          <h2>Movement and alert history</h2><p class="sub">All stock positions, accumulated through the current frame only. Reset returns to the opening frame, including any opening demo alerts.</p>
+          <div class="history-grid"><div><h3 id="movement-count"></h3><ol id="movements" class="history-list"></ol></div><div><h3 id="alert-count"></h3><ol id="alerts" class="history-list"></ol></div></div>
+        </section>`);
+        html.push(`<section>
+          <details><summary>Process areas and equipment register</summary>
+          <p class="sub">The equipment register is local-only and sits beneath
+            the published area assets: each row names its parent asset, so the
+            register refines the published catalogue rather than contradicting
+            it. Counts here are derived from the rows themselves, so they cannot
+            drift from the plan above.</p>
+          <div class="table-scroll"><table><thead><tr>
+            <th>Area</th><th class="num">Equipment</th><th class="num">Critical</th>
+            <th class="num">Spared</th><th class="num">Classes</th><th>Equipment classes</th>
+          </tr></thead><tbody>${(data.areas || [])
+            .map(
+              (area) => `<tr>
+              <td><strong>${esc(area.area_id)}</strong><br /><span class="muted">${esc(
+                area.area_name
+              )}</span></td>
+              <td class="num">${num(area.equipment_count)}</td>
+              <td class="num">${num(area.critical_count)}</td>
+              <td class="num">${num(area.spared_count)}</td>
+              <td class="num">${num(area.class_count)}</td>
+              <td class="muted">${(area.equipment_classes || [])
+                .map((c) => esc(humanize(c)))
+                .join(", ")}</td>
+            </tr>`
+            )
+            .join("")}</tbody></table></div></details>
+        </section>`);
+        html.push(`<section>
+          <details><summary>Browse full catalogue and fitment</summary>
+          <p class="sub">${num((data.parts || []).length)} catalogued parts. A part with no fitment
+            row is still catalogued: absence of fitment is a fact, not a zero.
+            Site-wide consumables legitimately fit no single equipment class.</p>
+          <p class="sub">Search and criticality follow the workspace filters above. Totals below are for each part only, across all its locations in the current frame.</p>
+          <div class="controls"><label>Procurement band<select id="lead">
+              <option value="">All lead bands</option>
+              <option value="COM">COM — commodity</option>
+              <option value="ENG">ENG — engineered</option>
+              <option value="LLT">LLT — long lead</option>
+            </select></label>
+            <label>Equipment class<select id="cls">
+              <option value="">All equipment classes</option>
+              ${[...new Set((data.equipment || []).map((e) => e.equipment_class))]
+                .sort()
+                .map(
+                  (c) => `<option value="${esc(c)}">${esc(humanize(c))}</option>`
+                )
+                .join("")}
+            </select></label>
+          </div>
+          <div class="table-scroll"><table id="parts"><thead><tr>
+            <th>Part</th><th>Class</th><th>Lead</th><th>Crit</th><th>ABC</th>
+            <th>Track</th><th>UoM</th><th>Storage</th>
+            <th class="num">Procurement</th><th class="num">Current quantity</th><th>Fitment</th>
+          </tr></thead><tbody></tbody></table></div></details>
+          <details class="summary-detail"><summary>Dataset and baseline provenance</summary>
+            <p>Dataset <code>${esc(data.source_dataset)}</code>. ${esc(data.stock_note)}</p>
+            <p>Canonical opening balances are read-only. The server-authored movement overlay
+              changes no generated artifact, equipment geometry, fitment or procurement estimate.</p>
+          </details>
+        </section>`);
+        root.innerHTML = html.join("");
+      }
+
+      function drawParts(data) {
+        const body = document.querySelector("#parts tbody");
+        const q = document.getElementById("q");
+        const crit = document.getElementById("crit");
+        const lead = document.getElementById("lead");
+        const cls = document.getElementById("cls");
+
+        const draw = () => {
+          const term = q.value.trim().toLowerCase();
+          const rows = (data.parts || []).filter((p) => {
+            if (crit.value && p.criticality_class !== crit.value) return false;
+            if (lead.value && p.lead_band !== lead.value) return false;
+            if (
+              cls.value &&
+              !(p.fits || []).some((f) => f.equipment_class === cls.value)
+            ) {
+              return false;
+            }
+            if (!term) return true;
+            return [p.part_name, p.part_key, p.stock_code]
+              .join(" ")
+              .toLowerCase()
+              .includes(term);
+          });
+          body.innerHTML = rows
+            .map(
+              (p) => `<tr>
+              <td><strong>${esc(p.part_name)}</strong><br /><span class="muted">${esc(
+                p.stock_code
+              )}</span></td>
+              <td>${esc(p.part_class)}</td>
+              <td>${esc(p.lead_band)}</td>
+              <td>${esc(p.criticality_class)}</td>
+              <td>${esc(p.abc_class)}</td>
+              <td>${esc(p.tracking_mode)}</td>
+              <td>${esc(p.uom)}</td>
+              <td class="muted">${esc(humanize(p.required_storage_class))}</td>
+              <td class="num">${num(p.nominal_lead_time_days_synthetic)} days</td>
+              <td class="num">${num(p.quantity)} ${esc(p.uom)}</td>
+              <td>${
+                p.has_fitment
+                  ? `<details id="part-fit-${encodeURIComponent(p.part_master_id)}"><summary>${p.fits.length} equipment class${
+                      p.fits.length === 1 ? "" : "es"
+                    }</summary><ul class="fitlist">${p.fits
+                      .map(
+                        (f) =>
+                          `<li>${esc(humanize(f.equipment_class))} &times;${esc(
+                            f.quantity_per_assembly
+                          )} ${esc(p.uom)} per assembly</li>`
+                      )
+                      .join("")}</ul></details>`
+                  : p.is_site_wide
+                  ? '<span class="none">site-wide, no fitment recorded</span>'
+                  : '<span class="none">no fitment recorded</span>'
+              }</td>
+            </tr>`
+            )
+            .join("");
+          if (!rows.length) {
+            body.innerHTML =
+              '<tr><td colspan="11" class="none">No part matches this filter.</td></tr>';
+          }
+        };
+
+        draw();
+      }
+
+      const VIEW = { snapshot: null, studio: null, selected: null, location: "", focus: "" };
+      const byId = id => document.getElementById(id);
+      const statusLabel = status => ({
+        unknown: "? Unknown", out_of_stock: "× Out of stock",
+        low: "! Below demo threshold", healthy: "✓ At / above demo threshold",
+      }[status]);
+      const badge = status => `<span class="status ${status}">${statusLabel(status)}</span>`;
+      const quantity = (q, uom, known = true) =>
+        `${known ? num(q) : '<span class="none">unknown</span>'} ${esc(uom)}`;
+      const positionId = row => encodeURIComponent(InventoryStudio.stockKey(row));
+
+      // Only this projection feeds simulated quantities. Canonical part totals,
+      // held_at and location totals are baseline metadata, not playback state.
+      function currentView(snapshot) {
+        const inventory = snapshot.inventory;
+        const known = inventory.stock_is_known;
+        const stock = snapshot.frame.stock.map(row => ({ ...row, quantity: known ? row.quantity : null }));
+        return { ...inventory, stock,
+          parts: inventory.parts.map(part => {
+            const held = stock.filter(row => row.part_master_id === part.part_master_id);
+            return { ...part, held_at: held,
+              quantity: known && held.length ? held.reduce((n, row) => n + row.quantity, 0) : null };
+          }),
+          locations: inventory.locations.map(location => ({
+            ...location, quantity: null,
+            part_count: known ? stock.filter(row => row.location_id === location.location_id).length : null,
+          })),
+        };
+      }
+
+      function stockRows(data) {
+        const parts = new Map(data.parts.map(part => [part.part_master_id, part]));
+        const rows = data.stock.map(row => ({ ...row, part: parts.get(row.part_master_id) }));
+        // A missing balance is explicitly unknown, not an empty stock position.
+        data.parts.filter(part => !data.stock.some(row => row.part_master_id === part.part_master_id))
+          .forEach(part => rows.push({ part_master_id: part.part_master_id, location_id: null,
+            location_code: "No position recorded", quantity: null, part }));
+        const rank = { out_of_stock: 0, low: 1, unknown: 2, healthy: 3 };
+        return rows.map(row => ({ ...row, status: InventoryStudio.quantityStatus(row.quantity, data.stock_is_known) }))
+          .sort((a, b) => rank[a.status] - rank[b.status] ||
+            String(a.part.part_name).localeCompare(String(b.part.part_name)) ||
+            String(a.location_code).localeCompare(String(b.location_code)));
+      }
+
+      function selectPosition(key) {
+        VIEW.selected = key;
+        const row = VIEW.snapshot.frame.stock.find(row => InventoryStudio.stockKey(row) === key);
+        if (row) VIEW.location = row.location_id;
+        updateWorkspace();
+      }
+
+      function renderStudio(snapshot) {
+        VIEW.snapshot = snapshot;
+        const focusId = document.activeElement && document.activeElement.id;
+        const openDetails = [...document.querySelectorAll("details[id]")].filter(node => node.open).map(node => node.id);
+        const focus = snapshot.movement.focus.find(row => InventoryStudio.stockKey(row) === VIEW.focus);
+        const row = focus && snapshot.frame.stock.find(row => InventoryStudio.stockKey(row) === VIEW.focus);
+        byId("play").textContent = snapshot.playing ? "Pause" : "Play";
+        byId("play").disabled = !snapshot.movement.available || snapshot.index === snapshot.movement.frames.length - 1;
+        byId("step").disabled = !snapshot.movement.available || snapshot.index === snapshot.movement.frames.length - 1;
+        byId("speed").value = String(snapshot.speed);
+        byId("playback-state").textContent = snapshot.movement.available
+          ? `${snapshot.playing ? "Playing" : "Paused"} · Frame ${snapshot.index + 1} of 6 · ${snapshot.frame.elapsed_minutes} simulated minutes · ${snapshot.frame.label}`
+          : `Playback unavailable: ${snapshot.movement.unavailable_reason}`;
+        byId("stages").innerHTML = snapshot.movement.frames.map((frame, index) =>
+          `<li ${index === snapshot.index ? 'aria-current="step"' : ""}>${index + 1}. ${esc(frame.label)}</li>`).join("");
+        byId("focus-name").textContent = focus ? `${focus.part_name} · ${focus.location_code}` : "No eligible demo focus";
+        byId("focus-quantity").innerHTML = row ? quantity(row.quantity, focus.uom, snapshot.inventory.stock_is_known) : "Unavailable";
+        byId("focus-status").innerHTML = row ? badge(InventoryStudio.quantityStatus(row.quantity, snapshot.inventory.stock_is_known)) : badge("unknown");
+        const opening = focus && snapshot.movement.frames[0].stock.find(item => InventoryStudio.stockKey(item) === VIEW.focus);
+        byId("focus-narrative").innerHTML = focus
+          ? `Opening ${quantity(opening.quantity, focus.uom)} → ${quantity(12, focus.uom)} → ${quantity(10, focus.uom)} → ${quantity(9, focus.uom)} → ${quantity(0, focus.uom)} → ${quantity(opening.quantity, focus.uom)}.<br>Demo threshold: ${quantity(10, focus.uom)} at this position; strictly below fires.`
+          : "The catalogue and any known positions remain available to browse.";
+        byId("focus-location").disabled = !focus;
+        updateWorkspace();
+        renderHistory(snapshot);
+        openDetails.forEach(id => { if (byId(id)) byId(id).open = true; });
+        if (focusId && byId(focusId) && document.activeElement !== byId(focusId)) byId(focusId).focus({ preventScroll: true });
+      }
+
+      function updateWorkspace() {
+        if (!VIEW.snapshot) return;
+        const focusId = document.activeElement && document.activeElement.id;
+        const openDetails = [...document.querySelectorAll("details[id]")].filter(node => node.open).map(node => node.id);
+        const data = currentView(VIEW.snapshot);
+        const rows = stockRows(data);
+        const term = byId("q").value.trim().toLowerCase();
+        const visible = rows.filter(row =>
+          (!VIEW.location || row.location_id === VIEW.location) &&
+          (!byId("stock-status").value || row.status === byId("stock-status").value) &&
+          (!byId("crit").value || row.part.criticality_class === byId("crit").value) &&
+          [row.part.part_name, row.part.part_key, row.part.stock_code].join(" ").toLowerCase().includes(term));
+        byId("stock-count").textContent = `${visible.length} of ${rows.length} position / unplaced-part rows`;
+        const loc = data.locations.find(location => location.location_id === VIEW.location);
+        byId("location-scope").textContent = loc ? `Location: ${loc.location_code} · ${loc.location_name}` : "All locations · on site and off site";
+        byId("clear-location").disabled = !VIEW.location;
+        byId("stock-body").innerHTML = visible.map(row =>
+          `<tr data-stock-key="${esc(InventoryStudio.stockKey(row))}">
+            <td><button id="stock-${positionId(row)}" data-position="${esc(InventoryStudio.stockKey(row))}" aria-pressed="${VIEW.selected === InventoryStudio.stockKey(row)}">${esc(row.part.part_name)}</button><br><span class="muted">${esc(row.part.stock_code)} · ${esc(row.part.part_class)} · ${esc(row.part.criticality_class)}</span></td>
+            <td>${esc(row.location_code)}<br><span class="muted">${row.location_id === null ? "Unknown location" : row.is_on_site ? "On-site storeroom" : "Off-site source"}</span></td>
+            <td class="num">${quantity(row.quantity, row.part.uom, data.stock_is_known)}</td><td>${badge(row.status)}${row.part.tracking_mode === "serialized" && ["low", "out_of_stock"].includes(row.status) ? '<br><small>Serialized · demo rule only</small>' : ""}</td></tr>`
+        ).join("") || '<tr><td colspan="4" class="none">No positions match these filters. Clear the location or change a filter.</td></tr>';
+        renderPartDetail(data, rows);
+        renderLocations(data);
+        drawParts(data);
+        openDetails.forEach(id => { if (byId(id)) byId(id).open = true; });
+        if (focusId) {
+          const target = byId(focusId) || byId(`stock-${encodeURIComponent(VIEW.selected)}`);
+          if (target && document.activeElement !== target) target.focus({ preventScroll: true });
+        }
+      }
+
+      function renderPartDetail(data, rows) {
+        const row = rows.find(row => InventoryStudio.stockKey(row) === VIEW.selected);
+        if (!row) { byId("part-detail").innerHTML = '<p class="sub">Select a stock row to inspect fitment, storage and quantities at other locations.</p>'; return; }
+        const part = row.part;
+        const held = data.stock.filter(item => item.part_master_id === part.part_master_id);
+        const fits = part.fits || [];
+        const equipment = (data.equipment || []).filter(item => fits.some(fit => fit.equipment_class === item.equipment_class));
+        byId("part-detail").innerHTML = `<h3>${esc(part.part_name)}</h3><p>${esc(row.location_code)} · ${badge(row.status)}</p>
+          <p class="quantity">${quantity(row.quantity, part.uom, data.stock_is_known)}</p>
+          <dl class="detail-grid">
+            <div><dt>Stock code / key</dt><dd>${esc(part.stock_code)} / ${esc(part.part_key)}</dd></div>
+            <div><dt>Part class / tracking</dt><dd>${esc(part.part_class)} / ${esc(part.tracking_mode)}</dd></div>
+            <div><dt>Criticality / ABC</dt><dd>${esc(part.criticality_class)} / ${esc(part.abc_class)}</dd></div>
+            <div><dt>Required storage</dt><dd>${esc(humanize(part.required_storage_class || "unknown"))}</dd></div>
+            <div><dt>Procurement estimate (synthetic)</dt><dd>${num(part.nominal_lead_time_days_synthetic)} days · ${esc(part.lead_band)}</dd></div>
+            <div><dt>Shelf life class</dt><dd>${esc(humanize(part.shelf_life_class || "unknown"))}</dd></div>
+          </dl>
+          <h3>Same part · other locations</h3><p class="sub">Current frame quantities, not the canonical opening balance.</p>
+          <ul class="fitlist">${held.filter(item => item.location_id !== row.location_id).map(item =>
+            `<li><button id="other-${positionId(item)}" data-position="${esc(InventoryStudio.stockKey(item))}">${esc(item.location_code)} · ${quantity(item.quantity, part.uom, data.stock_is_known)}</button></li>`
+          ).join("") || '<li>No other recorded location. Absence is not a zero balance.</li>'}</ul>
+          <h3>Fitment and process-area context</h3>
+          ${fits.length ? `<ul class="fitlist">${fits.map(fit =>
+            `<li>${esc(humanize(fit.equipment_class))} · ${quantity(fit.quantity_per_assembly, part.uom)} per assembly
+            <br>${esc(fit.fit_spec_code || "No fit specification")} · ${esc(humanize(fit.condition_eligibility || "unknown"))}</li>`).join("")}</ul>
+            <p class="sub">${equipment.length} matching equipment-register items in ${new Set(equipment.map(item => item.area_id)).size} process areas. Class-level synthetic fitment is not installed-unit or operational readiness evidence.</p>
+            <details id="matching-equipment"><summary>Matching equipment and parent assets</summary><ul class="fitlist">${equipment.map(item =>
+              `<li>${esc(item.area_id)} · ${esc(item.area_name)} · ${esc(item.equipment_tag)}<br>Parent asset: ${esc(item.parent_asset_id || "unknown")}</li>`).join("") || "<li>No matching register item recorded.</li>"}</ul></details>`
+            : `<p class="none">${part.is_site_wide ? "Site-wide consumable; " : ""}no fitment recorded.</p>`}`;
+      }
+
+      function renderLocations(data) {
+        data.locations.forEach(location => {
+          const button = byId(`location-${encodeURIComponent(location.location_id)}`);
+          if (!button) return;
+          const rows = data.stock.filter(row => row.location_id === location.location_id);
+          const exceptions = rows.filter(row => ["low", "out_of_stock"].includes(InventoryStudio.quantityStatus(row.quantity, data.stock_is_known))).length;
+          button.setAttribute("aria-pressed", String(VIEW.location === location.location_id));
+          button.innerHTML = `${esc(location.location_code)}<small>${esc(location.location_name || humanize(location.location_type))}</small><small>${data.stock_is_known ? `${rows.length} positions · ${exceptions} demo exceptions` : "Stock unknown"}</small>`;
+        });
+        document.querySelectorAll("#mapwrap [data-locations]").forEach(marker => {
+          const selected = JSON.parse(marker.getAttribute("data-locations")).includes(VIEW.location);
+          marker.setAttribute("data-selected", String(selected));
+          marker.setAttribute("aria-pressed", String(selected));
+        });
+        const location = data.locations.find(location => location.location_id === VIEW.location);
+        if (!location) { byId("location-detail").innerHTML = '<p class="sub">Select a storeroom to see supported storage, handling time and process-area travel estimates.</p>'; return; }
+        const travel = (data.travel || []).filter(row => row.from_location_id === location.location_id || row.from_location_code === location.location_code);
+        byId("location-detail").innerHTML = `<h3>${esc(location.location_code)} · ${esc(location.location_name)}</h3>
+          <dl class="detail-grid">
+            <div><dt>Location type / profile</dt><dd>${esc(humanize(location.location_type))} · ${esc(humanize(location.stocking_profile))}</dd></div>
+            <div><dt>Position</dt><dd>${location.is_on_site ? `Site x ${num(location.site_x_m)} m · y ${num(location.site_y_m)} m` : "Off site — no site coordinate published"}</dd></div>
+            <div><dt>Supported storage classes</dt><dd>${(location.storage_classes_supported || []).map(humanize).map(esc).join(", ") || "Unknown"}</dd></div>
+            <div><dt>Nominal handling (synthetic)</dt><dd>${num(location.nominal_handling_minutes_synthetic)} minutes</dd></div>
+            <div><dt>Off-site supply lead (synthetic)</dt><dd>${location.is_on_site ? "Not an off-site source" : `${num(location.off_site_lead_hours_synthetic)} hours`}</dd></div>
+          </dl><p class="sub">Storage and handling describe the source location. Procurement lead belongs to the part and is measured in days, not handling minutes. These are synthetic estimates, not delivery promises.</p>
+          <details id="area-travel"><summary>Area travel estimates · ${travel.length} recorded routes</summary><ul class="fitlist">${travel.map(row =>
+            `<li>${esc(row.to_area_id)} · ${esc(row.to_area_name)} · ${esc(humanize(row.transport_mode))}<br>Drive ${num(row.drive_minutes_synthetic)} minutes · handling ${num(row.handling_minutes_synthetic)} minutes · total retrieval ${num(row.retrieval_minutes_synthetic)} minutes</li>`).join("") || "<li>No area travel rows recorded; timing is unknown.</li>"}</ul></details>`;
+      }
+
+      function renderHistory(snapshot) {
+        const active = snapshot.frame.active_alerts;
+        byId("alert-summary").innerHTML = `<strong>${snapshot.inventory.stock_is_known ? active.length : "Unknown"} active local demo alerts</strong><br><span class="muted">${active.length} of ${active.length} listed · all stock positions</span>`;
+        byId("active-alerts").innerHTML = active.map(alert =>
+          `<li><button id="alert-${encodeURIComponent(alert.alert_id)}" data-position="${esc(InventoryStudio.stockKey(alert))}">${esc(alert.part_name)} · ${esc(alert.location_code)} · ${quantity(alert.quantity, alert.uom)}</button> ${badge(InventoryStudio.quantityStatus(alert.quantity, snapshot.inventory.stock_is_known))}</li>`
+        ).join("") || (snapshot.inventory.stock_is_known ? "<li>No active demo alerts in this frame.</li>" : "<li>Alert evaluation unavailable: opening stock is unknown.</li>");
+        byId("movement-count").textContent = `${snapshot.history.movements.length} movement events · all listed`;
+        byId("alert-count").textContent = `${snapshot.history.alerts.length} alert transitions · all listed`;
+        byId("movements").innerHTML = snapshot.history.movements.map(row =>
+          `<li>${esc(row.part_name)} · ${esc(row.location_code)} · ${esc(humanize(row.kind))}: ${quantity(row.quantity_before, row.uom)} → ${quantity(row.quantity_after, row.uom)} (${row.delta > 0 ? "+" : ""}${quantity(row.delta, row.uom)})</li>`
+        ).join("") || "<li>No movements through this frame.</li>";
+        byId("alerts").innerHTML = snapshot.history.alerts.map(row =>
+          `<li>${esc(humanize(row.state))} · ${esc(row.part_name)} · ${esc(row.location_code)} · ${quantity(row.quantity, row.uom)} · frame ${row.frame_index + 1}<br><small>${esc(row.alert_id)}</small></li>`
+        ).join("") || "<li>No alert transitions through this frame.</li>";
+      }
+
+      function wireStudio(payload) {
+        const studio = InventoryStudio.create(payload);
+        VIEW.studio = studio;
+        const focus = payload.movement.focus;
+        VIEW.focus = focus.length ? InventoryStudio.stockKey(focus[0]) : "";
+        VIEW.selected = VIEW.focus || null;
+        byId("focus-part").innerHTML = focus.map(row => `<option value="${esc(InventoryStudio.stockKey(row))}">${esc(row.part_name)} · ${esc(row.location_code)}</option>`).join("") || '<option value="">Unavailable</option>';
+        byId("focus-part").disabled = !focus.length;
+        for (const onSite of [true, false]) {
+          byId(onSite ? "onsite-rail" : "offsite-rail").innerHTML = payload.inventory.locations
+            .filter(location => Boolean(location.is_on_site) === onSite)
+            .map(location => `<button id="location-${encodeURIComponent(location.location_id)}" data-location="${esc(location.location_id)}" aria-pressed="false"></button>`).join("");
+        }
+        byId("play").addEventListener("click", () => studio.snapshot().playing ? studio.pause() : studio.play());
+        byId("step").addEventListener("click", () => studio.step());
+        byId("reset").addEventListener("click", () => studio.reset());
+        byId("speed").addEventListener("change", event => studio.setSpeed(Number(event.target.value)));
+        byId("focus-part").addEventListener("change", event => {
+          VIEW.focus = event.target.value;
+          VIEW.selected = VIEW.focus;
+          renderStudio(studio.snapshot());
+        });
+        byId("focus-location").addEventListener("click", () => selectPosition(VIEW.focus));
+        byId("clear-location").addEventListener("click", () => { VIEW.location = ""; updateWorkspace(); });
+        ["q", "stock-status", "crit", "lead", "cls"].forEach(id => byId(id).addEventListener("input", updateWorkspace));
+        const activate = event => {
+          const target = event.target.closest("[data-position], [data-location], [data-locations]");
+          if (!target) return;
+          if (event.type === "keydown") {
+            if (!target.hasAttribute("data-locations") || !["Enter", " "].includes(event.key)) return;
+            event.preventDefault();
+          }
+          if (target.hasAttribute("data-position")) selectPosition(target.getAttribute("data-position"));
+          else {
+            VIEW.location = target.hasAttribute("data-location") ? target.getAttribute("data-location") : JSON.parse(target.getAttribute("data-locations"))[0];
+            updateWorkspace();
+          }
+        };
+        byId("root").addEventListener("click", activate);
+        byId("root").addEventListener("keydown", activate);
+        studio.subscribe(renderStudio);
+        window.addEventListener("pagehide", event => {
+          if (event.persisted) studio.pause();
+          else studio.dispose();
+        });
+      }
+
+      (async () => {
+        const root = document.getElementById("root");
+        // The basemap is fetched alongside the data, not before it. It is
+        // decoration for facts the dataset already carries, so a failure to
+        // load it must cost the reader the regional inset, never the site
+        // plan: the rejection is swallowed deliberately and drawInset says so.
+        const basemap = fetch("/downstream/review/inventory/basemap.json", {
+          headers: { Accept: "application/json" },
+        })
+          .then((response) => (response.ok ? response.json() : null))
+          .catch(() => null);
+        try {
+          const response = await fetch("/api/downstream/review/inventory/movement", {
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) {
+            const detail = await response.json().catch(() => ({}));
+            root.innerHTML = `<div class="err"><strong>Inventory unavailable.</strong>
+              ${esc(detail.message || "Generate a downstream dataset first.")}</div>`;
+            return;
+          }
+          const payload = await response.json();
+          MAP.basemap = await basemap;
+          MAP.data = payload.inventory;
+          render(payload.inventory);
+          wireStudio(payload);
+        } catch (error) {
+          root.innerHTML = `<div class="err"><strong>Inventory unavailable.</strong> ${esc(
+            error.message
+          )}</div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

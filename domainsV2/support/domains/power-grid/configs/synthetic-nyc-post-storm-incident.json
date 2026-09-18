@@ -1,0 +1,42 @@
+{
+  "incident_id": "synthetic-nyc-post-storm-transformer-001",
+  "title": "Post-storm distribution transformer outage",
+  "incident_type": "distribution_transformer_outage",
+  "severity": "major",
+  "exercise_status": "Exercise",
+  "is_synthetic": true,
+  "public_safety": false,
+  "scope": "Private",
+  "area": "Brooklyn",
+  "owner_team": "synthetic-grid-operations",
+  "detection_source": "storm-impact telemetry correlation",
+  "root_cause": "synthetic storm-related equipment damage",
+  "caused_by": "synthetic-nyc-coastal-storm-001",
+  "lifecycle": [
+    {
+      "sequence": 1,
+      "status": "detected",
+      "offset_minutes": 0
+    },
+    {
+      "sequence": 2,
+      "status": "investigating",
+      "offset_minutes": 15
+    },
+    {
+      "sequence": 3,
+      "status": "mitigating",
+      "offset_minutes": 30
+    },
+    {
+      "sequence": 4,
+      "status": "monitoring",
+      "offset_minutes": 45
+    },
+    {
+      "sequence": 5,
+      "status": "resolved",
+      "offset_minutes": 60
+    }
+  ]
+}

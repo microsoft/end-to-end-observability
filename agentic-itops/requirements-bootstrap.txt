@@ -1,0 +1,5 @@
+# Isolated Linux bootstrap profile. No runtime/Foundry SDK or tenant-wide Graph client.
+azure-identity==1.25.3
+azure-keyvault-secrets==4.10.0
+httpx==0.28.1
+mssql-python==1.15.0

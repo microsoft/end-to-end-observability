@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {"value": "${AZURE_ENV_NAME}"},
+    "resourceGroupName": {"value": "${AZURE_RESOURCE_GROUP}"},
+    "location": {"value": "${AZURE_LOCATION}"},
+    "phase": {"value": "infrastructure"},
+    "bootstrapAuthorized": {"value": false},
+    "reviewApplicationClientId": {"value": "${ITOPS_REVIEW_APPLICATION_CLIENT_ID}"},
+    "serviceApplicationClientId": {"value": "${ITOPS_SERVICE_APPLICATION_CLIENT_ID}"}
+  }
+}

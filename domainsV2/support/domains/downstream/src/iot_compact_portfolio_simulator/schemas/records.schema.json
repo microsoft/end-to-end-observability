@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iot-compact-portfolio/records.schema.json",
+  "title": "Fictional compact portfolio record",
+  "oneOf": [
+    {"$ref": "#/$defs/asset"},
+    {"$ref": "#/$defs/device"},
+    {"$ref": "#/$defs/tag"},
+    {"$ref": "#/$defs/topology"},
+    {"$ref": "#/$defs/telemetry"},
+    {"$ref": "#/$defs/product_summary"},
+    {"$ref": "#/$defs/event"},
+    {"$ref": "#/$defs/device_log"},
+    {"$ref": "#/$defs/detector_output"},
+    {"$ref": "#/$defs/physical_confirmation_event"},
+    {"$ref": "#/$defs/ground_truth"}
+  ],
+  "$defs": {
+    "common": {
+      "type": "object",
+      "required": ["schema_version", "is_synthetic", "operational_use"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "is_synthetic": {"const": true},
+        "operational_use": {"const": "prohibited"}
+      }
+    },
+    "quality": {
+      "type": "object",
+      "required": ["validity", "source", "reasons"],
+      "properties": {
+        "validity": {"type": "string"},
+        "source": {"type": "string"},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "asset": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "asset_id",
+            "asset_index",
+            "asset_type",
+            "generic_model",
+            "fidelity"
+          ]
+        }
+      ]
+    },
+    "device": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "asset_id",
+            "device_id",
+            "device_index",
+            "device_role",
+            "transport_class",
+            "fidelity"
+          ]
+        }
+      ]
+    },
+    "tag": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "asset_id",
+            "device_id",
+            "tag_id",
+            "measurement",
+            "unit",
+            "cadence_class",
+            "cadence_seconds",
+            "product_family",
+            "fidelity"
+          ]
+        }
+      ]
+    },
+    "topology": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "edge_id",
+            "source_kind",
+            "source_id",
+            "target_kind",
+            "target_id",
+            "relationship",
+            "enterprise_id"
+          ]
+        }
+      ]
+    },
+    "telemetry": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "telemetry_id",
+            "run_id",
+            "scenario_id",
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "asset_id",
+            "device_id",
+            "tag_id",
+            "event_time_utc",
+            "source_time_utc",
+            "ingest_time_utc",
+            "measurement",
+            "value",
+            "unit",
+            "cadence_class",
+            "cadence_seconds",
+            "delivery_class",
+            "quality",
+            "clock_state",
+            "clock_offset_ms",
+            "clock_uncertainty_ms",
+            "product_family",
+            "fidelity"
+          ],
+          "properties": {
+            "quality": {"$ref": "#/$defs/quality"}
+          }
+        }
+      ]
+    },
+    "product_summary": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "summary_id",
+            "run_id",
+            "scenario_id",
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "product_family",
+            "window_start_utc",
+            "window_end_utc",
+            "equivalent_volume_units",
+            "average_yield_share",
+            "average_throughput_index",
+            "opening_inventory_units",
+            "closing_inventory_units",
+            "fidelity"
+          ]
+        }
+      ]
+    },
+    "event": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "event_id",
+            "run_id",
+            "scenario_id",
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "asset_id",
+            "event_time_utc",
+            "event_type",
+            "scope",
+            "severity",
+            "state_transition",
+            "details"
+          ]
+        }
+      ]
+    },
+    "device_log": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "log_id",
+            "run_id",
+            "scenario_id",
+            "enterprise_id",
+            "site_id",
+            "module_id",
+            "asset_id",
+            "device_id",
+            "event_time_utc",
+            "source_time_utc",
+            "ingest_time_utc",
+            "level",
+            "category",
+            "code",
+            "message",
+            "queue_depth",
+            "clock_state",
+            "clock_offset_ms",
+            "clock_uncertainty_ms",
+            "quality"
+          ],
+          "properties": {
+            "quality": {"$ref": "#/$defs/quality"}
+          }
+        }
+      ]
+    },
+    "detector_output": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "detector_output_id",
+            "run_id",
+            "scenario_id",
+            "module_id",
+            "detector_id",
+            "method",
+            "model_version",
+            "evidence_window_start_utc",
+            "evidence_window_end_utc",
+            "detection_time_utc",
+            "available_time_utc",
+            "detection_state",
+            "estimated_segment_id",
+            "candidate_segment_ids",
+            "lower_route_distance_fraction",
+            "estimated_route_distance_fraction",
+            "upper_route_distance_fraction",
+            "abstention_reason",
+            "confidence_class",
+            "evidence_telemetry_ids",
+            "related_event_ids",
+            "quality",
+            "fidelity"
+          ],
+          "properties": {
+            "detection_state": {
+              "enum": ["clear", "estimated", "abstained", "not_required"]
+            },
+            "quality": {"$ref": "#/$defs/quality"}
+          }
+        }
+      ]
+    },
+    "physical_confirmation_event": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "confirmation_id",
+            "run_id",
+            "scenario_id",
+            "module_id",
+            "dispatch_time_utc",
+            "confirmation_time_utc",
+            "available_after_utc",
+            "inspection_method",
+            "result",
+            "confirmed_segment_id",
+            "confirmed_corridor_lower_fraction",
+            "confirmed_corridor_upper_fraction",
+            "related_detector_output_ids",
+            "fidelity"
+          ]
+        }
+      ]
+    },
+    "ground_truth": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": [
+            "ground_truth_id",
+            "run_id",
+            "scenario_id",
+            "scenario",
+            "enterprise_id",
+            "module_id",
+            "onset_utc",
+            "end_utc",
+            "injected_cause",
+            "actual_segment_id",
+            "actual_route_distance_fraction",
+            "actual_withdrawal_index",
+            "affected_site_ids",
+            "correlated_event_ids",
+            "fidelity"
+          ]
+        }
+      ]
+    }
+  }
+}

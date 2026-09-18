@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iot-downstream-refinery/manifest.schema.json",
+  "title": "Fictional downstream refinery manifest",
+  "oneOf": [
+    {"$ref": "#/$defs/full_manifest"},
+    {"$ref": "#/$defs/logs_manifest"}
+  ],
+  "$defs": {
+    "generator": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "file_entry": {
+      "type": "object",
+      "required": ["path", "record_type", "format", "record_count", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "record_type": {"type": "string", "minLength": 1},
+        "format": {"const": "jsonl"},
+        "record_count": {"type": "integer", "minimum": 0},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "monitoring_file_entry": {
+      "allOf": [
+        {"$ref": "#/$defs/file_entry"},
+        {
+          "oneOf": [
+            {"properties": {"path": {"const": "events.jsonl"}, "record_type": {"const": "events"}}},
+            {"properties": {"path": {"const": "alarm_journal.jsonl"}, "record_type": {"const": "alarm_journal"}}},
+            {"properties": {"path": {"const": "operator_actions.jsonl"}, "record_type": {"const": "operator_actions"}}},
+            {"properties": {"path": {"const": "device_logs.jsonl"}, "record_type": {"const": "device_logs"}}},
+            {"properties": {"path": {"const": "audit_logs.jsonl"}, "record_type": {"const": "audit_logs"}}},
+            {"properties": {"path": {"const": "delivery_logs.jsonl"}, "record_type": {"const": "delivery_logs"}}},
+            {"properties": {"path": {"const": "analyzer_results.jsonl"}, "record_type": {"const": "analyzer_results"}}},
+            {"properties": {"path": {"const": "condition_monitoring.jsonl"}, "record_type": {"const": "condition_monitoring"}}},
+            {"properties": {"path": {"const": "electrical_monitoring.jsonl"}, "record_type": {"const": "electrical_monitoring"}}},
+            {"properties": {"path": {"const": "environmental_observations.jsonl"}, "record_type": {"const": "environmental_observations"}}},
+            {"properties": {"path": {"const": "lab_results.jsonl"}, "record_type": {"const": "lab_results"}}},
+            {"properties": {"path": {"const": "maintenance_context.jsonl"}, "record_type": {"const": "maintenance_context"}}},
+            {"properties": {"path": {"const": "shipment_context.jsonl"}, "record_type": {"const": "shipment_context"}}}
+          ]
+        }
+      ]
+    },
+    "artifact_file_entry": {
+      "allOf": [
+        {"$ref": "#/$defs/file_entry"},
+        {
+          "oneOf": [
+            {"properties": {"path": {"const": "assets.jsonl"}, "record_type": {"const": "assets"}}},
+            {"properties": {"path": {"const": "devices.jsonl"}, "record_type": {"const": "devices"}}},
+            {"properties": {"path": {"const": "tags.jsonl"}, "record_type": {"const": "tags"}}},
+            {"properties": {"path": {"const": "topology.jsonl"}, "record_type": {"const": "topology"}}},
+            {"properties": {"path": {"const": "telemetry.jsonl"}, "record_type": {"const": "telemetry"}}},
+            {"properties": {"path": {"const": "events.jsonl"}, "record_type": {"const": "events"}}},
+            {"properties": {"path": {"const": "alarm_journal.jsonl"}, "record_type": {"const": "alarm_journal"}}},
+            {"properties": {"path": {"const": "operator_actions.jsonl"}, "record_type": {"const": "operator_actions"}}},
+            {"properties": {"path": {"const": "device_logs.jsonl"}, "record_type": {"const": "device_logs"}}},
+            {"properties": {"path": {"const": "audit_logs.jsonl"}, "record_type": {"const": "audit_logs"}}},
+            {"properties": {"path": {"const": "delivery_logs.jsonl"}, "record_type": {"const": "delivery_logs"}}},
+            {"properties": {"path": {"const": "analyzer_results.jsonl"}, "record_type": {"const": "analyzer_results"}}},
+            {"properties": {"path": {"const": "condition_monitoring.jsonl"}, "record_type": {"const": "condition_monitoring"}}},
+            {"properties": {"path": {"const": "electrical_monitoring.jsonl"}, "record_type": {"const": "electrical_monitoring"}}},
+            {"properties": {"path": {"const": "environmental_observations.jsonl"}, "record_type": {"const": "environmental_observations"}}},
+            {"properties": {"path": {"const": "lab_results.jsonl"}, "record_type": {"const": "lab_results"}}},
+            {"properties": {"path": {"const": "maintenance_context.jsonl"}, "record_type": {"const": "maintenance_context"}}},
+            {"properties": {"path": {"const": "shipment_context.jsonl"}, "record_type": {"const": "shipment_context"}}},
+            {"properties": {"path": {"const": "ground_truth.jsonl"}, "record_type": {"const": "ground_truth"}}}
+          ]
+        }
+      ]
+    },
+    "monitoring_record_counts": {
+      "type": "object",
+      "required": [
+        "events",
+        "alarm_journal",
+        "operator_actions",
+        "device_logs",
+        "audit_logs",
+        "delivery_logs",
+        "analyzer_results",
+        "condition_monitoring",
+        "electrical_monitoring",
+        "environmental_observations",
+        "lab_results",
+        "maintenance_context",
+        "shipment_context"
+      ],
+      "properties": {
+        "events": {"type": "integer", "minimum": 0},
+        "alarm_journal": {"type": "integer", "minimum": 0},
+        "operator_actions": {"type": "integer", "minimum": 0},
+        "device_logs": {"type": "integer", "minimum": 0},
+        "audit_logs": {"type": "integer", "minimum": 0},
+        "delivery_logs": {"type": "integer", "minimum": 0},
+        "analyzer_results": {"type": "integer", "minimum": 0},
+        "condition_monitoring": {"type": "integer", "minimum": 0},
+        "electrical_monitoring": {"type": "integer", "minimum": 0},
+        "environmental_observations": {"type": "integer", "minimum": 0},
+        "lab_results": {"type": "integer", "minimum": 0},
+        "maintenance_context": {"type": "integer", "minimum": 0},
+        "shipment_context": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "full_record_counts": {
+      "type": "object",
+      "required": [
+        "assets", "devices", "tags", "topology", "telemetry", "ground_truth",
+        "events", "alarm_journal", "operator_actions", "device_logs",
+        "audit_logs", "delivery_logs", "analyzer_results",
+        "condition_monitoring", "electrical_monitoring",
+        "environmental_observations", "lab_results", "maintenance_context",
+        "shipment_context"
+      ],
+      "properties": {
+        "assets": {"type": "integer", "minimum": 0},
+        "devices": {"type": "integer", "minimum": 0},
+        "tags": {"type": "integer", "minimum": 0},
+        "topology": {"type": "integer", "minimum": 0},
+        "telemetry": {"type": "integer", "minimum": 0},
+        "ground_truth": {"type": "integer", "minimum": 0},
+        "events": {"type": "integer", "minimum": 0},
+        "alarm_journal": {"type": "integer", "minimum": 0},
+        "operator_actions": {"type": "integer", "minimum": 0},
+        "device_logs": {"type": "integer", "minimum": 0},
+        "audit_logs": {"type": "integer", "minimum": 0},
+        "delivery_logs": {"type": "integer", "minimum": 0},
+        "analyzer_results": {"type": "integer", "minimum": 0},
+        "condition_monitoring": {"type": "integer", "minimum": 0},
+        "electrical_monitoring": {"type": "integer", "minimum": 0},
+        "environmental_observations": {"type": "integer", "minimum": 0},
+        "lab_results": {"type": "integer", "minimum": 0},
+        "maintenance_context": {"type": "integer", "minimum": 0},
+        "shipment_context": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object"
+    },
+    "full_manifest": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "generator",
+        "run_id",
+        "scenario_id",
+        "normalized_config",
+        "config_digest_sha256",
+        "seed",
+        "fixed_profile",
+        "record_counts",
+        "monitoring_caps",
+        "normal_monitoring_record_counts",
+        "files",
+        "logs_manifest",
+        "policy",
+        "fidelity_tiers",
+        "determinism"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "generator": {"$ref": "#/$defs/generator"},
+        "run_id": {"type": "string", "minLength": 1},
+        "scenario_id": {"type": "string", "minLength": 1},
+        "normalized_config": {"type": "object"},
+        "config_digest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "seed": {"type": "integer"},
+        "fixed_profile": {"type": "object"},
+        "record_counts": {"$ref": "#/$defs/full_record_counts"},
+        "monitoring_caps": {"type": "object"},
+        "normal_monitoring_record_counts": {"$ref": "#/$defs/monitoring_record_counts"},
+        "files": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifact_file_entry"}
+        },
+        "logs_manifest": {
+          "type": "object",
+          "required": ["path", "sha256", "record_type_count", "total_records"],
+          "properties": {
+            "path": {"const": "logs-manifest.json"},
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "record_type_count": {"type": "integer", "minimum": 0},
+            "total_records": {"type": "integer", "minimum": 0}
+          },
+          "additionalProperties": false
+        },
+        "policy": {"$ref": "#/$defs/policy"},
+        "fidelity_tiers": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "determinism": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "logs_manifest": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "generator",
+        "run_id",
+        "scenario_id",
+        "site_id",
+        "record_counts",
+        "total_records",
+        "files",
+        "private_truth_included",
+        "policy",
+        "fidelity_tiers",
+        "is_synthetic",
+        "operational_use"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "generator": {"$ref": "#/$defs/generator"},
+        "run_id": {"type": "string", "minLength": 1},
+        "scenario_id": {"type": "string", "minLength": 1},
+        "site_id": {"type": "string", "minLength": 1},
+        "record_counts": {"$ref": "#/$defs/monitoring_record_counts"},
+        "total_records": {"type": "integer", "minimum": 0},
+        "files": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/monitoring_file_entry"}
+        },
+        "private_truth_included": {"const": false},
+        "policy": {"$ref": "#/$defs/policy"},
+        "fidelity_tiers": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "is_synthetic": {"const": true},
+        "operational_use": {"const": "prohibited"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

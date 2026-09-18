@@ -12,20 +12,120 @@ tools:
   index: agentic-itops-knowledge
   query_type: vector_semantic_hybrid
   top_k: 3
-output_schema:
-  type: object
-  required:
-  - runbooks
-  - postmortems
-  properties:
-    runbooks:
-      type: array
-    postmortems:
-      type: array
-    coverage_gap:
-      type: string
 identity:
   type: user_assigned_managed_identity
   required_roles:
   - Monitoring Reader
   - Reader
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps: &id001
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
+    runbooks:
+      type: array
+      items:
+        type: object
+        properties:
+          doc_id:
+            type: string
+            minLength: 1
+          revision:
+            type: string
+            minLength: 1
+          title:
+            type: string
+            minLength: 1
+          relevance:
+            type: string
+            enum:
+            - strong
+            - partial
+            - weak
+          documented_actions: *id001
+          preconditions:
+            type: string
+          prohibitions: *id001
+          excerpt:
+            type: string
+        required:
+        - doc_id
+        - revision
+        - title
+        - relevance
+        - documented_actions
+        - preconditions
+        - prohibitions
+        - excerpt
+        additionalProperties: false
+      minItems: 0
+    postmortems:
+      type: array
+      items:
+        type: object
+        properties:
+          doc_id:
+            type: string
+            minLength: 1
+          revision:
+            type: string
+            minLength: 1
+          title:
+            type: string
+            minLength: 1
+          what_happened:
+            type: string
+          what_it_cost:
+            type: string
+          lesson:
+            type: string
+        required:
+        - doc_id
+        - revision
+        - title
+        - what_happened
+        - what_it_cost
+        - lesson
+        additionalProperties: false
+      minItems: 0
+    coverage_gap:
+      type: string
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - runbooks
+  - postmortems
+  - coverage_gap
+  additionalProperties: false

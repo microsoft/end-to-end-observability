@@ -25,19 +25,102 @@ tools:
   server_url: ${AZURE_MONITOR_MCP_URL}
   auth: managed_identity
   note: stub server in tools/mcp/azure_monitor_mcp_stub.py
-output_schema:
-  type: object
-  required:
-  - hypotheses
-  properties:
-    hypotheses:
-      type: array
-    timeline:
-      type: array
-    notable_absence:
-      type: string
 identity:
   type: user_assigned_managed_identity
   required_roles:
   - Monitoring Reader
   - Reader
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps: &id001
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
+    hypotheses:
+      type: array
+      items:
+        type: object
+        properties:
+          hypothesis:
+            type: string
+            minLength: 1
+          confidence:
+            type: string
+            enum:
+            - high
+            - medium
+            - low
+            - none
+          evidence:
+            type: array
+            items:
+              type: string
+              minLength: 1
+            minItems: 1
+          contradicting_evidence: *id001
+          next_check:
+            type: string
+        required:
+        - hypothesis
+        - confidence
+        - evidence
+        - contradicting_evidence
+        - next_check
+        additionalProperties: false
+      minItems: 0
+    timeline:
+      type: array
+      items:
+        type: object
+        properties:
+          at:
+            type: string
+            minLength: 1
+          observation:
+            type: string
+            minLength: 1
+        required:
+        - at
+        - observation
+        additionalProperties: false
+      minItems: 0
+    notable_absence:
+      type: string
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - hypotheses
+  - timeline
+  - notable_absence
+  additionalProperties: false

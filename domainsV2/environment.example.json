@@ -1,0 +1,21 @@
+{
+  "azure": {
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "location": "centralus"
+  },
+  "producer": {
+    "prefix": "iot-domains-v2-example",
+    "storageName": "iotdomainsv2demo01sa",
+    "approvedIpCidr": "203.0.113.10/32",
+    "unrestrictedPortal": false,
+    "securityPerimeter": true,
+    "bootstrapDeploymentName": "v2-bootstrap-rg",
+    "planDeploymentName": "v2-producer-plan",
+    "dataDeploymentName": "v2-producer-data",
+    "appDeploymentName": "v2-producer-app",
+    "readinessDeploymentName": "v2-readiness",
+    "packageOutputDirectory": "build\\producer-candidate-1",
+    "approvedPackageSha256": ""
+  }
+}

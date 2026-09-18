@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Local-only review surface for synthetic parts, storeroom and dispatch records"
+    />
+    <title>Upstream Inventory Review | Local Only</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f6f4f1;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f2f1ef;
+        --cp-border: #dcdad7;
+        --cp-text: #232323;
+        --cp-text-muted: #5b5b5b;
+        --cp-accent: #1c6b53;
+        --cp-accent-soft: rgba(28, 107, 83, 0.09);
+        --cp-accent-fg: #ffffff;
+        --cp-danger: #c33636;
+        --cp-danger-soft: rgba(195, 54, 54, 0.12);
+        --cp-warning: #b8791a;
+        --cp-warning-soft: rgba(184, 121, 26, 0.12);
+        --cp-ok: #1c6b53;
+        --cp-ok-soft: rgba(28, 107, 83, 0.12);
+        --cp-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3b3a38;
+        --cp-surface: #282827;
+        --cp-surface-soft: #2d2d2c;
+        --cp-border: #464645;
+        --cp-text: #dedede;
+        --cp-text-muted: #9a9a9a;
+        --cp-accent: #7fd1b4;
+        --cp-accent-soft: rgba(127, 209, 180, 0.14);
+        --cp-accent-fg: #16241f;
+        --cp-danger: #e88a8a;
+        --cp-danger-soft: rgba(232, 138, 138, 0.16);
+        --cp-warning: #e0ac5c;
+        --cp-warning-soft: rgba(224, 172, 92, 0.16);
+        --cp-ok: #7fd1b4;
+        --cp-ok-soft: rgba(127, 209, 180, 0.16);
+        --cp-shadow: none;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font: 15px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+      header { padding-top: 24px; }
+      .title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+      h1 { font-size: 21px; margin: 0; letter-spacing: -0.01em; }
+      .sub { color: var(--cp-text-muted); font-size: 13px; margin: 2px 0 0; }
+
+      .banner {
+        background: var(--cp-warning-soft);
+        border: 1px solid var(--cp-warning);
+        border-radius: 9px;
+        padding: 9px 13px;
+        font-size: 12.5px;
+        line-height: 1.5;
+        margin: 14px 0 0;
+        color: var(--cp-text);
+      }
+      .banner strong { color: var(--cp-warning); }
+      .banner summary { cursor: pointer; font-weight: 600; color: var(--cp-warning); list-style: none; }
+      .banner summary::-webkit-details-marker { display: none; }
+      .banner summary::before { content: "▸ "; }
+      .banner[open] summary::before { content: "▾ "; }
+      .banner p { margin: 8px 0 0; color: var(--cp-text-muted); }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--cp-bg);
+        border-bottom: 1px solid var(--cp-border);
+        margin-top: 16px;
+      }
+      .toolbar-inner {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 10px 0;
+      }
+      .jump { display: flex; gap: 4px; flex-wrap: wrap; }
+      .jump a {
+        font-size: 12.5px;
+        padding: 5px 11px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--cp-text-muted);
+        border: 1px solid transparent;
+      }
+      .jump a:hover { background: var(--cp-accent-soft); color: var(--cp-text); }
+
+      label.field { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--cp-text-muted); }
+      select, input, button {
+        font: inherit;
+        font-size: 13px;
+        padding: 6px 11px;
+        border-radius: 7px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        color: var(--cp-text);
+      }
+      button { cursor: pointer; }
+      button:hover:not(:disabled) { border-color: var(--cp-accent); }
+      button:disabled { opacity: 0.4; cursor: default; }
+      input[type="search"] { min-width: 230px; }
+      .chip {
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        color: var(--cp-text-muted);
+        cursor: pointer;
+      }
+      .chip.on { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+
+      main { padding-bottom: 56px; }
+      section { margin-top: 30px; scroll-margin-top: 62px; }
+      .section-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+      h2 { font-size: 15.5px; margin: 0; }
+      .section-head .note { margin: 0; }
+      .note { color: var(--cp-text-muted); font-size: 12.5px; margin: 6px 0 0; }
+
+      .card {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 11px;
+        box-shadow: var(--cp-shadow);
+        overflow: hidden;
+      }
+      .card-pad { padding: 14px 16px; }
+      .scroll { overflow-x: auto; }
+
+      .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+      .kpi {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 11px;
+        padding: 12px 14px;
+        box-shadow: var(--cp-shadow);
+      }
+      .kpi .k { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--cp-text-muted); }
+      .kpi .v { font-size: 24px; font-weight: 650; line-height: 1.25; margin-top: 3px; }
+      .kpi .d { font-size: 12px; color: var(--cp-text-muted); }
+      .kpi.alarm { border-color: var(--cp-danger); background: var(--cp-danger-soft); }
+      .kpi.alarm .v { color: var(--cp-danger); }
+      .kpi.warn { border-color: var(--cp-warning); background: var(--cp-warning-soft); }
+
+      table { border-collapse: collapse; width: 100%; font-size: 13px; }
+      th, td { border-bottom: 1px solid var(--cp-border); padding: 8px 11px; text-align: left; vertical-align: top; }
+      th { background: var(--cp-surface-soft); font-weight: 600; font-size: 12px; color: var(--cp-text-muted); white-space: nowrap; }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      tbody tr:last-child td { border-bottom: none; }
+      tbody tr.clickable { cursor: pointer; }
+      tbody tr.clickable:hover { background: var(--cp-accent-soft); }
+      tbody tr.selected { background: var(--cp-accent-soft); }
+      .primary { font-weight: 600; }
+      .mono { font-family: "Cascadia Mono", Consolas, monospace; font-size: 11.5px; color: var(--cp-text-muted); }
+      .wrapcell { white-space: normal; max-width: 340px; }
+
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        white-space: nowrap;
+      }
+      .tag.ok { background: var(--cp-ok-soft); border-color: var(--cp-ok); color: var(--cp-ok); }
+      .tag.warn { background: var(--cp-warning-soft); border-color: var(--cp-warning); color: var(--cp-warning); }
+      .tag.bad { background: var(--cp-danger-soft); border-color: var(--cp-danger); color: var(--cp-danger); }
+
+      .bar { height: 6px; border-radius: 3px; background: var(--cp-surface-soft); overflow: hidden; min-width: 70px; margin-top: 5px; }
+      .bar > span { display: block; height: 100%; background: var(--cp-accent); }
+
+      .split { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+      @media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+      .detail h3 { font-size: 13.5px; margin: 0 0 2px; }
+      .detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 10px 0 0; font-size: 12.5px; }
+      .detail dt { color: var(--cp-text-muted); }
+      .detail dd { margin: 0; }
+      .detail .block { margin-top: 14px; }
+      .detail .block > h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--cp-text-muted); margin: 0 0 6px; }
+
+      .chain { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 4px 0 10px; }
+      .leg { font-size: 12px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-muted); }
+      .leg.on { border-color: var(--cp-ok); background: var(--cp-ok-soft); color: var(--cp-ok); font-weight: 600; }
+      .leg.off { border-style: dashed; }
+      .arrow { color: var(--cp-text-muted); font-size: 12px; }
+
+      .empty { color: var(--cp-text-muted); font-size: 12.5px; padding: 14px 16px; }
+      .err { color: var(--cp-danger); font-size: 13px; margin: 10px 0 0; min-height: 0; }
+      .hidden { display: none; }
+      details.raw > summary { cursor: pointer; font-size: 13px; padding: 12px 16px; font-weight: 600; }
+      details.raw[open] > summary { border-bottom: 1px solid var(--cp-border); }
+      code { background: var(--cp-surface-soft); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
+      .footnote { font-size: 12px; color: var(--cp-text-muted); margin-top: 26px; border-top: 1px solid var(--cp-border); padding-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="title-row">
+          <h1>Upstream inventory review</h1>
+          <p class="sub">Parts, storeroom and dispatch &mdash; fictional upstream simulator</p>
+        </div>
+        <details class="banner">
+          <summary>Local only &mdash; synthetic data, not a publication path</summary>
+          <p>
+            <strong>Local only.</strong> This page is never served from hosted infrastructure:
+            when the process detects it is hosted, only the read-only inventory view is
+            registered and this surface does not exist. These eight families remain excluded
+            from the public portal and the ADLS monitoring sink. This page exists so a human can
+            review the data before any decision to publish it &mdash; it is not a publication
+            path. All records are synthetic and fictional, and every stock balance shown is
+            derived by folding the generated ledger, never read from a stored balance.
+          </p>
+        </details>
+      </header>
+
+      <div class="toolbar">
+        <div class="toolbar-inner">
+          <label class="field" for="run">Dataset
+            <select id="run"></select>
+          </label>
+          <nav class="jump">
+            <a href="/">All domains</a>
+            <a href="/upstream">Upstream</a>
+            <a href="/upstream/review/inventory">Field inventory</a>
+            <a href="#at-a-glance">Overview</a>
+            <a href="#stock">Stock</a>
+            <a href="#demand">Demand</a>
+            <a href="#trace">Traceability</a>
+            <a href="#records">Records</a>
+          </nav>
+          <span style="flex: 1"></span>
+          <span id="loading" class="note hidden">Loading&hellip;</span>
+        </div>
+      </div>
+      <p id="error" class="err"></p>
+
+      <main>
+        <section id="at-a-glance">
+          <div class="section-head">
+            <h2>At a glance</h2>
+            <p class="note" id="glance-scope"></p>
+          </div>
+          <div id="kpis" class="kpis"></div>
+          <p class="note" id="glance-note"></p>
+        </section>
+
+        <section id="stock">
+          <div class="section-head">
+            <h2>Stock health</h2>
+            <p class="note">
+              On hand, available and unavailable per part, derived by folding the append-only
+              ledger. Unavailable covers reserved, quarantined and in-repair units together.
+              Select a row for its locations and movements.
+            </p>
+          </div>
+          <div class="card card-pad" style="padding-bottom: 10px">
+            <div class="toolbar-inner" style="padding: 0 0 10px">
+              <input id="stock-search" type="search" placeholder="Search part, stock code or location" />
+              <span class="jump" id="stock-filters">
+                <button class="chip on" data-filter="all">All</button>
+                <button class="chip" data-filter="attention">Needs attention</button>
+                <button class="chip" data-filter="stocked">In stock</button>
+                <button class="chip" data-filter="unstocked">Not stocked</button>
+              </span>
+              <span style="flex: 1"></span>
+              <span class="note" id="stock-count"></span>
+            </div>
+          </div>
+          <div class="split" style="margin-top: 12px">
+            <div class="card scroll" id="stock-table"></div>
+            <aside class="card card-pad detail" id="stock-detail"></aside>
+          </div>
+        </section>
+
+        <section id="demand">
+          <div class="section-head">
+            <h2>Demand and dispatch</h2>
+            <p class="note">
+              What was asked for, what was met from stock, and how the dispatch ended.
+            </p>
+          </div>
+          <div class="split">
+            <div class="card scroll" id="demand-table"></div>
+            <div class="card scroll" id="dispatch-table"></div>
+          </div>
+        </section>
+
+        <section id="trace">
+          <div class="section-head">
+            <h2>Alert traceability</h2>
+            <p class="note">
+              candidate &rarr; demand &rarr; stock movement &rarr; dispatch. Candidates publish a
+              rank and a rule, never a probability or a diagnosis.
+            </p>
+          </div>
+          <div class="card card-pad" style="padding-bottom: 10px">
+            <div class="toolbar-inner" style="padding: 0 0 10px">
+              <input id="alert-search" type="search" placeholder="Search alert, asset or disposition" />
+              <span style="flex: 1"></span>
+              <span class="note" id="alert-scope"></span>
+            </div>
+          </div>
+          <div class="split" style="margin-top: 12px">
+            <div class="card scroll" id="alert-table"></div>
+            <aside class="card card-pad detail" id="alert-detail"></aside>
+          </div>
+        </section>
+
+        <section id="records">
+          <div class="section-head">
+            <h2>Underlying records</h2>
+            <p class="note">The raw generated families, exactly as written to disk.</p>
+          </div>
+          <details class="card raw">
+            <summary>Browse raw records</summary>
+            <div class="card-pad">
+              <div class="toolbar-inner" style="padding: 0 0 10px">
+                <label class="field" for="family">Family
+                  <select id="family"></select>
+                </label>
+                <button id="prev">Previous</button>
+                <button id="next">Next</button>
+                <span class="note" id="paging"></span>
+              </div>
+              <div id="families" class="note"></div>
+            </div>
+            <div class="scroll" id="raw-records"></div>
+          </details>
+        </section>
+
+        <p class="footnote">
+          Synthetic and fictional throughout. Model coefficients, lead times and dispatch minutes
+          are documented heuristics, not standards compliance, vendor emulation or real-world
+          calibration. Nothing here is suitable for operational decisions.
+        </p>
+      </main>
+    </div>
+
+    <script>
+      const MAX_PAGE = 200;
+      const FETCH_CAP = 5000;
+
+      const state = {
+        runId: null,
+        data: null,
+        stockFilter: "all",
+        stockQuery: "",
+        selectedPart: null,
+        alertQuery: "",
+        selectedAlert: null,
+        family: null,
+        offset: 0,
+        limit: 50,
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function showError(message) {
+        $("error").textContent = message || "";
+      }
+
+      function busy(on) {
+        $("loading").classList.toggle("hidden", !on);
+      }
+
+      async function api(path) {
+        const separator = path.includes("?") ? "&" : "?";
+        const url = state.runId
+          ? `${path}${separator}run_id=${encodeURIComponent(state.runId)}`
+          : path;
+        const response = await fetch(`/api/upstream/review/parts${url}`, {
+          headers: { Accept: "application/json" },
+        });
+        let payload;
+        try {
+          payload = await response.json();
+        } catch (error) {
+          throw new Error(
+            `${response.status} ${response.statusText} (the server did not return JSON)`
+          );
+        }
+        if (!response.ok) throw new Error(payload.message || payload.error || "request failed");
+        return payload;
+      }
+
+      /**
+       * Page a family to completion. The server caps a page at MAX_PAGE, so a
+       * whole family is assembled here. The cap is reported rather than hidden:
+       * a reviewer must never believe they have seen every row when they have not.
+       */
+      async function fetchFamily(recordType) {
+        const rows = [];
+        let offset = 0;
+        let total = 0;
+        for (;;) {
+          const page = await api(
+            `/records/${encodeURIComponent(recordType)}?offset=${offset}&limit=${MAX_PAGE}`
+          );
+          total = page.total;
+          rows.push(...page.records);
+          offset += page.returned;
+          if (!page.returned || offset >= page.total || rows.length >= FETCH_CAP) break;
+        }
+        return { rows, total, truncated: rows.length < total };
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(
+          /[&<>"']/g,
+          (character) =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character])
+        );
+      }
+
+      function format(value) {
+        if (value === null || value === undefined) return "";
+        if (Array.isArray(value)) return value.join(", ");
+        if (typeof value === "object") return JSON.stringify(value);
+        return String(value);
+      }
+
+      function humanize(value) {
+        if (value === null || value === undefined || value === "") return "\u2014";
+        return String(value).replace(/_/g, " ");
+      }
+
+      function shortTime(value) {
+        if (!value) return "\u2014";
+        return String(value).replace("T", " ").replace("Z", "");
+      }
+
+      function empty(message) {
+        return `<p class="empty">${escapeHtml(message)}</p>`;
+      }
+
+      function tagFor(text, kind) {
+        return `<span class="tag ${kind || ""}">${escapeHtml(humanize(text))}</span>`;
+      }
+
+      // -- data assembly ----------------------------------------------------
+
+      async function loadDataset() {
+        const [families, balances, outcomes, alertPayload] = await Promise.all([
+          api("/families"),
+          api("/balances"),
+          api("/outcomes"),
+          api("/alerts"),
+        ]);
+        const present = new Set(
+          families.families.filter((entry) => entry.present).map((entry) => entry.record_type)
+        );
+        const wanted = [
+          "part_master",
+          "storeroom_location",
+          "part_demand",
+          "dispatch_context",
+          "part_stock_txn",
+        ];
+        const loaded = {};
+        for (const recordType of wanted) {
+          loaded[recordType] = present.has(recordType)
+            ? await fetchFamily(recordType)
+            : { rows: [], total: 0, truncated: false };
+        }
+        return {
+          families: families.families,
+          balances,
+          outcomes,
+          alerts: alertPayload,
+          ...loaded,
+        };
+      }
+
+      function indexBy(rows, key) {
+        const index = new Map();
+        for (const row of rows) if (row[key]) index.set(row[key], row);
+        return index;
+      }
+
+      /**
+       * Roll the derived balances up per part, keeping the per-location detail.
+       *
+       * When the ledger family is absent the server reports `available: false`
+       * and returns no rows. That is *unknown*, not zero: a part is not
+       * "out of stock" merely because the transactions that would prove its
+       * balance were never generated. On that path every derived quantity is
+       * left null and the stock status is `unknown`, so the page states what it
+       * does not know instead of inventing a stockout.
+       */
+      function buildStock(data) {
+        const ledgerKnown = data.balances.available !== false;
+        const parts = indexBy(data.part_master.rows, "part_master_id");
+        const locations = indexBy(data.storeroom_location.rows, "location_id");
+        const byPart = new Map();
+
+        for (const part of data.part_master.rows) {
+          byPart.set(part.part_master_id, {
+            part_master_id: part.part_master_id,
+            part,
+            locations: [],
+            on_hand: 0,
+            available: 0,
+            requested: 0,
+            fulfilled: 0,
+            lost: 0,
+            demand_lines: 0,
+            movements: 0,
+          });
+        }
+
+        for (const row of data.balances.rows || []) {
+          let entry = byPart.get(row.part_master_id);
+          if (!entry) {
+            entry = {
+              part_master_id: row.part_master_id,
+              part: parts.get(row.part_master_id) || { part_key: row.part_key },
+              locations: [],
+              on_hand: 0,
+              available: 0,
+              requested: 0,
+              fulfilled: 0,
+              lost: 0,
+              demand_lines: 0,
+              movements: 0,
+            };
+            byPart.set(row.part_master_id, entry);
+          }
+          const location = locations.get(row.location_id) || {};
+          entry.locations.push({
+            location_id: row.location_id,
+            location_code: row.location_code || location.location_code || row.location_id,
+            location_type: row.location_type || location.location_type,
+            dispatch_latency_class: location.dispatch_latency_class,
+            nominal_dispatch_minutes_synthetic: location.nominal_dispatch_minutes_synthetic,
+            on_hand: row.on_hand,
+            available: row.available,
+          });
+          entry.on_hand += row.on_hand;
+          entry.available += row.available;
+        }
+
+        for (const demand of data.part_demand.rows) {
+          const entry = byPart.get(demand.part_master_id);
+          if (!entry) continue;
+          entry.demand_lines += 1;
+          entry.requested += Number(demand.requested_qty) || 0;
+          entry.fulfilled += Number(demand.fulfilled_qty) || 0;
+          entry.lost += Number(demand.lost_qty) || 0;
+        }
+
+        for (const txn of data.part_stock_txn.rows) {
+          const entry = byPart.get(txn.part_master_id);
+          if (entry) entry.movements += 1;
+        }
+
+        for (const entry of byPart.values()) {
+          entry.ledgerKnown = ledgerKnown;
+          entry.unmet =
+            entry.lost > 0 || (entry.demand_lines > 0 && entry.fulfilled < entry.requested);
+          if (!ledgerKnown) {
+            // Unknown, not zero. Nothing derived from the ledger may be claimed.
+            entry.on_hand = null;
+            entry.available = null;
+            entry.unavailable = null;
+            entry.stocked = null;
+            entry.status = "unknown";
+            entry.attention = entry.unmet;
+            continue;
+          }
+          // `on_hand` counts every present state, so the difference is not
+          // reserved alone: it is reserved, quarantined and in-repair together.
+          // The server publishes no per-state split, so it is labelled for what
+          // it actually is rather than narrowed to a claim the data cannot make.
+          entry.unavailable = entry.on_hand - entry.available;
+          entry.stocked = entry.locations.length > 0;
+          if (!entry.stocked) {
+            entry.status = entry.demand_lines ? "never_stocked" : "not_stocked";
+          } else if (entry.on_hand === 0) {
+            entry.status = "stockout";
+          } else if (entry.available === 0) {
+            entry.status = "none_available";
+          } else {
+            entry.status = "in_stock";
+          }
+          entry.attention =
+            entry.unmet || entry.status === "stockout" || entry.status === "never_stocked";
+        }
+
+        return [...byPart.values()].sort((a, b) => {
+          if (a.attention !== b.attention) return a.attention ? -1 : 1;
+          return String(a.part.part_key || "").localeCompare(String(b.part.part_key || ""));
+        });
+      }
+
+      const STATUS_TAGS = {
+        in_stock: ["in stock", "ok"],
+        none_available: ["none available", "warn"],
+        stockout: ["stockout", "bad"],
+        never_stocked: ["demanded, never stocked", "bad"],
+        not_stocked: ["not stocked", ""],
+        unknown: ["balance unknown", ""],
+      };
+
+      function statusTag(status) {
+        const [label, kind] = STATUS_TAGS[status] || [status, ""];
+        return `<span class="tag ${kind}">${escapeHtml(label)}</span>`;
+      }
+
+      /** Render a derived quantity, or an em-dash when the ledger cannot prove it. */
+      function qty(value) {
+        return value === null || value === undefined ? "\u2014" : escapeHtml(String(value));
+      }
+
+      // -- rendering --------------------------------------------------------
+
+      function renderGlance(data, stock) {
+        const balances = data.balances;
+        const ledgerKnown = balances.available !== false;
+        const outcomes = data.outcomes;
+        const demands = data.part_demand.rows;
+        const dispatches = data.dispatch_context.rows;
+
+        const onHand = ledgerKnown ? stock.reduce((total, entry) => total + entry.on_hand, 0) : null;
+        const available = ledgerKnown
+          ? stock.reduce((total, entry) => total + entry.available, 0)
+          : null;
+        const unavailable = ledgerKnown ? onHand - available : null;
+        const stockedParts = stock.filter((entry) => entry.stocked).length;
+        const attention = stock.filter((entry) => entry.attention);
+        const unmetLines = demands.filter(
+          (demand) => (Number(demand.lost_qty) || 0) > 0 || demand.fulfilment_state !== "fulfilled"
+        ).length;
+        const requested = demands.reduce(
+          (total, demand) => total + (Number(demand.requested_qty) || 0),
+          0
+        );
+        const fulfilled = demands.reduce(
+          (total, demand) => total + (Number(demand.fulfilled_qty) || 0),
+          0
+        );
+        const fillRate = requested ? Math.round((fulfilled / requested) * 100) : null;
+        const secondTrips = dispatches.filter(
+          (dispatch) => dispatch.outcome === "second_trip_required"
+        ).length;
+        const fitRejections = outcomes.van_fit_rejections || 0;
+        const locationRows = data.storeroom_location.rows;
+
+        const cards = [
+          {
+            k: "Parts catalogued",
+            v: stock.length,
+            d: ledgerKnown
+              ? `${stockedParts} held in a storeroom`
+              : "stock ledger absent, holdings unknown",
+          },
+          {
+            k: "Storeroom locations",
+            v: data.storeroom_location.total,
+            d: data.storeroom_location.truncated
+              ? `mix of first ${locationRows.length}: ${locationMix(locationRows)}`
+              : locationMix(locationRows),
+          },
+          {
+            k: "Units on hand",
+            v: qty(onHand),
+            d: ledgerKnown
+              ? `${available} available, ${unavailable} reserved, quarantined or in repair`
+              : "no stock ledger in this dataset",
+          },
+          {
+            k: "Fill rate",
+            v: fillRate === null ? "\u2014" : `${fillRate}%`,
+            d: `${fulfilled} of ${requested} units requested`,
+            kind: fillRate !== null && fillRate < 100 ? "warn" : "",
+          },
+          {
+            k: "Needs attention",
+            v: attention.length,
+            d: attention.length
+              ? ledgerKnown
+                ? "stockout or unmet demand"
+                : "unmet demand"
+              : ledgerKnown
+                ? "no stock exceptions"
+                : "no unmet demand",
+            kind: attention.length ? "alarm" : "",
+          },
+          {
+            k: "Unmet demand lines",
+            v: unmetLines,
+            d: `of ${demands.length} demand lines`,
+            kind: unmetLines ? "warn" : "",
+          },
+          {
+            k: "Dispatches",
+            v: outcomes.dispatch_count,
+            d: `${secondTrips} needed a second trip`,
+            kind: secondTrips ? "warn" : "",
+          },
+          {
+            k: "Van fit rejections",
+            v: fitRejections,
+            d: fitRejections ? "offered unit did not fit" : "every offered unit fitted",
+            kind: fitRejections ? "warn" : "",
+          },
+        ];
+
+        $("kpis").innerHTML = cards
+          .map(
+            (card) => `
+              <div class="kpi ${card.kind || ""}">
+                <div class="k">${escapeHtml(card.k)}</div>
+                <div class="v">${escapeHtml(String(card.v))}</div>
+                <div class="d">${escapeHtml(card.d)}</div>
+              </div>`
+          )
+          .join("");
+
+        $("glance-scope").textContent = `${outcomes.scenario_count} dataset(s): ${outcomes.scenarios_included.join(", ")}`;
+
+        const notes = [outcomes.note];
+        if (!ledgerKnown) notes.push(balances.note);
+        else
+          notes.push(
+            `Balances folded from ${balances.transaction_count} transactions; policy ${balances.balance_policy.replace(/_/g, " ")}. "On hand" counts every present state, so the unavailable figure covers reserved, quarantined and in-repair units together.`
+          );
+        const truncated = [
+          "part_master",
+          "storeroom_location",
+          "part_stock_txn",
+          "part_demand",
+          "dispatch_context",
+        ].filter((name) => data[name].truncated);
+        if (truncated.length)
+          notes.push(
+            `Only the first ${FETCH_CAP} rows were read for ${truncated.join(", ")}; the figures above cover that window only.`
+          );
+        $("glance-note").textContent = notes.join(" ");
+      }
+
+      function locationMix(rows) {
+        const counts = {};
+        for (const row of rows) counts[row.location_type] = (counts[row.location_type] || 0) + 1;
+        const parts = Object.entries(counts).map(([type, count]) => `${count} ${humanize(type)}`);
+        return parts.join(", ") || "none";
+      }
+
+      function stockMatches(entry) {
+        if (state.stockFilter === "attention" && !entry.attention) return false;
+        // The stocked / not-stocked filters are answerable only from the ledger.
+        if (state.stockFilter === "stocked" && entry.status !== "in_stock") return false;
+        if (state.stockFilter === "unstocked" && (!entry.ledgerKnown || entry.stocked))
+          return false;
+        const query = state.stockQuery.trim().toLowerCase();
+        if (!query) return true;
+        const haystack = [
+          entry.part.part_key,
+          entry.part.part_name,
+          entry.part.stock_code,
+          ...entry.locations.map((location) => location.location_code),
+          ...entry.locations.map((location) => location.location_type),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      }
+
+      function renderStock(stock) {
+        const ledgerKnown = stock.length ? stock[0].ledgerKnown : true;
+        const rows = stock.filter(stockMatches);
+        $("stock-count").textContent = `${rows.length} of ${stock.length} parts`;
+        if (!rows.length) {
+          $("stock-table").innerHTML = empty("No part matches this filter.");
+          renderStockDetail(null);
+          return;
+        }
+        const maxOnHand = ledgerKnown ? Math.max(...rows.map((entry) => entry.on_hand), 1) : 1;
+        $("stock-table").innerHTML = `
+          ${
+            ledgerKnown
+              ? ""
+              : '<p class="empty">The stock ledger (<code>part_stock_txn</code>) is not present in this dataset, so on hand, available and unavailable cannot be derived. They are shown as unknown, not as zero.</p>'
+          }
+          <table>
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Status</th>
+                <th class="num">On hand</th>
+                <th class="num">Available</th>
+                <th class="num">Unavailable</th>
+                <th>Demand</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map((entry) => {
+                  const selected = entry.part_master_id === state.selectedPart;
+                  const width = ledgerKnown ? Math.round((entry.on_hand / maxOnHand) * 100) : 0;
+                  const demand = entry.demand_lines
+                    ? `${entry.fulfilled}/${entry.requested} units${entry.lost ? ` &middot; ${entry.lost} lost` : ""}`
+                    : "no demand";
+                  return `
+                    <tr class="clickable ${selected ? "selected" : ""}" data-part="${escapeHtml(entry.part_master_id)}">
+                      <td>
+                        <div class="primary">${escapeHtml(entry.part.part_name || entry.part.part_key || entry.part_master_id)}</div>
+                        <div class="mono">${escapeHtml(entry.part.stock_code || entry.part.part_key || "")}</div>
+                      </td>
+                      <td>${statusTag(entry.status)}</td>
+                      <td class="num">${qty(entry.on_hand)}${ledgerKnown ? `<div class="bar"><span style="width:${width}%"></span></div>` : ""}</td>
+                      <td class="num">${qty(entry.available)}</td>
+                      <td class="num">${qty(entry.unavailable)}</td>
+                      <td>${entry.unmet ? `<span class="tag bad">${demand}</span>` : `<span class="note">${demand}</span>`}</td>
+                    </tr>`;
+                })
+                .join("")}
+            </tbody>
+          </table>`;
+
+        $("stock-table")
+          .querySelectorAll("tr[data-part]")
+          .forEach((row) =>
+            row.addEventListener("click", () => {
+              state.selectedPart = row.dataset.part;
+              renderStock(stock);
+            })
+          );
+
+        const selected =
+          rows.find((entry) => entry.part_master_id === state.selectedPart) || rows[0];
+        state.selectedPart = selected.part_master_id;
+        renderStockDetail(selected);
+      }
+
+      function renderStockDetail(entry) {
+        if (!entry) {
+          $("stock-detail").innerHTML = empty("Select a part to see its detail.");
+          return;
+        }
+        const part = entry.part;
+        const facts = [
+          ["Part key", part.part_key],
+          ["Stock code", part.stock_code],
+          ["Class", `${humanize(part.part_class)} \u00b7 criticality ${humanize(part.criticality_class)} \u00b7 ABC ${humanize(part.abc_class)}`],
+          ["Movement", `${humanize(part.movement_class)} \u00b7 ${humanize(part.tracking_mode)} \u00b7 ${humanize(part.uom)}`],
+          ["Lead time", part.nominal_lead_time_days_synthetic === undefined ? "\u2014" : `${part.nominal_lead_time_days_synthetic} days (${humanize(part.lead_band)}, synthetic)`],
+          ["Storage class", humanize(part.required_storage_class)],
+          ["Insurance spare", part.is_insurance_spare ? "yes" : "no"],
+          ["Fits", (part.applicable_asset_configs || []).map(humanize).join(", ") || "\u2014"],
+        ];
+        const locations = entry.locations.length
+          ? `<table>
+              <thead><tr><th>Location</th><th>Type</th><th class="num">On hand</th><th class="num">Available</th></tr></thead>
+              <tbody>${entry.locations
+                .map(
+                  (location) => `
+                    <tr>
+                      <td><div class="mono">${escapeHtml(location.location_code)}</div></td>
+                      <td>${tagFor(location.location_type)}<div class="note">${escapeHtml(humanize(location.dispatch_latency_class))}</div></td>
+                      <td class="num">${qty(location.on_hand)}</td>
+                      <td class="num">${qty(location.available)}</td>
+                    </tr>`
+                )
+                .join("")}</tbody>
+            </table>`
+          : entry.ledgerKnown
+            ? '<p class="note">This part is not held at any storeroom location in this dataset.</p>'
+            : '<p class="note">Unknown: the stock ledger is not present in this dataset, so where this part sits cannot be derived. This is not the same as holding none.</p>';
+
+        const activity = entry.ledgerKnown
+          ? `${entry.movements} ledger movement(s), ${entry.demand_lines} demand line(s),
+             ${entry.fulfilled} of ${entry.requested} units met from stock${entry.lost ? `, ${entry.lost} lost` : ""}.`
+          : `${entry.demand_lines} demand line(s), ${entry.fulfilled} of ${entry.requested} units
+             met from stock${entry.lost ? `, ${entry.lost} lost` : ""}. Ledger movements are not
+             available in this dataset.`;
+
+        $("stock-detail").innerHTML = `
+          <h3>${escapeHtml(part.part_name || part.part_key || entry.part_master_id)}</h3>
+          <div>${statusTag(entry.status)} ${entry.unmet ? '<span class="tag bad">unmet demand</span>' : ""}</div>
+          <dl>${facts
+            .map(([key, value]) => `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(format(value) || "\u2014")}</dd>`)
+            .join("")}</dl>
+          <div class="block">
+            <h4>Where it sits</h4>
+            ${locations}
+          </div>
+          <div class="block">
+            <h4>Activity</h4>
+            <p class="note">${activity}</p>
+          </div>`;
+      }
+
+      // Vocabularies as the generator actually emits them (parts.py
+      // DISPATCH_OUTCOMES / MATERIAL_STATES). `outcome` is null for
+      // dispositions that never reach a visit, and `created` means no material
+      // was needed, so neither is an exception. `returned_unused` is not one
+      // either: it ships with `material_state: issued` because a candidate kit
+      // is speculative by construction and the surplus comes back by design.
+      const OUTCOME_KIND = {
+        resolved_first_visit: "ok",
+        second_trip_required: "warn",
+        wrong_part: "bad",
+      };
+      const MATERIAL_KIND = {
+        issued: "ok",
+        partially_fulfilled: "warn",
+        unfulfilled: "bad",
+      };
+
+      function renderDemand(data) {
+        const parts = indexBy(data.part_master.rows, "part_master_id");
+        const demands = data.part_demand.rows;
+        $("demand-table").innerHTML = demands.length
+          ? `<table>
+              <thead><tr><th>Part</th><th class="num">Req</th><th class="num">Met</th><th class="num">Lost</th><th>State</th><th class="num">Latency</th></tr></thead>
+              <tbody>${demands
+                .map((demand) => {
+                  const part = parts.get(demand.part_master_id) || {};
+                  const met = demand.fulfilment_state === "fulfilled";
+                  return `
+                    <tr>
+                      <td>
+                        <div class="primary">${escapeHtml(part.part_name || demand.part_key)}</div>
+                        <div class="mono">${escapeHtml(humanize(demand.demand_reason))} &middot; ${escapeHtml(shortTime(demand.requested_utc))}</div>
+                      </td>
+                      <td class="num">${escapeHtml(format(demand.requested_qty))}</td>
+                      <td class="num">${escapeHtml(format(demand.fulfilled_qty))}</td>
+                      <td class="num">${escapeHtml(format(demand.lost_qty))}</td>
+                      <td>${tagFor(demand.fulfilment_state, met ? "ok" : "bad")}${demand.fit_rejected_at_source ? tagFor("fit rejected", "warn") : ""}</td>
+                      <td class="num">${demand.fulfilment_latency_minutes === null || demand.fulfilment_latency_minutes === undefined ? "\u2014" : `${Math.round(demand.fulfilment_latency_minutes)}m`}</td>
+                    </tr>`;
+                })
+                .join("")}</tbody>
+            </table>`
+          : empty("No demand lines in this dataset.");
+
+        const dispatches = data.dispatch_context.rows;
+        $("dispatch-table").innerHTML = dispatches.length
+          ? `<table>
+              <thead><tr><th>Dispatch</th><th>Disposition</th><th>Material</th><th>Outcome</th></tr></thead>
+              <tbody>${dispatches
+                .map((dispatch) => {
+                  return `
+                    <tr>
+                      <td>
+                        <div class="primary">${escapeHtml(humanize(dispatch.asset_type))}</div>
+                        <div class="mono">${escapeHtml(shortTime(dispatch.event_time_utc))}</div>
+                      </td>
+                      <td>${tagFor(dispatch.disposition)}</td>
+                      <td>${tagFor(dispatch.material_state, MATERIAL_KIND[dispatch.material_state] || "")}</td>
+                      <td>${tagFor(dispatch.outcome, OUTCOME_KIND[dispatch.outcome] || "")}${dispatch.van_stock_fit_rejected ? tagFor("van fit rejected", "bad") : ""}</td>
+                    </tr>`;
+                })
+                .join("")}</tbody>
+            </table>`
+          : empty("No dispatches in this dataset.");
+      }
+
+      function alertMatches(alert) {
+        const query = state.alertQuery.trim().toLowerCase();
+        if (!query) return true;
+        return [alert.alert_id, alert.asset_id, alert.disposition, alert.alert_source, alert.coverage_state]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      }
+
+      function renderAlerts(data) {
+        const payload = data.alerts;
+        $("alert-scope").textContent = payload.truncated
+          ? `First ${payload.returned} of ${payload.total} alerts (${payload.order}); the rest are not reachable from this list.`
+          : `All ${payload.total} alerts (${payload.order}).`;
+        const alerts = payload.alerts.filter(alertMatches);
+        if (!alerts.length) {
+          $("alert-table").innerHTML = empty(
+            payload.alerts.length ? "No alert matches this search." : "No alerts in this dataset."
+          );
+          $("alert-detail").innerHTML = empty("Nothing to trace.");
+          return;
+        }
+        $("alert-table").innerHTML = `
+          <table>
+            <thead><tr><th>Observed</th><th>Asset</th><th>Coverage</th><th>Disposition</th></tr></thead>
+            <tbody>${alerts
+              .map((alert) => {
+                const selected = alert.alert_id === state.selectedAlert;
+                return `
+                  <tr class="clickable ${selected ? "selected" : ""}" data-alert="${escapeHtml(alert.alert_id)}">
+                    <td>
+                      <div class="primary">${escapeHtml(shortTime(alert.observed_at_utc))}</div>
+                      <div class="mono">${escapeHtml(humanize(alert.alert_source))}</div>
+                    </td>
+                    <td class="mono">${escapeHtml(alert.asset_id || "")}</td>
+                    <td>${tagFor(alert.coverage_state)}</td>
+                    <td>${alert.disposition ? tagFor(alert.disposition) : '<span class="note">no dispatch</span>'}</td>
+                  </tr>`;
+              })
+              .join("")}</tbody>
+          </table>`;
+        $("alert-table")
+          .querySelectorAll("tr[data-alert]")
+          .forEach((row) =>
+            row.addEventListener("click", () => {
+              state.selectedAlert = row.dataset.alert;
+              renderAlerts(data);
+              loadTraceDetail(state.selectedAlert).catch((error) => showError(error.message));
+            })
+          );
+        const selected = alerts.find((alert) => alert.alert_id === state.selectedAlert) || alerts[0];
+        state.selectedAlert = selected.alert_id;
+        loadTraceDetail(selected.alert_id).catch((error) => showError(error.message));
+      }
+
+      async function loadTraceDetail(alertId) {
+        const trace = await api(`/trace/${encodeURIComponent(alertId)}`);
+        const legs = trace.legs_present || {};
+        const order = [
+          ["candidates", "Candidate"],
+          ["demands", "Demand"],
+          ["transactions", "Stock movement"],
+          ["dispatches", "Dispatch"],
+        ];
+        const chain = order
+          .map(([key, label]) => `<span class="leg ${legs[key] ? "on" : "off"}">${label}</span>`)
+          .join('<span class="arrow">&rarr;</span>');
+
+        const candidates = trace.candidates.length
+          ? `<table>
+              <thead><tr><th class="num">Rank</th><th>Part</th><th>Rule</th><th>Claims</th></tr></thead>
+              <tbody>${trace.candidates
+                .map(
+                  (candidate) => `
+                    <tr>
+                      <td class="num">${escapeHtml(format(candidate.rank))}</td>
+                      <td><div class="primary">${escapeHtml(humanize(candidate.candidate_part_key))}</div><div class="mono">${escapeHtml(humanize(candidate.coverage_state))}</div></td>
+                      <td>${tagFor(candidate.rule_match_strength)}<div class="note">${escapeHtml(humanize(candidate.evidence_basis))}</div></td>
+                      <td class="note">diagnosis ${escapeHtml(format(candidate.diagnosis_claim))}, probability ${escapeHtml(format(candidate.probability_claim))}</td>
+                    </tr>`
+                )
+                .join("")}</tbody>
+            </table>`
+          : '<p class="note">No candidate.</p>';
+
+        const movements = trace.transactions.length
+          ? `<table>
+              <thead><tr><th class="num">#</th><th>Movement</th><th class="num">Qty</th><th>To state</th></tr></thead>
+              <tbody>${trace.transactions
+                .map(
+                  (txn) => `
+                    <tr>
+                      <td class="num">${escapeHtml(format(txn.txn_sequence))}</td>
+                      <td><div class="primary">${escapeHtml(humanize(txn.transaction_type))}</div><div class="mono">${escapeHtml(humanize(txn.part_key))} &middot; ${escapeHtml(humanize(txn.location_type))}</div></td>
+                      <td class="num">${escapeHtml(format(txn.quantity))}</td>
+                      <td>${tagFor(txn.to_state)}</td>
+                    </tr>`
+                )
+                .join("")}</tbody>
+            </table>`
+          : '<p class="note">No stock movement. A dispatch that needed no material produces none.</p>';
+
+        const demands = trace.demands.length
+          ? `<table>
+              <thead><tr><th>Part</th><th class="num">Req</th><th class="num">Met</th><th>State</th></tr></thead>
+              <tbody>${trace.demands
+                .map(
+                  (demand) => `
+                    <tr>
+                      <td>${escapeHtml(humanize(demand.part_key))}</td>
+                      <td class="num">${escapeHtml(format(demand.requested_qty))}</td>
+                      <td class="num">${escapeHtml(format(demand.fulfilled_qty))}</td>
+                      <td>${tagFor(demand.fulfilment_state, demand.fulfilment_state === "fulfilled" ? "ok" : "bad")}</td>
+                    </tr>`
+                )
+                .join("")}</tbody>
+            </table>`
+          : '<p class="note">No demand line.</p>';
+
+        const dispatch = trace.dispatches.length
+          ? trace.dispatches
+              .map(
+                (item) => `
+                  <dl>
+                    <dt>Disposition</dt><dd>${escapeHtml(humanize(item.disposition))}</dd>
+                    <dt>Material</dt><dd>${escapeHtml(humanize(item.material_state))}</dd>
+                    <dt>Outcome</dt><dd>${escapeHtml(humanize(item.outcome))}</dd>
+                    <dt>Fit verified</dt><dd>${item.fit_spec_verified ? "yes" : "no"}${item.van_stock_fit_rejected ? " (van unit rejected)" : ""}</dd>
+                    <dt>Travel</dt><dd>${item.travel_minutes_synthetic === undefined || item.travel_minutes_synthetic === null ? "\u2014" : `${Math.round(item.travel_minutes_synthetic)} min (synthetic)`}</dd>
+                    <dt>Crew claim</dt><dd>${escapeHtml(humanize(item.crew_assignment_claim))}</dd>
+                  </dl>`
+              )
+              .join("")
+          : '<p class="note">No dispatch.</p>';
+
+        $("alert-detail").innerHTML = `
+          <h3 class="mono">${escapeHtml(alertId)}</h3>
+          <div class="chain">${chain}</div>
+          <p class="note">${
+            trace.chain_is_complete
+              ? "Chain complete: candidate, demand, stock movement and dispatch are all present."
+              : escapeHtml(trace.chain_note || "")
+          }</p>
+          <div class="block"><h4>Candidates</h4>${candidates}</div>
+          <div class="block"><h4>Demand</h4>${demands}</div>
+          <div class="block"><h4>Stock movements</h4>${movements}</div>
+          <div class="block"><h4>Dispatch</h4>${dispatch}</div>`;
+      }
+
+      function renderFamilies(data) {
+        const present = data.families.filter((entry) => entry.present);
+        $("families").textContent = data.families
+          .map(
+            (entry) =>
+              `${entry.record_type}: ${entry.present ? `${entry.record_count} records` : "absent"}`
+          )
+          .join("  \u00b7  ");
+        if (!state.family || !present.some((entry) => entry.record_type === state.family)) {
+          state.family = present.length ? present[0].record_type : null;
+          state.offset = 0;
+        }
+        $("family").innerHTML = present
+          .map(
+            (entry) =>
+              `<option value="${escapeHtml(entry.record_type)}"${
+                entry.record_type === state.family ? " selected" : ""
+              }>${escapeHtml(entry.record_type)}</option>`
+          )
+          .join("");
+      }
+
+      async function loadRawRecords() {
+        if (!state.family) {
+          $("raw-records").innerHTML = empty("No parts family is present in this dataset.");
+          return;
+        }
+        const page = await api(
+          `/records/${encodeURIComponent(state.family)}?offset=${state.offset}&limit=${state.limit}`
+        );
+        if (!page.records.length) {
+          $("raw-records").innerHTML = empty("No records.");
+        } else {
+          const keys = page.fields;
+          $("raw-records").innerHTML = `
+            <table>
+              <thead><tr>${keys.map((key) => `<th>${escapeHtml(key)}</th>`).join("")}</tr></thead>
+              <tbody>${page.records
+                .map(
+                  (record) =>
+                    `<tr>${keys
+                      .map((key) => {
+                        const value = escapeHtml(format(record[key]));
+                        return `<td class="mono wrapcell" title="${value}">${value}</td>`;
+                      })
+                      .join("")}</tr>`
+                )
+                .join("")}</tbody>
+            </table>`;
+        }
+        $("paging").textContent = `${page.offset + 1}-${page.offset + page.returned} of ${page.total}`;
+        $("prev").disabled = page.offset === 0;
+        $("next").disabled = page.offset + page.returned >= page.total;
+      }
+
+      // -- orchestration ----------------------------------------------------
+
+      async function render() {
+        showError("");
+        busy(true);
+        try {
+          const data = await loadDataset();
+          state.data = data;
+          const stock = buildStock(data);
+          state.stock = stock;
+          renderGlance(data, stock);
+          renderStock(stock);
+          renderDemand(data);
+          renderAlerts(data);
+          renderFamilies(data);
+          await loadRawRecords();
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          busy(false);
+        }
+      }
+
+      async function loadRuns() {
+        const { runs } = await api("/runs");
+        $("run").innerHTML = runs
+          .map(
+            (run) =>
+              `<option value="${escapeHtml(run.run_id)}">${escapeHtml(
+                run.scenario || run.directory
+              )}</option>`
+          )
+          .join("");
+        if (runs.length) state.runId = runs[0].run_id;
+        else
+          showError("No generated dataset with a manifest was found under the review root.");
+      }
+
+      function debounce(handler, delay) {
+        let timer = null;
+        return (...args) => {
+          window.clearTimeout(timer);
+          timer = window.setTimeout(() => handler(...args), delay);
+        };
+      }
+
+      $("run").addEventListener("change", (event) => {
+        state.runId = event.target.value;
+        state.selectedPart = null;
+        state.selectedAlert = null;
+        state.offset = 0;
+        render();
+      });
+      $("stock-search").addEventListener(
+        "input",
+        debounce((event) => {
+          state.stockQuery = event.target.value;
+          state.selectedPart = null;
+          renderStock(state.stock || []);
+        }, 150)
+      );
+      $("alert-search").addEventListener(
+        "input",
+        debounce((event) => {
+          state.alertQuery = event.target.value;
+          state.selectedAlert = null;
+          if (state.data) renderAlerts(state.data);
+        }, 150)
+      );
+      $("stock-filters")
+        .querySelectorAll("button[data-filter]")
+        .forEach((button) =>
+          button.addEventListener("click", () => {
+            state.stockFilter = button.dataset.filter;
+            state.selectedPart = null;
+            $("stock-filters")
+              .querySelectorAll("button[data-filter]")
+              .forEach((other) => other.classList.toggle("on", other === button));
+            renderStock(state.stock || []);
+          })
+        );
+      $("family").addEventListener("change", (event) => {
+        state.family = event.target.value;
+        state.offset = 0;
+        loadRawRecords().catch((error) => showError(error.message));
+      });
+      $("prev").addEventListener("click", () => {
+        state.offset = Math.max(0, state.offset - state.limit);
+        loadRawRecords().catch((error) => showError(error.message));
+      });
+      $("next").addEventListener("click", () => {
+        state.offset += state.limit;
+        loadRawRecords().catch((error) => showError(error.message));
+      });
+
+      loadRuns()
+        .then(render)
+        .catch((error) => {
+          busy(false);
+          showError(error.message);
+        });
+    </script>
+  </body>
+</html>

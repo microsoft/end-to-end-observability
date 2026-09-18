@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:energy-domains-v2:energy-observations:1",
+  "title": "Energy Domains V2 neutral observation envelope, version 1",
+  "description": "Producer-owned wire contract, not an incident or alert. Project these columns when reading Log Analytics; service-added columns are outside this envelope. Payload semantics and label exclusion are specified in the integration guide.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "TimeGenerated", "ObservedAt", "SimulatedAt", "SchemaVersion", "EventId",
+    "RunId", "Domain", "Surface", "Portal", "RecordType", "EntityId",
+    "LocationId", "Payload", "Context", "IsSynthetic", "OperationalUse"
+  ],
+  "properties": {
+    "TimeGenerated": {
+      "type": "string", "format": "date-time", "x-log-analytics-type": "datetime",
+      "description": "Producer UTC observation time on upload; Azure may replace out-of-window values."
+    },
+    "ObservedAt": {
+      "type": "string", "format": "date-time", "x-log-analytics-type": "datetime",
+      "description": "Authoritative observation timeline, preserved across delivery retries."
+    },
+    "SimulatedAt": {
+      "type": "string", "format": "date-time", "x-log-analytics-type": "datetime",
+      "description": "Synthetic source timeline; not ingestion time or a detector label."
+    },
+    "SchemaVersion": {
+      "type": "string", "const": "1", "x-log-analytics-type": "string"
+    },
+    "EventId": {
+      "type": "string", "pattern": "^[0-9a-f]{64}$", "x-log-analytics-type": "string",
+      "description": "Opaque deterministic event identity derived from run, sequence and row index. Deduplicate delivery retries by this field."
+    },
+    "RunId": {
+      "type": "string", "minLength": 1, "x-log-analytics-type": "string",
+      "description": "Opaque producer run identifier; never mix runs into a baseline."
+    },
+    "Domain": {
+      "type": "string", "enum": ["power-grid", "upstream", "midstream", "downstream"],
+      "x-log-analytics-type": "string"
+    },
+    "Surface": {
+      "type": "string",
+      "enum": [
+        "power-grid", "upstream", "midstream", "downstream", "downstream-portfolio",
+        "power-grid-inventory", "upstream-inventory", "midstream-inventory", "downstream-inventory"
+      ],
+      "x-log-analytics-type": "string"
+    },
+    "Portal": {
+      "type": "string", "enum": ["monitoring", "inventory"], "x-log-analytics-type": "string"
+    },
+    "RecordType": {
+      "type": "string", "enum": ["telemetry", "inventory_position"], "x-log-analytics-type": "string",
+      "description": "Current replay record families. New families require explicit consumer acceptance; this is not an anomaly class."
+    },
+    "EntityId": {
+      "type": "string", "x-log-analytics-type": "string",
+      "description": "Opaque domain identity, not necessarily an equipment asset or ARM resource."
+    },
+    "LocationId": {
+      "type": "string", "x-log-analytics-type": "string",
+      "description": "Domain-local location identity; do not equate location namespaces across domains."
+    },
+    "Payload": {
+      "type": "object", "x-log-analytics-type": "dynamic",
+      "description": "Domain-owned values, units, quality, measurement/tag/phase and source-time fields. Preserve JSON types and nulls."
+    },
+    "Context": {
+      "type": "object", "x-log-analytics-type": "dynamic",
+      "description": "Fictional domain-owned equipment/location/part context, not Azure resource metadata. Legacy rows may omit details_profile; enriched rows declare the separately versioned domain profile.",
+      "properties": {
+        "details_profile": {"type": "string", "const": "domain-details-v1"}
+      }
+    },
+    "IsSynthetic": {
+      "type": "boolean", "const": true, "x-log-analytics-type": "boolean"
+    },
+    "OperationalUse": {
+      "type": "string", "const": "prohibited", "x-log-analytics-type": "string"
+    }
+  },
+  "$defs": {
+    "telemetryPayload": {
+      "type": "object",
+      "required": ["measurement", "value", "unit", "quality"],
+      "properties": {
+        "measurement": {"type": "string", "minLength": 1},
+        "value": {"type": ["number", "null"]},
+        "unit": {"type": "string"},
+        "quality": {"type": "string", "minLength": 1},
+        "source_time_utc": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "inventoryPayload": {
+      "type": "object",
+      "required": ["quantity", "uom", "quality"],
+      "properties": {
+        "quantity": {"type": ["integer", "null"]},
+        "uom": {"type": "string", "minLength": 1},
+        "quality": {"type": "string", "minLength": 1}
+      }
+    },
+    "richMonitoringContext": {
+      "type": "object",
+      "required": ["details_profile", "asset", "measurement", "topology"],
+      "properties": {
+        "asset": {"type": "object", "required": ["semantics"]},
+        "measurement": {
+          "type": "object", "required": ["measurement", "unit", "quantity_kind", "cadence_semantics"],
+          "properties": {
+            "measurement": {"type": "string"}, "unit": {"type": "string"},
+            "quantity_kind": {"type": "string"}, "cadence_semantics": {"type": "string"},
+            "cadence_seconds": {"type": "number", "exclusiveMinimum": 0}
+          }
+        },
+        "topology": {
+          "type": "object", "required": ["semantics", "source", "links", "available_link_count", "omitted_link_count"],
+          "properties": {
+            "links": {"type": "array", "maxItems": 4, "items": {"type": "object"}},
+            "available_link_count": {"type": "integer", "minimum": 0},
+            "omitted_link_count": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "richInventoryContext": {
+      "type": "object",
+      "required": ["details_profile", "part_details", "applicability", "location_details", "inventory_provenance"],
+      "properties": {
+        "part_details": {
+          "type": "object", "required": ["part_class", "tracking_mode", "required_storage_class", "catalog_claim"]
+        },
+        "applicability": {
+          "type": "object", "required": ["items", "total_count", "included_count", "partial", "content_sha256", "scope", "claim", "validity_basis"],
+          "properties": {
+            "items": {"type": "array", "maxItems": 12, "items": {"type": "object"}},
+            "total_count": {"type": "integer", "minimum": 0},
+            "included_count": {"type": "integer", "minimum": 0, "maximum": 12},
+            "partial": {"type": "boolean"},
+            "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        "location_details": {"type": "object"},
+        "inventory_provenance": {
+          "type": "object", "required": ["source_domain", "source_files_sha256", "stock_basis", "monitoring_asset_join"],
+          "properties": {
+            "source_files_sha256": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+            "monitoring_asset_join": {"const": "not_established"}
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"RecordType": {"const": "telemetry"}}},
+      "then": {"properties": {"Portal": {"const": "monitoring"}, "Payload": {"$ref": "#/$defs/telemetryPayload"}}}
+    },
+    {
+      "if": {"properties": {"RecordType": {"const": "inventory_position"}}},
+      "then": {"properties": {"Portal": {"const": "inventory"}, "Payload": {"$ref": "#/$defs/inventoryPayload"}}}
+    },
+    {
+      "if": {"properties": {"Portal": {"const": "monitoring"}, "Context": {"required": ["details_profile"]}}},
+      "then": {"properties": {"Context": {"$ref": "#/$defs/richMonitoringContext"}}}
+    },
+    {
+      "if": {"properties": {"Portal": {"const": "inventory"}, "Context": {"required": ["details_profile"]}}},
+      "then": {"properties": {"Context": {"$ref": "#/$defs/richInventoryContext"}}}
+    }
+  ],
+  "oneOf": [
+    {"properties": {"Surface": {"const": "power-grid"}, "Domain": {"const": "power-grid"}, "Portal": {"const": "monitoring"}}},
+    {"properties": {"Surface": {"const": "upstream"}, "Domain": {"const": "upstream"}, "Portal": {"const": "monitoring"}}},
+    {"properties": {"Surface": {"const": "midstream"}, "Domain": {"const": "midstream"}, "Portal": {"const": "monitoring"}}},
+    {"properties": {"Surface": {"const": "downstream"}, "Domain": {"const": "downstream"}, "Portal": {"const": "monitoring"}}},
+    {"properties": {"Surface": {"const": "downstream-portfolio"}, "Domain": {"const": "downstream"}, "Portal": {"const": "monitoring"}}},
+    {"properties": {"Surface": {"const": "power-grid-inventory"}, "Domain": {"const": "power-grid"}, "Portal": {"const": "inventory"}}},
+    {"properties": {"Surface": {"const": "upstream-inventory"}, "Domain": {"const": "upstream"}, "Portal": {"const": "inventory"}}},
+    {"properties": {"Surface": {"const": "midstream-inventory"}, "Domain": {"const": "midstream"}, "Portal": {"const": "inventory"}}},
+    {"properties": {"Surface": {"const": "downstream-inventory"}, "Domain": {"const": "downstream"}, "Portal": {"const": "inventory"}}}
+  ]
+}

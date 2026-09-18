@@ -3,8 +3,8 @@ display_name: Postmortem Drafter
 model: gpt-4o
 temperature: 0.3
 top_p: 0.95
-description: Drafts a blameless postmortem from the incident record and writes it back to
-  the knowledge index, closing the learning loop.
+description: Drafts a blameless postmortem from the incident record. Publication requires
+  separate review and a dedicated publisher identity.
 instructions_file: instructions.md
 tools:
 - type: azure_ai_search
@@ -16,28 +16,114 @@ tools:
   name: change_history
   spec: ../../tools/openapi/change-history.yaml
   auth: managed_identity
-output_schema:
-  type: object
-  required:
-  - summary
-  - timeline
-  - contributing_factors
-  - actions
-  properties:
-    summary:
-      type: string
-    timeline:
-      type: array
-    contributing_factors:
-      type: array
-    what_made_it_slow:
-      type: string
-    actions:
-      type: array
-    lesson:
-      type: string
 identity:
   type: user_assigned_managed_identity
   required_roles:
   - Monitoring Reader
   - Reader
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps: &id001
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
+    summary:
+      type: string
+      minLength: 1
+    timeline:
+      type: array
+      items:
+        type: object
+        properties:
+          at:
+            type: string
+            minLength: 1
+          observation:
+            type: string
+            minLength: 1
+        required:
+        - at
+        - observation
+        additionalProperties: false
+      minItems: 0
+    contributing_factors: *id001
+    what_made_it_slow:
+      type: string
+    actions:
+      type: array
+      items:
+        type: object
+        properties:
+          action:
+            type: string
+            minLength: 1
+          owner:
+            type:
+            - string
+            - 'null'
+          status:
+            type: string
+            enum:
+            - proposed
+            - unknown
+        required:
+        - action
+        - owner
+        - status
+        additionalProperties: false
+      minItems: 0
+    lesson:
+      type: string
+    executed_action:
+      type: string
+      enum:
+      - none
+    closure_basis:
+      type: string
+      enum:
+      - observed_recovery
+      - administrative_closure
+      - unknown
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - summary
+  - timeline
+  - contributing_factors
+  - what_made_it_slow
+  - actions
+  - lesson
+  - executed_action
+  - closure_basis
+  additionalProperties: false

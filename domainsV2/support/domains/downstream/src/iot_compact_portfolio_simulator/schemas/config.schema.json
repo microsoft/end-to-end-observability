@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iot-compact-portfolio/config.schema.json",
+  "title": "Fictional compact portfolio simulator config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "seed",
+    "scenario",
+    "enterprise",
+    "simulation"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "seed": {"type": "integer"},
+    "scenario": {
+      "enum": [
+        "normal_portfolio",
+        "communications_degradation",
+        "module_degradation",
+        "offsites_withdrawal",
+        "portfolio_power_event",
+        "blend_shift"
+      ]
+    },
+    "enterprise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enterprise_id", "display_name", "time_zone"],
+      "properties": {
+        "enterprise_id": {
+          "type": "string",
+          "pattern": "^fictional-[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "display_name": {"type": "string", "minLength": 1},
+        "time_zone": {"type": "string", "minLength": 1}
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_utc", "end_utc"],
+      "properties": {
+        "start_utc": {"type": "string"},
+        "end_utc": {"type": "string"}
+      }
+    },
+    "localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "hidden_withdrawal_route_fraction",
+        "confirmation_delay_seconds"
+      ],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "hidden_withdrawal_route_fraction": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 0.95
+        },
+        "confirmation_delay_seconds": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 86400
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["include_csv", "telemetry_shard_target_records"],
+      "properties": {
+        "include_csv": {"type": "boolean"},
+        "telemetry_shard_target_records": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 1000000
+        }
+      }
+    }
+  }
+}

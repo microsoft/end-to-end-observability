@@ -1,0 +1,52 @@
+{
+  "review": {
+    "dbo.consumer_jobs": ["SELECT", "INSERT"],
+    "dbo.consumer_results": ["SELECT"],
+    "dbo.consumer_application_runs": ["SELECT"],
+    "review.incidents": ["SELECT", "INSERT", "UPDATE"],
+    "review.revisions": ["SELECT", "INSERT", "UPDATE"],
+    "review.receipts": ["SELECT", "INSERT"],
+    "review.publications": ["SELECT", "INSERT", "UPDATE"],
+    "review.outbox": ["SELECT", "INSERT", "UPDATE"],
+    "review.dependencies": ["SELECT", "INSERT"],
+    "review.evidence_tombstones": ["SELECT", "INSERT"],
+    "review.publisher_state": ["SELECT", "INSERT", "UPDATE"],
+    "review.publisher_jobs": ["INSERT"]
+  },
+  "worker": {
+    "dbo.consumer_events": ["SELECT", "INSERT"],
+    "dbo.consumer_batches": ["SELECT", "INSERT"],
+    "dbo.consumer_batch_events": ["SELECT", "INSERT"],
+    "dbo.consumer_jobs": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.consumer_results": ["SELECT", "INSERT"],
+    "dbo.consumer_application_runs": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.itops_runtime_month": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.itops_runtime_workflow": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.itops_runtime_call": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.itops_runtime_tool": ["SELECT", "INSERT"],
+    "review.incidents": ["SELECT"],
+    "review.revisions": ["SELECT"],
+    "review.receipts": ["SELECT"],
+    "review.publications": ["SELECT"],
+    "review.publisher_state": ["SELECT"],
+    "review.publisher_projections": ["SELECT"]
+  },
+  "tools": {
+    "dbo.consumer_jobs": ["SELECT"],
+    "dbo.consumer_application_runs": ["SELECT"]
+  },
+  "publisher": {
+    "dbo.itops_runtime_month": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.itops_runtime_workflow": ["SELECT", "INSERT", "UPDATE"],
+    "dbo.itops_runtime_call": ["SELECT", "INSERT", "UPDATE"],
+    "review.incidents": ["SELECT", "UPDATE"],
+    "review.revisions": ["SELECT", "UPDATE"],
+    "review.publications": ["SELECT", "UPDATE"],
+    "review.dependencies": ["SELECT"],
+    "review.outbox": ["SELECT", "INSERT", "UPDATE"],
+    "review.publisher_state": ["SELECT", "INSERT", "UPDATE"],
+    "review.publisher_jobs": ["SELECT", "INSERT", "UPDATE"],
+    "review.publisher_attempts": ["SELECT", "INSERT", "UPDATE"],
+    "review.publisher_projections": ["SELECT", "INSERT"]
+  }
+}

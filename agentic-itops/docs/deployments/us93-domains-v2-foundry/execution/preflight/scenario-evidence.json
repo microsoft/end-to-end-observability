@@ -1,0 +1,23 @@
+{
+  "calculatedUtc": "2026-09-15T01:36:07.330350+00:00",
+  "fixed": 91.76708333333333,
+  "variable": {
+    "gpt4o_input_20M": 55.0,
+    "gpt4o_output_5M": 55,
+    "embedding_10M": 0.21999999999999997,
+    "semantic_10000": 10,
+    "functions_3M_GBs": 78.0,
+    "functions_1M_executions": 0.39999999999999997,
+    "blob_100GB": 1.8399999999999999,
+    "blob_writes_1M": 5.0,
+    "blob_reads_5M": 2.0,
+    "blob_lists_100k": 0.5,
+    "queue_3GB": 0.135,
+    "queue_ops_1M": 0.4,
+    "logs_50GB": 138.0,
+    "retention_50GB": 6.0,
+    "egress_100GB": 8.7
+  },
+  "subtotal": 452.96208333333334,
+  "status": "conditional quote; SKU/model/quota/auth approval gates remain"
+}

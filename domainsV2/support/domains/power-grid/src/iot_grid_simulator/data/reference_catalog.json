@@ -1,0 +1,101 @@
+[
+  {
+    "catalog_key": "beckwith-m6200a",
+    "manufacturer": "Beckwith Electric",
+    "product_family": "M-6200A",
+    "category": "regulator_control",
+    "reference_only": true,
+    "source_url": "https://beckwithelectric.com/wp-content/uploads/docs/product-specs/M-6200A-SP.pdf",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "chargepoint-cpf50",
+    "manufacturer": "ChargePoint",
+    "product_family": "CPF50",
+    "category": "evse",
+    "reference_only": true,
+    "source_url": "https://www.chargepoint.com/products/stations/cpf50",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "eaton-cbc8000",
+    "manufacturer": "Eaton",
+    "product_family": "CBC-8000",
+    "category": "capacitor_bank_control",
+    "reference_only": true,
+    "source_url": "https://www.eaton.com/content/dam/eaton/products/utility-and-grid-solutions/grid-automation-systems/capacitor-bank-control/cbc-8000-capacitor-bank-control/cbc-8000-capacitor-bank-control-instructions-mn916001en.pdf",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "eaton-cl7",
+    "manufacturer": "Eaton",
+    "product_family": "CL-7",
+    "category": "regulator_control",
+    "reference_only": true,
+    "source_url": "https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/voltage-regulators/cl-7-voltage-regulator-control-catalog-ca225003en.pdf",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "eaton-nova-form6",
+    "manufacturer": "Eaton",
+    "product_family": "NOVA / Form 6",
+    "category": "recloser_and_control",
+    "reference_only": true,
+    "source_url": "https://www.eaton.com/content/dam/eaton/products/medium-voltage-power-distribution-control-systems/reclosers/nova-three-phase-recloser-specification-ps280002en.pdf",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "ge-kelman-dga900",
+    "manufacturer": "GE Vernova",
+    "product_family": "Kelman DGA 900",
+    "category": "transformer_monitor",
+    "reference_only": true,
+    "source_url": "https://www.gevernova.com/electrification/automation/transformer-monitoring/kelman-dga-900",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "itron-openway-riva",
+    "manufacturer": "Itron",
+    "product_family": "OpenWay Riva CENTRON",
+    "category": "ami_smart_meter",
+    "reference_only": true,
+    "source_url": "https://na.itron.com/documents/44647/3812512/101441SP-02+OpenWay+Riva+CENTRON+Meter+NAM_web+%282%29.pdf/851a5702-a840-deb1-6a4c-0ff1468a8550",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "landis-gyr-revelo",
+    "manufacturer": "Landis+Gyr",
+    "product_family": "Revelo",
+    "category": "ami_smart_meter",
+    "reference_only": true,
+    "source_url": "https://www.landisgyr.com/us/en/home/knowledge/blog/2025/National-Grid-Crosses-One-Millionth-Meter-Mark",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "sel-2414",
+    "manufacturer": "Schweitzer Engineering Laboratories",
+    "product_family": "SEL-2414",
+    "category": "transformer_monitor",
+    "reference_only": true,
+    "source_url": "https://cdn.selinc.com/assets/Literature/Product%20Data%20Sheets/2414_DS_20230519.pdf?v=20230519-160022",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "sel-735",
+    "manufacturer": "Schweitzer Engineering Laboratories",
+    "product_family": "SEL-735",
+    "category": "power_quality_meter",
+    "reference_only": true,
+    "source_url": "https://selinc.com/products/735/",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  },
+  {
+    "catalog_key": "sel-751",
+    "manufacturer": "Schweitzer Engineering Laboratories",
+    "product_family": "SEL-751",
+    "category": "feeder_protection_relay",
+    "reference_only": true,
+    "source_url": "https://selinc.com/products/751/",
+    "caveat": "Public family reference only; generated assets and behavior are generic and do not emulate proprietary ratings, point maps, firmware, or controls."
+  }
+]

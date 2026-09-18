@@ -1,0 +1,15 @@
+{
+  "independentReviewerCorrection": "R1 freshness + industry count",
+  "method": "parent direct artifact checks following reviewer-authorized closure",
+  "checks": {
+    "explicit_freshness_contract": true,
+    "trusted_replay_clock": true,
+    "missing_evidence_not_healthy": true,
+    "w3_freshness_and_knowledge": true,
+    "ac5_stale_cases": true,
+    "ac8_stale_knowledge": true,
+    "historical_knowledge_distinguished": true,
+    "six_industry_choices": true
+  },
+  "allPassed": true
+}

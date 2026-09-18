@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "seed": 20260717,
+  "scenario": "normal",
+  "location": {
+    "city": "New York City",
+    "state": "NY",
+    "time_zone": "America/New_York",
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "preset": "new_york_city_ny",
+    "areas": [
+      "Bronx",
+      "Brooklyn",
+      "Manhattan",
+      "Queens",
+      "Staten Island"
+    ]
+  },
+  "simulation": {
+    "start_utc": "2026-07-01T04:00:00Z",
+    "end_utc": "2026-07-11T04:00:00Z",
+    "interval_minutes": 15
+  },
+  "fleet": {
+    "feeders": 5,
+    "distribution_transformers_per_feeder": 1,
+    "ami_meters_per_transformer": 3,
+    "reclosers_per_feeder": 1,
+    "regulators_per_feeder": 1,
+    "capacitor_banks_per_feeder": 1,
+    "power_quality_monitors_per_feeder": 1,
+    "pv_fraction": 0.2,
+    "evse_fraction": 0.2
+  },
+  "output": {
+    "include_reference_catalog": true
+  }
+}

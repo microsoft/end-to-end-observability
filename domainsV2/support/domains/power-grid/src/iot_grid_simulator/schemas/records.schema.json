@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shumwilkintestlab/iot-data-generation/schemas/records.schema.json",
+  "title": "IoT Grid Simulator output records",
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "asset_id", "asset_type", "generic_model", "fictional", "location_ref", "ratings", "phases", "nominal_voltage_v", "telemetry_cadence_seconds", "reference_catalog_key"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "asset_id": {"type": "string"},
+        "asset_type": {"type": "string"},
+        "generic_model": {"type": "string"},
+        "fictional": {"type": "boolean"},
+        "location_ref": {"type": "string"},
+        "ratings": {"type": "object"},
+        "phases": {"type": "array", "items": {"type": "string"}},
+        "nominal_voltage_v": {"type": "number"},
+        "telemetry_cadence_seconds": {"type": "integer"},
+        "reference_catalog_key": {"type": ["string", "null"]}
+      }
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "topology_version", "edge_id", "source_asset_id", "target_asset_id", "relationship", "phases", "valid_from_utc", "valid_to_utc"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "topology_version": {"type": "string"},
+        "edge_id": {"type": "string"},
+        "source_asset_id": {"type": "string"},
+        "target_asset_id": {"type": "string"},
+        "relationship": {"type": "string"},
+        "phases": {"type": "array", "items": {"type": "string"}},
+        "valid_from_utc": {"type": "string"},
+        "valid_to_utc": {"type": "string"}
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "telemetry_id", "run_id", "scenario_id", "asset_id", "event_time_utc", "source_time_utc", "ingest_time_utc", "time_zone", "measurement", "value", "unit", "phase", "aggregation", "interval_seconds", "sequence", "related_event_id", "quality"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "telemetry_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "asset_id": {"type": "string"},
+        "event_time_utc": {"type": "string"},
+        "source_time_utc": {"type": "string"},
+        "ingest_time_utc": {"type": "string"},
+        "time_zone": {"type": "string"},
+        "measurement": {"type": "string"},
+        "value": {"type": ["number", "null"]},
+        "unit": {"type": "string"},
+        "phase": {"type": "string"},
+        "aggregation": {"type": "string"},
+        "interval_seconds": {"type": "integer"},
+        "sequence": {"type": "integer"},
+        "related_event_id": {"type": ["string", "null"]},
+        "quality": {"type": "object"}
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "event_id", "run_id", "scenario_id", "asset_id", "event_time_utc", "time_zone", "event_type", "severity", "state_transition", "correlation_id", "causation_id", "quality"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "event_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "asset_id": {"type": ["string", "null"]},
+        "event_time_utc": {"type": "string"},
+        "time_zone": {"type": "string"},
+        "event_type": {"type": "string"},
+        "severity": {"type": "string"},
+        "state_transition": {"type": "object"},
+        "correlation_id": {"type": "string"},
+        "causation_id": {"type": ["string", "null"]},
+        "quality": {"type": "object"}
+      }
+    },
+    "alert": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "alert_id",
+        "run_id",
+        "scenario_id",
+        "storm_id",
+        "storm_revision",
+        "is_synthetic",
+        "public_safety",
+        "status",
+        "message_type",
+        "scope",
+        "event_time_utc",
+        "effective_utc",
+        "onset_utc",
+        "expires_utc",
+        "area_ref",
+        "area_name",
+        "event",
+        "urgency",
+        "severity",
+        "certainty",
+        "headline",
+        "description",
+        "instruction",
+        "quality"
+      ],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "alert_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "storm_id": {"type": "string"},
+        "storm_revision": {"type": "integer"},
+        "is_synthetic": {"const": true},
+        "public_safety": {"const": false},
+        "status": {"enum": ["Test", "Exercise"]},
+        "message_type": {"enum": ["Alert", "Update"]},
+        "scope": {"const": "Private"},
+        "event_time_utc": {"type": "string"},
+        "effective_utc": {"type": "string"},
+        "onset_utc": {"type": "string"},
+        "expires_utc": {"type": "string"},
+        "area_ref": {"type": "string"},
+        "area_name": {"type": "string"},
+        "event": {"enum": ["Flood Watch", "Flood Warning"]},
+        "urgency": {"enum": ["Expected"]},
+        "severity": {"enum": ["Moderate", "Severe"]},
+        "certainty": {"enum": ["Possible", "Likely"]},
+        "headline": {"type": "string"},
+        "description": {"type": "string"},
+        "instruction": {"type": "string"},
+        "quality": {"type": "object"}
+      }
+    },
+    "incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "incident_record_id",
+        "incident_id",
+        "run_id",
+        "scenario_id",
+        "is_synthetic",
+        "public_safety",
+        "exercise_status",
+        "scope",
+        "title",
+        "incident_type",
+        "severity",
+        "status",
+        "area_ref",
+        "area_name",
+        "owner_team",
+        "detection_source",
+        "root_cause",
+        "caused_by",
+        "correlation_id",
+        "detected_at_utc",
+        "updated_at_utc",
+        "resolved_at_utc",
+        "target_asset_id",
+        "affected_asset_ids",
+        "affected_service_points",
+        "service_state",
+        "lifecycle",
+        "quality"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "incident_record_id": {"type": "string"},
+        "incident_id": {"type": "string", "pattern": "^synthetic-"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "is_synthetic": {"const": true},
+        "public_safety": {"const": false},
+        "exercise_status": {"enum": ["Test", "Exercise"]},
+        "scope": {"const": "Private"},
+        "title": {"type": "string"},
+        "incident_type": {"const": "distribution_transformer_outage"},
+        "severity": {"enum": ["minor", "major", "critical"]},
+        "status": {
+          "enum": [
+            "detected",
+            "investigating",
+            "mitigating",
+            "monitoring",
+            "resolved"
+          ]
+        },
+        "area_ref": {"type": "string"},
+        "area_name": {"type": "string"},
+        "owner_team": {"type": "string"},
+        "detection_source": {"type": "string"},
+        "root_cause": {"type": "string"},
+        "caused_by": {"type": ["string", "null"]},
+        "correlation_id": {"type": "string"},
+        "detected_at_utc": {"type": "string"},
+        "updated_at_utc": {"type": "string"},
+        "resolved_at_utc": {"type": "string"},
+        "target_asset_id": {"type": "string"},
+        "affected_asset_ids": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "affected_service_points": {"type": "integer", "minimum": 0},
+        "service_state": {
+          "enum": ["interrupted", "restored_under_monitoring", "restored"]
+        },
+        "lifecycle": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "quality": {"type": "object"}
+      }
+    },
+    "ground_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "ground_truth_id", "run_id", "scenario_id", "scenario", "scenario_interval", "affected_asset_ids", "injected_cause", "expected_symptoms", "label", "correlated_event_ids", "quality"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "ground_truth_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "scenario": {"type": "string"},
+        "scenario_interval": {"type": "object"},
+        "affected_asset_ids": {"type": "array", "items": {"type": "string"}},
+        "injected_cause": {"type": "string"},
+        "expected_symptoms": {"type": "array", "items": {"type": "string"}},
+        "label": {"type": "string"},
+        "correlated_event_ids": {"type": "array", "items": {"type": "string"}},
+        "quality": {"type": "object"}
+      }
+    },
+    "device_log": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "log_id",
+        "run_id",
+        "scenario_id",
+        "asset_id",
+        "event_time_utc",
+        "source_time_utc",
+        "time_zone",
+        "is_synthetic",
+        "level",
+        "category",
+        "code",
+        "message",
+        "attributes",
+        "related_event_id",
+        "correlation_id",
+        "quality"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "log_id": {"type": "string"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "asset_id": {"type": "string"},
+        "event_time_utc": {"type": "string"},
+        "source_time_utc": {"type": "string"},
+        "time_zone": {"type": "string"},
+        "is_synthetic": {"const": true},
+        "level": {
+          "enum": ["information", "warning", "error", "critical"]
+        },
+        "category": {
+          "enum": [
+            "lifecycle",
+            "protection",
+            "communications",
+            "sensor",
+            "condition",
+            "environment",
+            "control"
+          ]
+        },
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "attributes": {"type": "object"},
+        "related_event_id": {"type": ["string", "null"]},
+        "correlation_id": {"type": "string"},
+        "quality": {"type": "object"}
+      }
+    },
+    "reference_catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog_key", "manufacturer", "product_family", "category", "reference_only", "source_url", "caveat"],
+      "properties": {
+        "catalog_key": {"type": "string"},
+        "manufacturer": {"type": "string"},
+        "product_family": {"type": "string"},
+        "category": {"type": "string"},
+        "reference_only": {"type": "boolean"},
+        "source_url": {"type": "string"},
+        "caveat": {"type": "string"}
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "generator", "run_id", "scenario_id", "normalized_config", "config_digest_sha256", "seed", "record_counts", "files", "source_reference_versions", "determinism"],
+      "properties": {
+        "schema_version": {"type": "string"},
+        "generator": {"type": "object"},
+        "run_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "normalized_config": {"type": "object"},
+        "config_digest_sha256": {"type": "string"},
+        "seed": {"type": "integer"},
+        "record_counts": {"type": "object"},
+        "files": {"type": "array", "items": {"type": "object"}},
+        "source_reference_versions": {"type": "object"},
+        "determinism": {"type": "object"}
+      }
+    }
+  }
+}

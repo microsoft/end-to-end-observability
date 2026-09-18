@@ -1,0 +1,5 @@
+{
+  "version": "2.0",
+  "functionTimeout": "00:00:45",
+  "logging": {"logLevel": {"default": "Warning"}}
+}

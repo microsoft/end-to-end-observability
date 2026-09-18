@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Public fictional downstream refinery telemetry and monitoring portal"
+    >
+    <title>Downstream Refinery Operations Lab</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f7f4ef;
+        --cp-bg-elevated: #fcfbf8;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f5f5f5;
+        --cp-border: #dedede;
+        --cp-border-strong: #919191;
+        --cp-text: #242424;
+        --cp-text-muted: #5c5c5c;
+        --cp-text-soft: #6f6f6f;
+        --cp-accent: #b11f4b;
+        --cp-accent-hover: #9a1a41;
+        --cp-accent-soft: rgba(177, 31, 75, 0.08);
+        --cp-accent-fg: #ffffff;
+        --cp-success: #16a34a;
+        --cp-danger: #dc2626;
+        --cp-warning: #f59e0b;
+        --cp-link: #0078d4;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+        --cp-overlay: rgba(255, 255, 255, 0.8);
+        --cp-panel: rgba(255, 255, 255, 0.86);
+        --cp-panel-strong: rgba(255, 255, 255, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.55);
+        --cp-highlight: rgba(177, 31, 75, 0.12);
+        --cp-backdrop: rgba(36, 36, 36, 0.55);
+        --cp-card-shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3d3b3a;
+        --cp-bg-elevated: #343231;
+        --cp-surface: #292929;
+        --cp-surface-soft: #2e2e2e;
+        --cp-border: #474747;
+        --cp-border-strong: #5f5f5f;
+        --cp-text: #dedede;
+        --cp-text-muted: #919191;
+        --cp-text-soft: #b0b0b0;
+        --cp-accent: #fd8ea1;
+        --cp-accent-hover: #fb7b91;
+        --cp-accent-soft: rgba(253, 142, 161, 0.14);
+        --cp-accent-fg: #1a1a1a;
+        --cp-success: #4ade80;
+        --cp-danger: #f87171;
+        --cp-warning: #fbbf24;
+        --cp-link: #4da6ff;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+        --cp-overlay: rgba(41, 41, 41, 0.88);
+        --cp-panel: rgba(41, 41, 41, 0.72);
+        --cp-panel-strong: rgba(41, 41, 41, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.04);
+        --cp-highlight: rgba(253, 142, 161, 0.12);
+        --cp-backdrop: rgba(0, 0, 0, 0.62);
+        --cp-card-shadow: 0 0 2px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.38);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      button, input, select { font: inherit; }
+      button:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 2px solid var(--cp-accent);
+        outline-offset: 2px;
+      }
+      .shell { max-width: 1480px; margin: 0 auto; padding: 24px; }
+      .masthead {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+      .eyebrow {
+        color: var(--cp-accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      h1 { font-size: clamp(28px, 5vw, 48px); margin: 6px 0 8px; line-height: 1.05; }
+      h2 { margin: 0; font-size: 20px; }
+      p { color: var(--cp-text-muted); line-height: 1.55; }
+      .safety {
+        max-width: 520px;
+        border-left: 4px solid var(--cp-warning);
+        padding: 12px 16px;
+        background: var(--cp-surface);
+        border-radius: 0.625rem;
+        box-shadow: var(--cp-card-shadow);
+      }
+      .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+      .card {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 16px;
+        box-shadow: var(--cp-card-shadow);
+        padding: 20px;
+      }
+      .control { grid-column: span 5; }
+      .status { grid-column: span 7; }
+      .records { grid-column: 1 / -1; }
+      .row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+      label { display: grid; gap: 6px; color: var(--cp-text-muted); font-size: 13px; flex: 1; }
+      select, input {
+        min-height: 42px;
+        border: 1px solid var(--cp-border-strong);
+        border-radius: 0.625rem;
+        background: var(--cp-bg-elevated);
+        color: var(--cp-text);
+        padding: 8px 12px;
+      }
+      button {
+        min-height: 42px;
+        border: 1px solid var(--cp-accent);
+        border-radius: 0.625rem;
+        background: var(--cp-accent);
+        color: var(--cp-accent-fg);
+        font-weight: 700;
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+      button:hover { background: var(--cp-accent-hover); }
+      button:disabled { cursor: not-allowed; opacity: 0.55; }
+      button.secondary {
+        background: var(--cp-surface);
+        color: var(--cp-accent);
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .metric { background: var(--cp-surface-soft); border-radius: 0.625rem; padding: 12px; }
+      .metric span { display: block; color: var(--cp-text-muted); font-size: 12px; }
+      .metric strong { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+      .toolbar { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: 12px; margin: 16px 0; }
+      .table-wrap { overflow: auto; border: 1px solid var(--cp-border); border-radius: 0.625rem; }
+      table { border-collapse: collapse; width: 100%; min-width: 960px; font-size: 13px; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--cp-border); vertical-align: top; }
+      th { position: sticky; top: 0; background: var(--cp-bg-elevated); color: var(--cp-text-muted); }
+      td { font-family: Consolas, "Courier New", Courier, monospace; max-width: 360px; overflow-wrap: anywhere; }
+      .badge {
+        display: inline-block;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+        border-radius: 0.625rem;
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+      .badge.warning { border-color: var(--cp-warning); color: var(--cp-warning); }
+      .badge.success { border-color: var(--cp-success); color: var(--cp-success); }
+      .live-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .live-strip {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+      }
+      .stat {
+        background: var(--cp-surface-soft);
+        border-radius: 0.625rem;
+        padding: 12px;
+        border: 1px solid var(--cp-border);
+      }
+      .stat span { display: block; color: var(--cp-text-muted); font-size: 12px; }
+      .stat strong { display: block; margin-top: 4px; font-size: 22px; line-height: 1.1; }
+      .stat.nominal strong { color: var(--cp-success); }
+      .stat.degraded strong { color: var(--cp-warning); }
+      .stat.impaired strong { color: var(--cp-danger); }
+      .pulse {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--cp-success);
+        margin-right: 8px;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .pulse.stalled { background: var(--cp-danger); animation: none; }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+      .device-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+      }
+      .device {
+        border: 1px solid var(--cp-border);
+        border-left: 4px solid var(--cp-success);
+        border-radius: 0.625rem;
+        background: var(--cp-bg-elevated);
+        padding: 12px 14px;
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+        min-height: 0;
+        color: inherit;
+        font-weight: 400;
+      }
+      .device:hover { background: var(--cp-surface-soft); }
+      .device.degraded { border-left-color: var(--cp-warning); }
+      .device.impaired { border-left-color: var(--cp-danger); }
+      .device-title { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+      .device-title strong { font-size: 14px; }
+      .device-area { color: var(--cp-text-muted); font-size: 12px; margin: 2px 0 10px; }
+      .pill {
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border: 1px solid var(--cp-success);
+        color: var(--cp-success);
+        white-space: nowrap;
+      }
+      .pill.degraded { border-color: var(--cp-warning); color: var(--cp-warning); }
+      .pill.impaired { border-color: var(--cp-danger); color: var(--cp-danger); }
+      .reading {
+        display: grid;
+        grid-template-columns: 1fr auto 64px;
+        gap: 8px;
+        align-items: center;
+        padding: 4px 0;
+        border-top: 1px solid var(--cp-border);
+        font-size: 12px;
+      }
+      .reading:first-of-type { border-top: 0; }
+      .reading-name { color: var(--cp-text-muted); overflow-wrap: anywhere; }
+      .reading-value { font-family: Consolas, "Courier New", monospace; font-weight: 700; white-space: nowrap; }
+      .reading-value.degraded { color: var(--cp-warning); }
+      .reading-value.impaired { color: var(--cp-danger); }
+      .spark { display: block; width: 64px; height: 22px; }
+      .events { max-height: 320px; overflow: auto; }
+      .event-row {
+        display: grid;
+        grid-template-columns: 78px 84px 1fr;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--cp-border);
+        font-size: 12px;
+      }
+      .event-row time { color: var(--cp-text-muted); font-family: Consolas, monospace; }
+      .sev { font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+      .sev.info { color: var(--cp-link); }
+      .sev.warning { color: var(--cp-warning); }
+      .sev.critical { color: var(--cp-danger); }
+      dialog {
+        border: 1px solid var(--cp-border);
+        border-radius: 16px;
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        max-width: 760px;
+        width: 92vw;
+        padding: 24px;
+        box-shadow: var(--cp-shadow);
+      }
+      dialog::backdrop { background: var(--cp-backdrop); }
+      .detail-tag {
+        border-top: 1px solid var(--cp-border);
+        padding: 10px 0;
+        display: grid;
+        grid-template-columns: 1fr 150px;
+        gap: 12px;
+        align-items: center;
+      }
+      .detail-tag .spark { width: 150px; height: 40px; }
+      .message { min-height: 24px; color: var(--cp-text-muted); }
+      .error { color: var(--cp-danger); }
+      .footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 12px; align-items: center; }
+      @media (max-width: 900px) {
+        .masthead { display: block; }
+        .control, .status { grid-column: 1 / -1; }
+        .toolbar { grid-template-columns: 1fr; }
+        .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .live-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+        .pulse { animation: none !important; }
+      }
+      .domain-nav { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; }
+      .domain-nav a { color: var(--cp-link); }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <div class="eyebrow">Public development environment</div>
+          <h1>Downstream Refinery Operations Lab</h1>
+          <p>Start bounded fictional scenarios, inspect public evidence, and trace every abnormal instance into Azure Monitor.</p>
+        </div>
+        <aside class="safety">
+          <strong>Synthetic evidence only</strong>
+          <p>This experience is prohibited for process control, safety, compliance, custody transfer, certification, or operator training. Private ground truth is never shown.</p>
+        </aside>
+      </header>
+      <nav class="domain-nav" aria-label="Domain navigation">
+        <a href="/">All domains</a>
+        <a href="/downstream" aria-current="page">Downstream refinery</a>
+        <a href="/downstream/portfolio">Downstream product portfolio</a>
+        <a href="/downstream/review/inventory" id="inventory-link" hidden>Downstream refinery inventory</a>
+      </nav>
+
+      <section class="grid">
+        <article class="card records" id="live-card">
+          <div class="live-head">
+            <div>
+              <div class="eyebrow"><span class="pulse" id="live-pulse"></span>Live device feed</div>
+              <h2>Every device, updating continuously</h2>
+              <p id="live-subtitle">Connecting to the continuous synthetic device feed…</p>
+            </div>
+            <div class="row">
+              <label>Live scenario
+                <select id="live-scenario"></select>
+              </label>
+              <button id="live-apply" type="button">Apply to live feed</button>
+            </div>
+          </div>
+          <p id="live-message" class="message" role="status"></p>
+
+          <div class="live-strip">
+            <div class="stat"><span>Devices</span><strong id="live-devices">—</strong></div>
+            <div class="stat nominal"><span>Nominal</span><strong id="live-nominal">—</strong></div>
+            <div class="stat degraded"><span>Degraded</span><strong id="live-degraded">—</strong></div>
+            <div class="stat impaired"><span>Impaired</span><strong id="live-impaired">—</strong></div>
+            <div class="stat"><span>Samples in window</span><strong id="live-samples">—</strong></div>
+            <div class="stat"><span>Live events</span><strong id="live-events-count">—</strong></div>
+          </div>
+
+          <div class="device-grid" id="device-grid"></div>
+        </article>
+
+        <article class="card records">
+          <div class="eyebrow">Live monitoring stream</div>
+          <h2>Delivery faults and process deviations</h2>
+          <p id="live-events-message" class="message" role="status">No live events in the current window.</p>
+          <div class="events" id="live-events"></div>
+        </article>
+
+        <article class="card control">
+          <div class="eyebrow">Simulation control</div>
+          <h2>Start a five-minute window</h2>
+          <p id="scenario-description">Loading the allowlisted scenario contract.</p>
+          <div class="row">
+            <label>Scenario
+              <select id="scenario" aria-describedby="scenario-description"></select>
+            </label>
+            <button id="start" type="button">Start simulation</button>
+          </div>
+          <p id="control-message" class="message" role="status"></p>
+        </article>
+
+        <article class="card status">
+          <div class="eyebrow">Run state</div>
+          <h2>Latest control activity</h2>
+          <div class="metrics">
+            <div class="metric"><span>State</span><strong id="job-state">Idle</strong></div>
+            <div class="metric"><span>Scenario</span><strong id="job-scenario">—</strong></div>
+            <div class="metric"><span>Run ID</span><strong id="job-run">—</strong></div>
+            <div class="metric"><span>Alert instances</span><strong id="job-alerts">0</strong></div>
+          </div>
+        </article>
+
+        <article class="card records">
+          <div class="eyebrow">ADLS Gen2 public evidence</div>
+          <h2>Telemetry and monitoring logs</h2>
+          <div class="toolbar">
+            <label>Finalized run<select id="run"></select></label>
+            <label>Artifact type<select id="record-type"></select></label>
+            <label>Filter loaded page<input id="filter" type="search" placeholder="ID, area, severity…"></label>
+            <button id="refresh" class="secondary" type="button">Refresh</button>
+          </div>
+          <p id="records-message" class="message" role="status"></p>
+          <div class="table-wrap">
+            <table>
+              <thead id="records-head"></thead>
+              <tbody id="records-body"></tbody>
+            </table>
+          </div>
+          <div class="footer">
+            <span id="page-count" class="badge">0 records</span>
+            <button id="more" class="secondary" type="button" disabled>Load next page</button>
+          </div>
+        </article>
+      </section>
+    </main>
+    <dialog id="device-dialog">
+      <div class="live-head">
+        <div>
+          <div class="eyebrow">Live device detail</div>
+          <h2 id="detail-title">Device</h2>
+          <p id="detail-subtitle" class="message"></p>
+        </div>
+        <button id="detail-close" class="secondary" type="button">Close</button>
+      </div>
+      <div id="detail-body"></div>
+    </dialog>
+    <script>
+      fetch("/downstream/review/inventory", { method: "HEAD" })
+        .then(response => { if (response.ok) document.getElementById("inventory-link").hidden = false; })
+        .catch(() => {});
+      const state = { scenarios: [], runs: [], records: [], cursor: null, live: null, detailDeviceId: null };
+      const byId = id => document.getElementById(id);
+      const escapeHtml = value => String(value ?? "")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;").replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+      const words = value => String(value || "—").replaceAll("_", " ");
+      const fetchJson = async (url, options) => {
+        const response = await fetch(url, options);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.message || payload.error || "Request failed");
+        return payload;
+      };
+
+      const formatValue = value => {
+        if (value === null || value === undefined) return "no data";
+        const magnitude = Math.abs(value);
+        return magnitude >= 100 ? value.toFixed(1) : magnitude >= 1 ? value.toFixed(2) : value.toFixed(4);
+      };
+      const clockOf = stamp => (stamp ? String(stamp).slice(11, 19) : "—");
+      const trendGlyph = trend => (trend === "rising" ? "▲" : trend === "falling" ? "▼" : "■");
+
+      const sparkline = (points, health, width = 64, height = 22) => {
+        const values = points.filter(value => value !== null && value !== undefined);
+        if (values.length < 2) return `<svg class="spark" viewBox="0 0 ${width} ${height}" aria-hidden="true"></svg>`;
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const span = max - min || 1;
+        const step = width / (points.length - 1);
+        let path = "";
+        let started = false;
+        points.forEach((value, index) => {
+          if (value === null || value === undefined) { started = false; return; }
+          const x = (index * step).toFixed(2);
+          const y = (height - 2 - ((value - min) / span) * (height - 4)).toFixed(2);
+          path += `${started ? "L" : "M"}${x} ${y}`;
+          started = true;
+        });
+        const stroke = health === "impaired" ? "var(--cp-danger)"
+          : health === "degraded" ? "var(--cp-warning)" : "var(--cp-success)";
+        return `<svg class="spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">`
+          + `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+      };
+
+      const renderReading = tag => {
+        const value = tag.value === null || tag.value === undefined
+          ? "no data"
+          : `${formatValue(tag.value)} ${escapeHtml(tag.unit === "index" ? "" : tag.unit)}`.trim();
+        return `<div class="reading">
+          <span class="reading-name">${escapeHtml(words(tag.measurement))}</span>
+          <span class="reading-value ${escapeHtml(tag.health)}" title="${escapeHtml(words(tag.delivery_class))} · ${escapeHtml(tag.quality.validity)} · ${tag.age_seconds ?? "?"}s old">
+            ${trendGlyph(tag.trend)} ${escapeHtml(value)}
+          </span>
+          ${sparkline(tag.sparkline, tag.health)}
+        </div>`;
+      };
+
+      const renderDevices = payload => {
+        byId("device-grid").innerHTML = payload.devices.map(device => `
+          <button type="button" class="device ${escapeHtml(device.health)}" data-device="${escapeHtml(device.device_id)}">
+            <span class="device-title">
+              <strong>${escapeHtml(device.area_id)} · ${escapeHtml(words(device.device_role))}</strong>
+              <span class="pill ${escapeHtml(device.health)}">${escapeHtml(device.health)}</span>
+            </span>
+            <div class="device-area">${escapeHtml(device.area_name)} · ${escapeHtml(words(device.transport_class))}</div>
+            ${device.tags.map(renderReading).join("")}
+          </button>`).join("");
+      };
+
+      const renderLiveEvents = payload => {
+        const events = payload.events || [];
+        byId("live-events-message").textContent = events.length
+          ? `${events.length} synthetic events in the last ${payload.history_seconds} seconds.`
+          : "No live events in the current window. Apply an abnormal scenario to generate evidence.";
+        byId("live-events").innerHTML = events.map(item => `
+          <div class="event-row">
+            <time>${escapeHtml(clockOf(item.event_time_utc))}</time>
+            <span class="sev ${escapeHtml(item.severity)}">${escapeHtml(item.severity)}</span>
+            <span>${escapeHtml(item.area_id)} · ${escapeHtml(words(item.measurement))} · ${escapeHtml(words(item.reason))}</span>
+          </div>`).join("");
+      };
+
+      const renderLive = payload => {
+        state.live = payload;
+        byId("live-devices").textContent = payload.summary.device_count;
+        byId("live-nominal").textContent = payload.summary.nominal;
+        byId("live-degraded").textContent = payload.summary.degraded;
+        byId("live-impaired").textContent = payload.summary.impaired;
+        byId("live-samples").textContent = payload.summary.samples_in_window.toLocaleString();
+        byId("live-events-count").textContent = payload.summary.event_count;
+        byId("live-subtitle").textContent =
+          `${payload.summary.tag_count} synthetic tags across ${payload.summary.device_count} devices · `
+          + `${payload.history_seconds}s rolling window · updated ${clockOf(payload.generated_at_utc)} UTC`;
+        if (byId("live-scenario").value !== payload.scenario.id && !state.scenarioDirty) {
+          byId("live-scenario").value = payload.scenario.id;
+        }
+        renderDevices(payload);
+        renderLiveEvents(payload);
+        if (state.detailDeviceId) refreshDetail();
+      };
+
+      const loadLive = async () => {
+        try {
+          const payload = await fetchJson("/api/downstream/live");
+          if (!state.liveScenarios) {
+            state.liveScenarios = payload.scenarios;
+            byId("live-scenario").innerHTML = payload.scenarios.map(item =>
+              `<option value="${escapeHtml(item.id)}">${escapeHtml(words(item.id))}</option>`
+            ).join("");
+            byId("live-scenario").value = payload.scenario.id;
+          }
+          renderLive(payload);
+          byId("live-pulse").classList.remove("stalled");
+          byId("live-message").classList.remove("error");
+          byId("live-message").textContent = `Live scenario: ${words(payload.scenario.id)} — ${payload.scenario.description}`;
+        } catch (error) {
+          byId("live-pulse").classList.add("stalled");
+          byId("live-message").textContent = `Live feed unavailable: ${error.message}`;
+          byId("live-message").classList.add("error");
+        }
+      };
+
+      const refreshDetail = async () => {
+        if (!state.detailDeviceId) return;
+        try {
+          const payload = await fetchJson(`/api/downstream/live/devices/${encodeURIComponent(state.detailDeviceId)}`);
+          const device = payload.device;
+          byId("detail-title").textContent = `${device.area_id} · ${words(device.device_role)}`;
+          byId("detail-subtitle").textContent =
+            `${device.area_name} · ${words(device.transport_class)} · ${device.health} · `
+            + `${payload.history_seconds}s history · ${clockOf(payload.generated_at_utc)} UTC`;
+          byId("detail-body").innerHTML = device.tags.map(tag => `
+            <div class="detail-tag">
+              <div>
+                <strong>${escapeHtml(words(tag.measurement))}</strong>
+                <div class="device-area">
+                  ${escapeHtml(formatValue(tag.value))} ${escapeHtml(tag.unit)} ·
+                  nominal ${escapeHtml(formatValue(tag.nominal_value))} ·
+                  window ${escapeHtml(formatValue(tag.window_min))}–${escapeHtml(formatValue(tag.window_max))} ·
+                  every ${tag.cadence_seconds}s · ${escapeHtml(words(tag.delivery_class))} ·
+                  ${escapeHtml(tag.quality.validity)} · ${tag.sample_count} samples
+                </div>
+              </div>
+              ${sparkline(tag.history.map(item => item.value), tag.health, 150, 40)}
+            </div>`).join("");
+        } catch (error) {
+          byId("detail-subtitle").textContent = error.message;
+        }
+      };
+
+      byId("device-grid").addEventListener("click", async event => {
+        const target = event.target.closest("[data-device]");
+        if (!target) return;
+        state.detailDeviceId = target.dataset.device;
+        await refreshDetail();
+        byId("device-dialog").showModal();
+      });
+      byId("detail-close").addEventListener("click", () => byId("device-dialog").close());
+      byId("device-dialog").addEventListener("close", () => { state.detailDeviceId = null; });
+      byId("live-scenario").addEventListener("change", () => { state.scenarioDirty = true; });
+      byId("live-apply").addEventListener("click", async () => {
+        byId("live-message").classList.remove("error");
+        byId("live-message").textContent = "Applying the live scenario…";
+        try {
+          const scenario = await fetchJson("/api/downstream/live/scenario", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Downstream-Control": "live-scenario" },
+            body: JSON.stringify({ scenario: byId("live-scenario").value })
+          });
+          state.scenarioDirty = false;
+          byId("live-message").textContent = `Live scenario now ${words(scenario.id)} from ${clockOf(scenario.onset_utc)} UTC.`;
+          await loadLive();
+        } catch (error) {
+          byId("live-message").textContent = error.message;
+          byId("live-message").classList.add("error");
+        }
+      });
+
+      const showControlStatus = payload => {
+        const job = payload.job || { state: "idle" };
+        byId("job-state").textContent = words(job.state);
+        byId("job-scenario").textContent = words(job.scenario);
+        byId("job-run").textContent = job.run_id || "—";
+        byId("job-alerts").textContent = job.alert_instance_count ?? 0;
+        byId("start").disabled = !payload.enabled || ["queued", "running"].includes(job.state);
+        if (!payload.enabled) byId("control-message").textContent = "Simulation control is disabled in this environment.";
+        if (job.state === "succeeded" && state.lastCompletedJob !== job.job_id) {
+          state.lastCompletedJob = job.job_id;
+          loadRuns();
+        }
+      };
+
+      const loadControl = async () => {
+        try {
+          showControlStatus(await fetchJson("/api/downstream/control/status"));
+        } catch (error) {
+          byId("control-message").textContent = error.message;
+          byId("control-message").classList.add("error");
+        }
+      };
+
+      const loadScenarios = async () => {
+        const payload = await fetchJson("/api/downstream/scenarios");
+        state.scenarios = payload.scenarios;
+        byId("scenario").innerHTML = payload.scenarios.map(item =>
+          `<option value="${escapeHtml(item.id)}">${escapeHtml(words(item.id))}</option>`
+        ).join("");
+        describeScenario();
+      };
+
+      const describeScenario = () => {
+        const selected = state.scenarios.find(item => item.id === byId("scenario").value);
+        byId("scenario-description").textContent = selected?.description || "Select a scenario.";
+      };
+
+      const loadRuns = async () => {
+        const payload = await fetchJson("/api/downstream/runs");
+        const selected = byId("run").value;
+        state.runs = payload.runs;
+        byId("run").innerHTML = payload.runs.map(item =>
+          `<option value="${escapeHtml(item.run_id)}">${escapeHtml(words(item.scenario))} · ${escapeHtml(item.simulation?.start_utc || item.run_id)}</option>`
+        ).join("");
+        if (payload.runs.some(item => item.run_id === selected)) byId("run").value = selected;
+        if (payload.runs.length) await loadRecords(true);
+      };
+
+      const renderRecords = () => {
+        const query = byId("filter").value.toLowerCase();
+        const records = state.records.filter(item => JSON.stringify(item).toLowerCase().includes(query));
+        const keys = [...new Set(records.flatMap(item => Object.keys(item)))].slice(0, 12);
+        byId("records-head").innerHTML = `<tr>${keys.map(key => `<th>${escapeHtml(words(key))}</th>`).join("")}</tr>`;
+        byId("records-body").innerHTML = records.map(item =>
+          `<tr>${keys.map(key => {
+            const value = typeof item[key] === "object" ? JSON.stringify(item[key]) : item[key];
+            return `<td>${escapeHtml(value)}</td>`;
+          }).join("")}</tr>`
+        ).join("");
+        byId("page-count").textContent = `${records.length} shown · ${state.records.length} loaded`;
+        byId("more").disabled = state.cursor === null;
+      };
+
+      const loadRecords = async reset => {
+        const run = byId("run").value;
+        const recordType = byId("record-type").value;
+        if (!run || !recordType) return;
+        if (reset) {
+          state.records = [];
+          state.cursor = 0;
+        }
+        byId("records-message").textContent = "Loading verified public evidence…";
+        try {
+          const payload = await fetchJson(
+            `/api/downstream/runs/${encodeURIComponent(run)}/records/${encodeURIComponent(recordType)}?cursor=${state.cursor || 0}&limit=100`
+          );
+          state.records.push(...payload.records);
+          state.cursor = payload.next_cursor;
+          byId("records-message").classList.remove("error");
+          byId("records-message").textContent = `${words(recordType)} · private ground truth excluded`;
+          renderRecords();
+        } catch (error) {
+          byId("records-message").textContent = error.message;
+          byId("records-message").classList.add("error");
+        }
+      };
+
+      byId("scenario").addEventListener("change", describeScenario);
+      byId("run").addEventListener("change", () => loadRecords(true));
+      byId("record-type").addEventListener("change", () => loadRecords(true));
+      byId("filter").addEventListener("input", renderRecords);
+      byId("refresh").addEventListener("click", loadRuns);
+      byId("more").addEventListener("click", () => loadRecords(false));
+      byId("start").addEventListener("click", async () => {
+        byId("control-message").classList.remove("error");
+        byId("control-message").textContent = "Submitting public control request…";
+        try {
+          const job = await fetchJson("/api/downstream/control/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Downstream-Control": "simulation-start" },
+            body: JSON.stringify({ scenario: byId("scenario").value })
+          });
+          byId("control-message").textContent = `Queued ${words(job.scenario)} as ${job.job_id}.`;
+          await loadControl();
+        } catch (error) {
+          byId("control-message").textContent = error.message;
+          byId("control-message").classList.add("error");
+        }
+      });
+
+      Promise.all([loadScenarios(), loadControl()]).then(async () => {
+        const status = await fetchJson("/api/downstream/control/status");
+        byId("record-type").innerHTML = status.record_types.map(value =>
+          `<option value="${escapeHtml(value)}">${escapeHtml(words(value))}</option>`
+        ).join("");
+        byId("record-type").value = "telemetry";
+        await loadRuns();
+      }).catch(error => {
+        byId("records-message").textContent = error.message;
+        byId("records-message").classList.add("error");
+      });
+      window.setInterval(loadControl, 3000);
+      loadLive();
+      window.setInterval(loadLive, 5000);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+name: agentic-itops-services
+infra:
+  provider: bicep
+  path: infra
+  module: services
+# Stage these source-only directories with deployment.package before azd validation.
+# Private Function deployment runs inside the isolated VNet bootstrap, not local azd.
+services:
+  review:
+    project: .\.build\azd\review
+    language: python
+    host: appservice
+  worker:
+    project: .\.build\azd\worker
+    language: python
+    host: function
+    hooks:
+      predeploy:
+        shell: pwsh
+        run: throw "Use the approved deployment.control_plane bootstrap; this Function has private-only SCM."
+  tools:
+    project: .\.build\azd\tools
+    language: python
+    host: function
+    hooks:
+      predeploy:
+        shell: pwsh
+        run: throw "Use the approved deployment.control_plane bootstrap; this Function has private-only SCM."
+  publisher:
+    project: .\.build\azd\publisher
+    language: python
+    host: function
+    hooks:
+      predeploy:
+        shell: pwsh
+        run: throw "Use the approved deployment.control_plane bootstrap; this Function has private-only SCM."

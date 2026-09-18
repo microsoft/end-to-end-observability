@@ -9,8 +9,9 @@ description: >
   delegates to specialist agents, assembles a recommendation, and hands
   the proposed action to the Change-Safety Gate. Never executes change.
 
-# Foundry connected-agents pattern: these are bound as tools on this
-# agent, so delegation needs no orchestration code.
+# Logical specialist relationships. The approved trusted_dispatch compiler
+# exposes no-argument delegation functions on this real Foundry coordinator;
+# the trusted worker invokes exact specialist versions and validates each stage.
 connected_agents:
   - rca-investigator
   - runbook-memory
@@ -39,11 +40,46 @@ identity:
 
 output_schema:
   type: object
-  required: [incident_fingerprint, summary, hypotheses, proposed_action, gate_decision]
+  additionalProperties: false
+  required: [status, citations, evidence_gaps, incident_fingerprint, summary, hypotheses, proposed_action, gate_decision, handoff]
   properties:
-    incident_fingerprint: { type: string }
-    summary: { type: string }
-    hypotheses: { type: array }
-    proposed_action: { type: string }
-    gate_decision: { type: string, enum: [allow, deny, escalate] }
+    status: { type: string, enum: [completed, insufficient_evidence] }
+    citations:
+      type: array
+      minItems: 0
+      items:
+        type: object
+        additionalProperties: false
+        required: [source_id, revision, locator]
+        properties:
+          source_id: { type: string, minLength: 1 }
+          revision: { type: [string, "null"] }
+          locator: { type: [string, "null"] }
+    evidence_gaps:
+      type: array
+      minItems: 0
+      items: { type: string, minLength: 1 }
+    incident_fingerprint: { type: string, minLength: 1 }
+    summary: { type: string, minLength: 1 }
+    hypotheses:
+      type: array
+      minItems: 0
+      items:
+        type: object
+        additionalProperties: false
+        required: [hypothesis, confidence, evidence, contradicting_evidence, next_check]
+        properties:
+          hypothesis: { type: string, minLength: 1 }
+          confidence: { type: string, enum: [high, medium, low, none] }
+          evidence:
+            type: array
+            minItems: 1
+            items: { type: string, minLength: 1 }
+          contradicting_evidence:
+            type: array
+            minItems: 0
+            items: { type: string, minLength: 1 }
+          next_check: { type: string }
+    proposed_action: { type: string, minLength: 1 }
+    gate_decision: { type: string, enum: [allow, deny, escalate, not_evaluated] }
     handoff: { type: string }

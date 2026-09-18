@@ -1,0 +1,8 @@
+# Optional Domains V2 consumer; the original offline demo remains independent.
+-r requirements.txt
+-r requirements-foundry.txt
+jsonschema==4.25.1
+azure-storage-blob==12.25.1
+Flask==3.1.1
+PyJWT==2.10.1
+mssql-python==1.15.0

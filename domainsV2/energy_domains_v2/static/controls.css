@@ -1,0 +1,37 @@
+#v2-controls {
+  position: relative; z-index: 100; margin: 16px; padding: 16px;
+  background: var(--cp-surface); color: var(--cp-text);
+  border: 2px solid var(--cp-accent); border-radius: 16px;
+  font: 14px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+#v2-controls .v2-heading { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+#v2-controls a { color: var(--cp-link); }
+#v2-controls p { margin: 8px 0; }
+#v2-controls .v2-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+#v2-controls label { display: flex; flex-direction: column; gap: 4px; color: var(--cp-text-muted); }
+#v2-controls button, #v2-controls select, #v2-controls input {
+  font: inherit; min-height: 40px; max-width: 100%; padding: 8px 12px;
+  border: 1px solid var(--cp-border-strong); border-radius: 0.625rem;
+  background: var(--cp-surface); color: var(--cp-text);
+}
+#v2-controls button { cursor: pointer; }
+#v2-controls button[data-v2-action="inject"] { background: var(--cp-accent); color: var(--cp-accent-fg); }
+#v2-controls button:disabled { opacity: .55; cursor: wait; }
+#v2-controls input { width: 96px; }
+#v2-controls .v2-surfaces { display: flex; flex-wrap: wrap; gap: 8px 16px; border: 1px solid var(--cp-border); margin: 8px 0; }
+#v2-controls .v2-choice { flex-direction: row; align-items: center; }
+#v2-controls .v2-choice input { width: 18px; min-height: 18px; accent-color: var(--cp-accent); }
+#v2-controls summary { cursor: pointer; color: var(--cp-link); }
+#v2-controls #v2-error { color: var(--cp-danger); }
+#v2-controls small { color: var(--cp-text-muted); }
+#v2-controls #v2-log-records {
+  max-height: 420px; max-width: 100%; overflow: auto; white-space: pre-wrap;
+  overflow-wrap: anywhere; padding: 12px; border: 1px solid var(--cp-border);
+  border-radius: 0.625rem; background: var(--cp-surface-soft);
+  color: var(--cp-text); font: 12px/1.5 Consolas, "Courier New", Courier, monospace;
+}
+#v2-controls :focus-visible { outline: 3px solid var(--cp-link); outline-offset: 2px; }
+@media (max-width: 620px) {
+  #v2-controls { margin: 8px; padding: 12px; }
+  #v2-controls .v2-actions > * { flex: 1 1 160px; min-width: 0; }
+}

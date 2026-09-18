@@ -1,0 +1,36 @@
+{
+  "evidenceType": "Mocked SDK/service boundary, not Azure connectivity or API compatibility validation",
+  "partialQuery": {
+    "exception": "'types.SimpleNamespace' object has no attribute 'tables'",
+    "passedTimespanType": "str"
+  },
+  "search": {
+    "request": {
+      "search_text": "test",
+      "top": 3,
+      "filter": "kind eq 'runbook'"
+    },
+    "result": {
+      "results": [
+        {
+          "doc_id": "RB-test",
+          "title": "Test",
+          "kind": "runbook",
+          "path": "",
+          "score": 1.0,
+          "matched_terms": [],
+          "excerpt": "test content"
+        }
+      ],
+      "count": 1,
+      "mode": "live",
+      "query": "test"
+    },
+    "credentialType": "FakeKeyCredential"
+  },
+  "indexing": {
+    "completed": 0,
+    "failed": 11,
+    "returnedStoreDespiteFailure": "test-store"
+  }
+}

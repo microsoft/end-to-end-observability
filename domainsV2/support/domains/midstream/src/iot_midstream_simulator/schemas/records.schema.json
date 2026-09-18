@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iot-midstream/records.schema.json",
+  "title": "Fictional liquid-midstream record",
+  "allOf": [
+    {"$ref": "#/$defs/common"},
+    {
+      "oneOf": [
+        {"$ref": "#/$defs/asset"},
+        {"$ref": "#/$defs/topology"},
+        {"$ref": "#/$defs/telemetry"},
+        {"$ref": "#/$defs/event"},
+        {"$ref": "#/$defs/deviceLog"},
+        {"$ref": "#/$defs/detectorOutput"},
+        {"$ref": "#/$defs/physicalConfirmation"},
+        {"$ref": "#/$defs/groundTruth"}
+      ]
+    }
+  ],
+  "$defs": {
+    "common": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "is_synthetic",
+        "operational_use"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "is_synthetic": {"const": true},
+        "operational_use": {"const": "prohibited"}
+      }
+    },
+    "asset": {
+      "type": "object",
+      "required": ["asset_id", "asset_type", "generic_model", "site_id"]
+    },
+    "topology": {
+      "type": "object",
+      "required": [
+        "edge_id",
+        "source_asset_id",
+        "target_asset_id",
+        "relationship"
+      ]
+    },
+    "telemetry": {
+      "type": "object",
+      "required": [
+        "telemetry_id",
+        "run_id",
+        "scenario_id",
+        "asset_id",
+        "event_time_utc",
+        "source_time_utc",
+        "ingest_time_utc",
+        "measurement",
+        "value",
+        "unit",
+        "measurement_uncertainty",
+        "sample_interval_ms",
+        "clock_state",
+        "clock_offset_ms",
+        "clock_uncertainty_ms",
+        "sequence",
+        "quality"
+      ]
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "run_id",
+        "scenario_id",
+        "asset_id",
+        "event_time_utc",
+        "event_type",
+        "severity",
+        "state_transition",
+        "related_detector_output_id"
+      ]
+    },
+    "deviceLog": {
+      "type": "object",
+      "required": [
+        "log_id",
+        "run_id",
+        "scenario_id",
+        "asset_id",
+        "event_time_utc",
+        "source_time_utc",
+        "ingest_time_utc",
+        "sequence",
+        "level",
+        "category",
+        "code",
+        "message",
+        "clock_state",
+        "clock_offset_ms",
+        "clock_uncertainty_ms",
+        "communications_latency_ms",
+        "queue_depth",
+        "related_event_id",
+        "related_detector_output_id",
+        "quality"
+      ]
+    },
+    "detectorOutput": {
+      "type": "object",
+      "required": [
+        "detector_output_id",
+        "run_id",
+        "scenario_id",
+        "detector_id",
+        "method",
+        "model_version",
+        "model_configuration_digest",
+        "evidence_window_start_utc",
+        "evidence_window_end_utc",
+        "detection_time_utc",
+        "available_time_utc",
+        "detection_state",
+        "estimated_segment_id",
+        "candidate_segment_ids",
+        "estimated_route_distance_m",
+        "lower_route_distance_m",
+        "upper_route_distance_m",
+        "confidence_class",
+        "confidence_basis",
+        "residual_value",
+        "residual_unit",
+        "evidence_telemetry_ids",
+        "related_event_ids",
+        "quality",
+        "fidelity"
+      ],
+      "properties": {
+        "detection_state": {
+          "enum": ["clear", "suspected", "estimated", "abstained"]
+        }
+      }
+    },
+    "physicalConfirmation": {
+      "type": "object",
+      "required": [
+        "confirmation_id",
+        "run_id",
+        "scenario_id",
+        "dispatch_time_utc",
+        "confirmation_time_utc",
+        "available_after_utc",
+        "inspection_method",
+        "result",
+        "confirmed_segment_id",
+        "confirmed_route_distance_m",
+        "related_detector_output_ids",
+        "fidelity"
+      ]
+    },
+    "groundTruth": {
+      "type": "object",
+      "required": [
+        "ground_truth_id",
+        "run_id",
+        "scenario_id",
+        "scenario",
+        "injected_cause",
+        "onset_utc",
+        "end_utc",
+        "causal_asset_id",
+        "actual_segment_id",
+        "actual_route_distance_m",
+        "injected_withdrawal_rate_m3_s",
+        "fidelity"
+      ]
+    }
+  }
+}

@@ -1,0 +1,34 @@
+// Neutral detector input: do not join injection audit labels into features.
+EnergyObservations_CL
+| where TimeGenerated > ago(24h)
+| summarize arg_max(TimeGenerated, *) by EventId
+| project TimeGenerated, ObservedAt, SimulatedAt, SchemaVersion, EventId,
+          Domain, Surface, Portal, RunId,
+          RecordType, EntityId, LocationId, Payload, Context,
+          IsSynthetic, OperationalUse
+| take 1000
+
+// Domain/surface coverage after a bounded deployment exercise.
+EnergyObservations_CL
+| where TimeGenerated > ago(2h)
+| summarize arg_max(TimeGenerated, *) by EventId
+| summarize Records=count(), Entities=dcount(EntityId),
+            FirstObserved=min(ObservedAt), LastObserved=max(ObservedAt)
+  by Domain, Surface, Portal
+| order by Domain asc, Surface asc
+
+// Operator/evaluation audit ONLY; not detector input.
+EnergyInjectionAudit_CL
+| where TimeGenerated > ago(2h)
+| summarize arg_max(TimeGenerated, *) by EventId
+| project TimeGenerated, Domain, Surface, RunId, Action, Scenario, Outcome
+| order by TimeGenerated desc
+| take 100
+
+// Observe latency rather than assuming SDK acceptance means queryability.
+EnergyObservations_CL
+| where TimeGenerated > ago(2h)
+| extend IngestedAt=ingestion_time()
+| extend DelaySeconds=datetime_diff('second', IngestedAt, ObservedAt)
+| summarize Records=count(), P50=percentile(DelaySeconds, 50),
+            P95=percentile(DelaySeconds, 95) by Surface

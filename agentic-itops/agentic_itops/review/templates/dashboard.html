@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Synthetic operations · Review workspace</title>
+  <script nonce="{{ nonce }}">
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+  </script>
+  <script nonce="{{ nonce }}">
+  // Preserve explicit light/dark selection after the required theme bootstrap.
+  (() => {
+    const explicit = new URLSearchParams(window.location.search).get("scoutTheme");
+    if (explicit === "light" || explicit === "dark") {
+      document.documentElement.setAttribute("data-theme", explicit);
+    }
+  })();
+  </script>
+  <style nonce="{{ nonce }}">
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='review.css') }}">
+  <script defer src="{{ url_for('static', filename='review.js') }}"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to review workspace</a>
+  <div class="banner" role="note">SYNTHETIC ONLY · OperationalUse=prohibited · No physical operations or sent communications. Work advancement is explicit, bounded software processing only.</div>
+  <header>
+    <div><p class="eyebrow">Agentic IT operations / independent review</p>
+      <h1>Evidence before acceptance.</h1>
+      <p class="muted">Review retained observations and exact analysis revisions. Human judgment never changes physical state.</p>
+    </div>
+    <label class="theme-label">Appearance
+      <select id="theme"><option value="light">Light</option><option value="dark">Dark</option></select>
+    </label>
+  </header>
+  <nav aria-label="Review areas">
+    <a href="#inbox">01 Inbox &amp; jobs</a><a href="#incident">02 Incident &amp; evidence</a>
+    <a href="#proposal">03 Proposal &amp; gate</a><a href="#learning">04 Drafts &amp; learning</a>
+    <a href="#hygiene">05 Hygiene</a>
+  </nav>
+  <main id="main">
+    <section id="inbox" aria-labelledby="inbox-title">
+      <div class="section-heading"><h2 id="inbox-title">01 / Inbox &amp; jobs</h2>
+        <span class="pill">{{ incidents|length }} authorized case projections</span></div>
+      <p class="muted">Observation counts are not alert counts. An empty inbox is not proof of normal operation.</p>
+      <label>Filter visible incidents by ID, source, run or domain <input id="inbox-filter" type="search" autocomplete="off"></label>
+      <div class="table-scroll"><table>
+        <caption>Current authorized revisions; historical decisions remain attached to their exact revision.</caption>
+        <thead><tr><th>Incident / revision</th><th>Source / run / domain / surfaces</th><th>Processing</th><th>Observed lifecycle</th><th>Human review</th></tr></thead>
+        <tbody id="incident-rows">
+        {% for item in incidents %}{% set result = item.result %}
+          <tr><td><a href="{{ url_for('dashboard', incident_id=result.incident_id, revision=result.analysis_revision) }}">{{ result.incident_id }}</a><br>Revision {{ result.analysis_revision }}</td>
+            <td>{{ result.source.producer_key }} / {{ result.source.run_id }}<br>{{ result.source.domain }} · {{ result.source.surfaces|join(', ') }}</td>
+            <td>{{ result.status }}</td><td>{{ result.get('observed_lifecycle', 'unknown') }}</td><td>{{ item.review_state }}</td></tr>
+        {% else %}<tr><td colspan="5" class="empty">No authorized analysis has been registered. Work may be pending, failed, not evaluated or outside your scope.</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+      <div class="columns">
+        <div class="card"><h3>Queue retained-data analysis</h3>
+          {% if work_available and ('Analyst' in roles or 'Operator' in roles) and sources %}
+          <form class="work-form" data-route="/analysis-jobs">
+            <label>Registered source<select name="source" required>
+              {% for source in sources %}<option value="{{ source|tojson|forceescape }}">{{ source.producer_key }} / {{ source.run_id }} / {{ source.domain }}</option>{% endfor %}
+            </select></label>
+            <p class="muted">Paste the exact approved UTC window, including seconds and the final Z. Do not convert to local time.</p>
+            <label>Window start (UTC)<input name="start_utc" type="text" placeholder="YYYY-MM-DDTHH:mm:ssZ" pattern="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z" required></label>
+            <label>Window end (UTC)<input name="end_utc" type="text" placeholder="YYYY-MM-DDTHH:mm:ssZ" pattern="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z" required></label>
+            <button type="submit">Queue analysis — no operations</button>
+          </form>
+          {% else %}<p class="empty">Analysis submission unavailable: requires a configured durable queue, registered scope and Analyst or Operator role.</p>{% endif %}
+        </div>
+        <div class="card"><h3>Track a durable job</h3><form class="lookup-form" data-kind="jobs">
+          <label>Job ID<input name="id" required maxlength="180"></label>
+          <label>Lookup root context (optional)<input name="root_job_id" pattern="[a-f0-9]{64}" maxlength="64"></label><button type="submit">Check job status</button>
+          </form><p class="muted">Queued does not mean analyzed. Failed and incomplete work is not a normal finding.</p>
+          <p class="muted">For internally generated child jobs, supply the original authorized root job ID. The server verifies immutable SQL lineage; this field cannot grant a new source scope.</p>
+          {% if advance_available and 'Operator' in roles %}
+          <form class="lookup-form" data-kind="job-budgets">
+            <label>Model workflow job ID<input name="id" required pattern="[a-f0-9]{64}" maxlength="64"></label>
+            <label>Budget root context (optional)<input name="root_job_id" pattern="[a-f0-9]{64}" maxlength="64"></label>
+            <button type="submit">Inspect model budget</button>
+            <p class="muted">Read-only job accounting plus all-history totals, including expired or failed attempts. Unknown usage retains its reservation; this never retries work or releases accounting. Monthly usage_mode and caps_enforced describe the current configuration, not historical workflows. In observe_only mode, application spending and count caps are not enforced and effective_limit_nanodollars is null, not a remaining allowance. Deadlines, per-call token bounds, approvals and Azure quotas still apply.</p>
+          </form>
+          <form class="lookup-form" data-kind="job-readiness">
+            <label>Dependency readiness job ID<input name="id" required pattern="[a-f0-9]{64}" maxlength="64"></label>
+            <label>Readiness root context (optional)<input name="root_job_id" pattern="[a-f0-9]{64}" maxlength="64"></label>
+            <button type="submit">Check dependencies — no model calls</button>
+            <p class="muted">Read the selected job and evidence, verify worker-to-review authentication, then check Search with a fixed probe vector. No inference, embedding, publication or job advancement. This does not prove analysis quality or full runtime isolation.</p>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% if advance_available and ('Analyst' in roles or 'Operator' in roles) %}
+      <form class="advance-form card">
+        <h3>Advance work — one job per click</h3>
+        <label>Root job ID from the durable submission receipt<input name="id" required pattern="[a-f0-9]{64}" maxlength="64"></label>
+        <label>Advancement root context (optional)<input name="root_job_id" pattern="[a-f0-9]{64}" maxlength="64"></label>
+        <button type="submit">Advance one queued step</button>
+        <p class="muted">No automatic polling or background processing. Unknown outcomes reuse the same selected-job receipt; check status before starting another step. A model step consumes the separately approved budget.</p>
+      </form>
+      {% endif %}
+      {% if advance_available and 'Operator' in roles %}
+      <form class="projection-recovery-form card">
+        <h3>Recover a persisted result into review</h3>
+        <label>Completed model workflow ID<input name="id" required pattern="[a-f0-9]{64}" maxlength="64"></label>
+        <label>Recovery root context (optional)<input name="root_job_id" pattern="[a-f0-9]{64}" maxlength="64"></label>
+        <button type="submit">Queue projection recovery — no model calls</button>
+        <p class="muted">Use only after reconciling the failed transfer. Creates a separately identified, source-bound projection job; preserves failed jobs and never reruns reasoning or approves a result. Advance the returned job separately.</p>
+      </form>
+      <form class="replacement-form card">
+        <h3>Prepare one explicitly approved replacement</h3>
+        <label>Failed first reasoning workflow ID<input name="id" required pattern="[a-f0-9]{64}" maxlength="64"></label>
+        <label>Replacement root context (optional)<input name="root_job_id" pattern="[a-f0-9]{64}" maxlength="64"></label>
+        <button type="submit">Queue replacement preparation - no model calls</button>
+        <p class="warning">Requires a separate server-held authorization for this exact failed workflow and candidate and settled provider accounting. Cumulative capacity is checked in enforced usage mode; explicitly approved observe_only test mode retains all accounting without application spending or count caps. Preserves the failed attempt. Preparation projects a failed diagnostic, not a completed analysis; paid reasoning must be advanced separately. No automatic retry or human decision.</p>
+      </form>
+      {% endif %}
+      {% if work_available and ('Analyst' in roles or 'Operator' in roles) and sources %}
+      <form class="investigation-form card">
+        <h3>Request an investigation — not a detected incident</h3>
+        <p class="warning">First complete retained-data ingestion. Select an actual observed entity; no anomaly, detector calibration, recovery, or model completion is asserted. Requires server-held actor-bound batch approval.</p>
+        <label>Registered source<select name="source" required>
+          {% for source in sources %}<option value="{{ source|tojson|forceescape }}">{{ source.producer_key }} / {{ source.run_id }} / {{ source.domain }}</option>{% endfor %}
+        </select></label>
+        <p class="muted">Paste the exact approved UTC window, including seconds and the final Z. Do not convert to local time.</p>
+        <label>Window start (UTC)<input name="start_utc" type="text" placeholder="YYYY-MM-DDTHH:mm:ssZ" pattern="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z" required></label>
+        <label>Window end (UTC)<input name="end_utc" type="text" placeholder="YYYY-MM-DDTHH:mm:ssZ" pattern="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z" required></label>
+        <label>Observed surface<input name="surface" required maxlength="256"></label>
+        <label>Observed EntityId<input name="entity_id" required maxlength="256"></label>
+        <label>Observed LocationId<input name="location_id" required maxlength="256"></label>
+        <label>Investigation question / reason<textarea name="reason" required maxlength="2000"></textarea></label>
+        <button type="submit">Queue explicitly labeled investigation</button>
+      </form>
+      {% endif %}
+    </section>
+    <section id="incident" aria-labelledby="incident-title">
+      <h2 id="incident-title">02 / Incident &amp; evidence</h2>
+      {% if detail %}{% set result = detail.result %}
+        <div class="facts">
+          <div><span class="muted">Incident / exact revision</span><strong>{{ result.incident_id }} / {{ result.analysis_revision }}</strong></div>
+          <div><span class="muted">Processing</span><strong>{{ result.status }}</strong></div>
+          <div><span class="muted">Observed lifecycle</span><strong>{{ result.get('observed_lifecycle', 'unknown') }}</strong></div>
+          <div><span class="muted">Current review</span><strong>{{ detail.review_state }}</strong></div>
+        </div>
+        {% if not detail.current %}<p class="warning">Historical revision. Its previous reviews are retained, not eligible as current acceptance.</p>{% endif %}
+        {% if not detail.eligible %}<p class="warning">This revision is ineligible for current knowledge approval.</p>{% endif %}
+        <p>{{ result.get('summary', 'No narrative summary was supplied.') }}</p>
+        {% if result.get('coverage', {}).get('trigger', {}).get('kind') == 'operator_requested_investigation' %}
+        <p class="warning">OPERATOR-REQUESTED INVESTIGATION · Not a detected incident. AI-authored analysis of retained observations; no calibrated detector or recovery claim.</p>
+        <details class="card" open><summary>Operator request provenance</summary><pre>{{ result.coverage.trigger|pretty }}</pre></details>
+        {% endif %}
+        <dl><dt>Source hash binding / result hash</dt><dd class="mono">{{ detail.result_hash }}</dd>
+          <dt>Source / run</dt><dd>{{ result.source.producer_key }} / {{ result.source.run_id }}</dd>
+          <dt>Created UTC</dt><dd>{{ result.created_at_utc }}</dd></dl>
+        <div class="columns">
+          <details class="card" open><summary>Coverage &amp; freshness</summary><pre>{{ result.get('coverage', 'Not supplied; coverage is unknown.')|pretty }}</pre></details>
+          <details class="card"><summary>Observed timeline &amp; finding membership</summary><pre>{{ result.get('timeline', 'No observed timeline supplied.')|pretty }}</pre><pre>{{ result.get('findings', 'No finding membership supplied.')|pretty }}</pre></details>
+        </div>
+        <details class="card" open><summary>Immutable supporting evidence references</summary>
+          <pre>{{ result.evidence_refs|pretty }}</pre><p class="muted">Reference verification is a trusted-worker assertion. Narrative text is not replacement evidence. No arbitrary evidence URL is opened here.</p>
+        </details>
+        {% if 'Analyst' in roles or 'Reviewer' in roles or 'KnowledgeReviewer' in roles or 'Operator' in roles %}
+          <a href="{{ url_for('export', incident_id=result.incident_id, revision=result.analysis_revision) }}">Download synthetic review JSON with provenance</a>
+        {% endif %}
+      {% else %}<p class="empty">Select an incident in the inbox to inspect an exact persisted revision. No evidence or results are fabricated.</p>{% endif %}
+      <h3>Nine-agent contribution panel</h3>
+      <div class="agent-grid">
+        {% for name in agents %}
+          {% set stage = detail.result.stage_results.get(name) if detail else none %}
+          <article class="card agent"><h4>{{ name }}</h4>
+            <span class="pill">{{ stage.status if stage else ('pending' if detail and detail.result.status in ['queued', 'running'] else 'not-triggered') }}</span>
+            {% if stage %}<pre>{{ stage|pretty }}</pre>
+            {% else %}<p class="muted">No contribution recorded. This is not a completed stage.</p>{% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+    <section id="proposal" aria-labelledby="proposal-title">
+      <h2 id="proposal-title">03 / Proposal &amp; gate</h2>
+      <p class="warning">Execution is prohibited. Accepting an analysis cannot authorize a proposed action.</p>
+      {% if detail %}
+      <div class="columns"><details class="card" open><summary>Proposal / exact target / missing checks</summary>
+        <pre>{{ detail.result.get('proposal', 'No validated proposal supplied.')|pretty }}</pre></details>
+        <details class="card" open><summary>Code-gate receipt &amp; reasons</summary>
+          <pre>{{ detail.result.get('gate_receipt', 'No gate receipt supplied. Do not infer gate success.')|pretty }}</pre>
+        </details></div>
+        {% if detail.current and 'Reviewer' in roles %}
+        <form class="review-form card" data-route="{{ url_for('review', incident_id=detail.result.incident_id) }}" data-etag="{{ detail.etag }}">
+          <h3>Review exact revision {{ detail.result.analysis_revision }}</h3>
+          <label>Decision<select name="action" required>
+            <option value="accept">Accept analysis — no execution authorized</option>
+            <option value="reject">Reject analysis</option><option value="request_evidence">Request more evidence</option>
+            <option value="close">Administrative closure — no recovery assertion</option>
+          </select></label><label>Reason<textarea name="reason" required maxlength="4000"></textarea></label>
+          <button type="submit">Record review decision</button>
+          <p class="muted">Closure requires prior acceptance and a reason. New revisions invalidate current acceptance without rewriting history.</p>
+        </form>
+        {% endif %}
+        <details class="card"><summary>Review receipts / administrative timeline</summary><pre>{{ detail.review_history|pretty }}</pre></details>
+        {% if detail.current and detail.eligible and detail.review_state == 'closed' and ('Analyst' in roles or 'Operator' in roles) %}
+        <form class="lifecycle-form card" data-incident="{{ detail.result.incident_id }}">
+          <h3>Request one human-closed lifecycle stage</h3>
+          <label>Stage<select name="kind"><option value="postmortem">08 / AI postmortem draft</option><option value="hygiene">09 / Hygiene analysis — no suppression</option></select></label>
+          <button type="submit">Queue lifecycle stage — advance separately</button>
+          <p class="muted">The worker rechecks this exact closure receipt. Each new result needs fresh human review; publication is never automatic.</p>
+        </form>
+        {% endif %}
+      {% else %}<p class="empty">No selected proposal or authoritative gate receipt.</p>{% endif %}
+    </section>
+    <section id="learning" aria-labelledby="learning-title">
+      <h2 id="learning-title">04 / Drafts &amp; learning</h2>
+      <p class="muted">Communication drafts are never sent. Approval creates a pending publishing outbox, not searchable knowledge.</p>
+      {% if detail %}
+        <div class="columns">
+          <details class="card" open><summary>Communication draft</summary><pre>{{ detail.result.stage_results.get('incident-comms', 'No communication draft supplied.')|pretty }}</pre></details>
+          <details class="card" open><summary>Postmortem draft / authorship / applicability</summary><pre>{{ detail.result.get('postmortem_draft', 'No postmortem draft supplied.')|pretty }}</pre></details>
+        </div>
+        {% if detail.current and 'KnowledgeReviewer' in roles and detail.result.get('postmortem_draft') %}
+        <form class="publication-form card" data-etag="{{ detail.etag }}" data-incident="{{ detail.result.incident_id }}" data-revision="{{ detail.result.analysis_revision }}" data-draft="{{ detail.result.postmortem_draft.sha256 }}">
+          <h3>Independent knowledge review</h3>
+          <label>Expiry (UTC)<input name="expires_at_utc" type="datetime-local" required></label>
+          <label>Approval reason<textarea name="reason" required maxlength="4000"></textarea></label>
+          <button type="submit">Approve synthetic publication — indexing pending</button>
+          <p class="muted">Human authors cannot approve their own revision. Eligibility ends no later than the earliest supporting-evidence retention deadline.</p>
+        </form>{% endif %}
+      {% else %}<p class="empty">No persisted draft selected. Nothing has been published by this screen.</p>{% endif %}
+      <div class="card"><form class="lookup-form" data-kind="publications">
+        <label>Publication ID<input name="id" required maxlength="180"></label><button type="submit">Check publication eligibility</button></form>
+        {% if 'KnowledgeReviewer' in roles %}<form id="revoke-form">
+          <label>Publication ID<input name="id" required maxlength="180"></label>
+          <label>Exact publication ETag (from status response)<input name="etag" required></label>
+          <label>Revocation reason<textarea name="reason" required maxlength="4000"></textarea></label>
+          <button type="submit">Revoke knowledge eligibility</button>
+        </form>{% endif %}
+        {% if publication_advance_available and 'KnowledgeReviewer' in roles %}
+        <form class="publication-advance-form">
+          <h3>Advance publication — one outbox item per click</h3>
+          <label>Publication ID from the approval or revocation receipt<input name="id" required maxlength="36"></label>
+          <button type="submit">Advance one Search delivery step</button>
+          <p class="warning">An upload can consume the approved embedding budget. This does not approve knowledge or start an automatic retry loop. Unknown responses retain the same selected outbox item.</p>
+        </form>
+        {% endif %}
+        <p class="muted">Approval and revocation are separate from Search delivery. Check persisted eligibility and delivery receipts; a queued item is not a confirmed upload or removal. Editing as a new human draft revision is not yet available here.</p>
+      </div>
+    </section>
+    <section id="hygiene" aria-labelledby="hygiene-title">
+      <h2 id="hygiene-title">05 / Hygiene</h2>
+      <p class="muted">Bounded history analysis only. No automatic threshold changes or suppression. Missing action history does not prove self-healing.</p>
+      {% if detail %}<pre>{{ detail.result.stage_results.get('alert-hygiene', 'No hygiene contribution recorded for this revision.')|pretty }}</pre>
+      {% else %}<p class="empty">No hygiene report selected. Transition counts, coverage, denominators and rule versions are unknown.</p>{% endif %}
+      {% if work_available and ('Analyst' in roles or 'Operator' in roles) and sources %}
+      <form class="work-form card" data-route="/hygiene-jobs">
+        <label>Registered history source<select name="source" required>
+          {% for source in sources %}<option value="{{ source|tojson|forceescape }}">{{ source.producer_key }} / {{ source.run_id }} / {{ source.domain }}</option>{% endfor %}
+        </select></label>
+        <p class="muted">Paste exact UTC timestamps, including seconds and the final Z. Do not convert to local time.</p>
+        <label>History start (UTC)<input name="start_utc" type="text" placeholder="YYYY-MM-DDTHH:mm:ssZ" pattern="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z" required></label>
+        <label>History end (UTC)<input name="end_utc" type="text" placeholder="YYYY-MM-DDTHH:mm:ssZ" pattern="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z" required></label>
+        <button type="submit">Queue human-closed hygiene evaluation</button>
+      </form>{% else %}<p class="empty">Hygiene job submission is unavailable for this session.</p>{% endif %}
+    </section>
+    <section aria-labelledby="receipt-title"><h2 id="receipt-title">Latest request receipt</h2>
+      <p id="request-status" role="status" aria-live="polite">No request submitted in this browser session.</p>
+      <pre id="request-result"></pre><a href="">Refresh persisted state</a>
+      <a href="/.auth/login/aad?post_login_redirect_uri=%2F">Renew sign-in</a>
+    </section>
+  </main>
+  <footer>Synthetic review only · Physical execution: not_performed · Search is a derived projection, not the authority ledger.</footer>
+</body>
+</html>

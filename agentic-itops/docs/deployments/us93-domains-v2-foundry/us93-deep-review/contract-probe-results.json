@@ -1,0 +1,179 @@
+[
+  {
+    "probe": "azure-common-alert-array",
+    "expected": {
+      "name": "Percentage CPU",
+      "value": 95,
+      "threshold": 80
+    },
+    "observed": {
+      "name": "CPU High",
+      "value": null,
+      "unit": "",
+      "threshold": null,
+      "operator": ""
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "raw-alertmanager-batch",
+    "expected": 2,
+    "observed": {
+      "normalized": 1,
+      "failures": 0,
+      "warnings": [
+        "payload carried 2 alerts; only the first was normalized"
+      ]
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "gate-evaluates-wrong-target-and-radius",
+    "expected": "deny or reject proposal/incident mismatch",
+    "observed": {
+      "proposal": {
+        "proposed_action": "scale_out",
+        "target_resource_id": "/subscriptions/test/resourceGroups/rg-app-demo/providers/Microsoft.Compute/virtualMachines/vm-scada-01",
+        "blast_radius": {
+          "scope": "tenant",
+          "estimated_affected": 40
+        },
+        "rationale": "offline contract probe"
+      },
+      "decision": {
+        "effect": "allow",
+        "approval_tier": "none",
+        "reasons": [
+          "action 'scale_out' permitted in environment 'test'",
+          "blast radius 1 within auto-approval ceiling"
+        ],
+        "matched_rules": [
+          "allowed_actions",
+          "resource_scopes",
+          "approval_tiers"
+        ],
+        "audit_id": "a70990749a1fde34",
+        "evaluated_at": "2026-09-15T00:04:01.316656+00:00",
+        "policy_version": "1.0-sample"
+      },
+      "executed": false
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "empty-policy-cli-fallback",
+    "expected": "deny with explicit empty configuration",
+    "observed": {
+      "exit": 0,
+      "effect": "allow",
+      "policy": "1.0-sample"
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "policy-without-resource-scope",
+    "expected": "reject missing required scope or deny",
+    "observed": {
+      "effect": "allow",
+      "approval_tier": "none",
+      "reasons": [
+        "action 'scale_out' permitted in environment 'test'",
+        "blast radius 1 within auto-approval ceiling"
+      ],
+      "matched_rules": [
+        "allowed_actions",
+        "resource_scopes",
+        "approval_tiers"
+      ],
+      "audit_id": "dccffd5750bccbaf",
+      "evaluated_at": "2026-09-15T00:04:01.343551+00:00",
+      "policy_version": "unversioned"
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "metric-free-correlation-order",
+    "expected": "stable/explicit ambiguity handling",
+    "observed": [
+      "cpu",
+      "memory"
+    ],
+    "defectReproduced": true
+  },
+  {
+    "probe": "resolution-utc-order",
+    "expected": false,
+    "observed": true,
+    "defectReproduced": true
+  },
+  {
+    "probe": "empty-hygiene-volume",
+    "expected": 0,
+    "observed": 1,
+    "defectReproduced": true
+  },
+  {
+    "probe": "hygiene-firing-lifecycle",
+    "expected": "one firing plus one resolution, not two firings",
+    "observed": {
+      "rule": "Same rule",
+      "source": "test",
+      "fired": 2,
+      "resolved": 1,
+      "auto_resolve_rate": 0.5,
+      "flap_ratio": 2.0,
+      "distinct_resources": 1,
+      "distinct_symptoms": 1,
+      "dominant_severity": "medium",
+      "noise_score": 29.9,
+      "recommendation": "keep",
+      "rationale": [
+        "behaviour within normal bounds for the sample window"
+      ]
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "demo-drops-normalization-failures",
+    "expected": "visible failed/incomplete batch",
+    "observed": [],
+    "defectReproduced": true
+  },
+  {
+    "probe": "foundry-truncates-json",
+    "expected": "valid bounded structured evidence",
+    "observed": {
+      "valid_json": false,
+      "chars": 6000
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "foundry-unstructured-response",
+    "expected": "explicit schema failure",
+    "observed": {
+      "agent": "remediation-planner",
+      "reasoner": "foundry",
+      "output": "not-json"
+    },
+    "defectReproduced": true
+  },
+  {
+    "probe": "live-demo-pins-historical-time",
+    "expected": "live acceptance uses current trusted time",
+    "observed": "2026-09-14T13:42:00+00:00",
+    "defectReproduced": true
+  },
+  {
+    "probe": "openapi-generator-parity",
+    "observed": {
+      "signal-normalizer.yaml": true,
+      "change-safety-gate.yaml": true,
+      "log-analytics.yaml": true,
+      "resource-graph.yaml": true,
+      "change-history.yaml": true,
+      "alert-hygiene.yaml": true
+    },
+    "allMatch": true
+  }
+]

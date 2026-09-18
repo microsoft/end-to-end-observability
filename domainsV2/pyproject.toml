@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energy-domains-v2"
+version = "0.1.0"
+description = "Isolated fictional energy portals with durable Log Analytics delivery"
+requires-python = ">=3.11"
+dependencies = [
+  "Flask>=3.1,<4",
+  "azure-identity>=1.17,<2",
+  "azure-monitor-ingestion>=1.0,<2",
+  "azure-storage-blob>=12.20,<13",
+]
+
+[project.optional-dependencies]
+validation = ["jsonschema>=4.23,<5", "rfc3339-validator>=0.1.4,<1"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["energy_domains_v2*"]
+
+[tool.setuptools.package-data]
+energy_domains_v2 = [
+  "static/*",
+  "inventory_assets/*.js",
+  "replay_data/manifest.json",
+  "replay_data/observations/*.json.gz",
+  "replay_data/snapshots/*/*.json.gz",
+]

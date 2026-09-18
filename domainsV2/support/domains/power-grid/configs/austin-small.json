@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "seed": 20260716,
+  "scenario": "normal",
+  "location": {
+    "city": "Austin",
+    "state": "TX",
+    "time_zone": "America/Chicago",
+    "latitude": 30.2672,
+    "longitude": -97.7431,
+    "preset": "austin_tx"
+  },
+  "simulation": {
+    "start_utc": "2026-07-01T05:00:00Z",
+    "end_utc": "2026-07-01T18:00:00Z",
+    "interval_minutes": 60
+  },
+  "fleet": {
+    "feeders": 1,
+    "distribution_transformers_per_feeder": 2,
+    "ami_meters_per_transformer": 2,
+    "reclosers_per_feeder": 1,
+    "regulators_per_feeder": 1,
+    "capacitor_banks_per_feeder": 1,
+    "power_quality_monitors_per_feeder": 1,
+    "pv_fraction": 0.25,
+    "evse_fraction": 0.25
+  },
+  "output": {
+    "include_reference_catalog": true
+  }
+}

@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Fictional upstream production, well, equipment, data-quality and evidence portal"
+    />
+    <title>Upstream · Wellpad Intelligence | Synthetic Production Portal</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f6f4f1;
+        --cp-bg-elevated: #fcfbf9;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f2f1ef;
+        --cp-border: #dcdad7;
+        --cp-border-strong: #8f8d8a;
+        --cp-text: #232323;
+        --cp-text-muted: #5b5b5b;
+        --cp-text-soft: #6e6e6e;
+        --cp-accent: #1c6b53;
+        --cp-accent-hover: #165843;
+        --cp-accent-soft: rgba(28, 107, 83, 0.09);
+        --cp-accent-fg: #ffffff;
+        --cp-success: #16a34a;
+        --cp-danger: #c33636;
+        --cp-warning: #b8791a;
+        --cp-link: #0f6cbd;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+        --cp-overlay: rgba(255, 255, 255, 0.82);
+        --cp-panel: rgba(255, 255, 255, 0.86);
+        --cp-panel-strong: rgba(255, 255, 255, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.55);
+        --cp-highlight: rgba(28, 107, 83, 0.12);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3b3a38;
+        --cp-bg-elevated: #333230;
+        --cp-surface: #282827;
+        --cp-surface-soft: #2d2d2c;
+        --cp-border: #464645;
+        --cp-border-strong: #5e5e5d;
+        --cp-text: #dedede;
+        --cp-text-muted: #9a9a9a;
+        --cp-text-soft: #b2b2b2;
+        --cp-accent: #7fd1b4;
+        --cp-accent-hover: #6ac3a3;
+        --cp-accent-fg: #16241f;
+        --cp-accent-soft: rgba(127, 209, 180, 0.14);
+        --cp-success: #4ade80;
+        --cp-danger: #f08a8a;
+        --cp-warning: #e0b055;
+        --cp-link: #62b3f2;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+        --cp-overlay: rgba(40, 40, 39, 0.88);
+        --cp-panel: rgba(40, 40, 39, 0.74);
+        --cp-panel-strong: rgba(40, 40, 39, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.05);
+        --cp-highlight: rgba(127, 209, 180, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      button, input, select { font: inherit; }
+      a { color: var(--cp-link); }
+      h1, h2, h3, h4, p { margin: 0; }
+      table { border-collapse: collapse; width: 100%; }
+      code, .mono { font-family: Consolas, "Courier New", Courier, monospace; }
+
+      .skip-link {
+        position: fixed;
+        z-index: 60;
+        top: 8px;
+        left: 8px;
+        transform: translateY(-180%);
+        padding: 8px 12px;
+        border-radius: 0.6rem;
+        background: var(--cp-accent);
+        color: var(--cp-accent-fg);
+      }
+      .skip-link:focus { transform: translateY(0); }
+
+      .portal-header {
+        position: sticky;
+        z-index: 20;
+        top: 0;
+        display: grid;
+        grid-template-columns: minmax(210px, 1fr) auto minmax(210px, 1fr);
+        align-items: center;
+        gap: 16px;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--cp-border);
+        background: var(--cp-panel-strong);
+      }
+      .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 0.7rem;
+        background: var(--cp-accent);
+        color: var(--cp-accent-fg);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      .domain-nav { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 24px; font-size: 0.8rem; }
+      .brand-text h1 { display: block; font-size: 0.98rem; }
+      .brand-text span { display: block; font-size: 0.74rem; color: var(--cp-text-muted); }
+
+      .view-switch { display: flex; gap: 6px; justify-self: center; }
+      .view-switch button {
+        padding: 7px 14px;
+        border: 1px solid var(--cp-border);
+        border-radius: 999px;
+        background: var(--cp-surface);
+        color: var(--cp-text-muted);
+        cursor: pointer;
+      }
+      .view-switch button[aria-pressed="true"] {
+        border-color: var(--cp-accent);
+        background: var(--cp-accent-soft);
+        color: var(--cp-text);
+        font-weight: 600;
+      }
+      .header-tools { display: flex; justify-content: flex-end; gap: 8px; }
+      .header-tools button {
+        padding: 7px 12px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.6rem;
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        cursor: pointer;
+      }
+      .header-tools button:hover { border-color: var(--cp-border-strong); }
+
+      main { padding: 20px 24px; max-width: 1320px; margin: 0 auto; }
+      .disclosure {
+        margin-bottom: 18px;
+        padding: 12px 16px;
+        border: 1px solid var(--cp-border);
+        border-left: 4px solid var(--cp-warning);
+        border-radius: 0.7rem;
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        font-size: 0.85rem;
+      }
+      .disclosure b { color: var(--cp-text); }
+
+      .panel {
+        margin-bottom: 18px;
+        padding: 16px 18px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.85rem;
+        background: var(--cp-surface);
+        box-shadow: var(--cp-shadow);
+      }
+      .panel > header { margin-bottom: 12px; }
+      .panel h2 { font-size: 1.02rem; }
+      .panel h3 { font-size: 0.9rem; }
+      .panel p.hint { margin-top: 4px; color: var(--cp-text-muted); font-size: 0.8rem; }
+
+      .grid { display: grid; gap: 12px; }
+      .grid.kpi { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+      .grid.cards { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .grid.tiles { grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); }
+
+      .card {
+        padding: 12px 14px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.7rem;
+        background: var(--cp-bg-elevated);
+      }
+      .card h3 { font-size: 0.78rem; color: var(--cp-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+      .card .value { display: block; margin-top: 6px; font-size: 1.5rem; font-weight: 650; }
+      .card .unit { font-size: 0.8rem; color: var(--cp-text-soft); }
+      .card .meta { margin-top: 6px; font-size: 0.76rem; color: var(--cp-text-muted); }
+
+      .pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border: 1px solid var(--cp-border);
+        border-radius: 999px;
+        font-size: 0.72rem;
+        color: var(--cp-text-muted);
+      }
+      .pill.nominal { border-color: var(--cp-success); color: var(--cp-success); }
+      .pill.degraded { border-color: var(--cp-warning); color: var(--cp-warning); }
+      .pill.impaired { border-color: var(--cp-danger); color: var(--cp-danger); }
+      .pill.attention { border-color: var(--cp-warning); color: var(--cp-warning); }
+      .pill.unknown { border-color: var(--cp-border-strong); color: var(--cp-text-soft); }
+
+      th, td {
+        padding: 7px 9px;
+        border-bottom: 1px solid var(--cp-border);
+        text-align: left;
+        font-size: 0.82rem;
+        vertical-align: top;
+      }
+      th { color: var(--cp-text-muted); font-weight: 600; }
+      tbody tr:hover { background: var(--cp-surface-soft); }
+      .scroll { max-height: 380px; overflow: auto; }
+
+      .empty { padding: 14px; color: var(--cp-text-muted); font-size: 0.85rem; }
+      .bar {
+        position: relative;
+        height: 7px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: var(--cp-surface-soft);
+        overflow: hidden;
+      }
+      .bar i { position: absolute; inset: 0 auto 0 0; display: block; background: var(--cp-accent); }
+
+      .spark { display: flex; align-items: flex-end; gap: 2px; height: 34px; margin-top: 8px; }
+      .spark i {
+        flex: 1 1 auto;
+        min-height: 2px;
+        border-radius: 2px 2px 0 0;
+        background: var(--cp-accent-soft);
+        border-top: 2px solid var(--cp-accent);
+      }
+      .spark i.gap { background: var(--cp-surface-soft); border-top-color: var(--cp-border-strong); }
+
+      /* Live wellpad console.
+         Kept in normal document flow rather than pinned to the viewport: a
+         fixed overlay covered page content, because its height varies with the
+         fleet while any reserved padding below main is a fixed guess. */
+      .live-console {
+        /* Aligns with main's content box: 1320px less its 24px side padding,
+           and viewport-minus-gutters once the screen is narrower than that. */
+        max-width: min(1272px, 100% - 48px);
+        margin: 0 auto 24px;
+        padding: 14px 16px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.9rem;
+        background: var(--cp-panel);
+        box-shadow: var(--cp-shadow);
+      }
+      .live-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .live-head h2 { font-size: 0.95rem; margin-right: auto; }
+      .live-console select,
+      .live-console button {
+        padding: 6px 11px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.55rem;
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        cursor: pointer;
+      }
+      .live-console button.primary {
+        border-color: var(--cp-accent);
+        background: var(--cp-accent);
+        color: var(--cp-accent-fg);
+      }
+      .live-console button[disabled] { cursor: progress; color: var(--cp-text-soft); }
+      .live-note { margin-top: 8px; font-size: 0.75rem; color: var(--cp-text-muted); }
+      .live-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); }
+      .live-tile {
+        padding: 9px 11px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.6rem;
+        background: var(--cp-panel);
+        cursor: pointer;
+        text-align: left;
+        width: 100%;
+      }
+      .live-tile:hover { border-color: var(--cp-accent); }
+      .live-tile strong { display: block; font-size: 0.8rem; }
+      .live-tile span { font-size: 0.72rem; color: var(--cp-text-muted); }
+      .live-events { margin-top: 10px; font-size: 0.76rem; color: var(--cp-text-muted); }
+      .live-events li { margin-bottom: 3px; }
+
+      .live-dialog {
+        width: min(720px, 92vw);
+        border: 1px solid var(--cp-border);
+        border-radius: 0.9rem;
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        box-shadow: var(--cp-shadow);
+      }
+      .live-dialog::backdrop { background: var(--cp-overlay); }
+      .live-controls { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+      .live-controls button {
+        padding: 6px 12px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.55rem;
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        cursor: pointer;
+      }
+
+      .banner {
+        margin-bottom: 14px;
+        padding: 10px 14px;
+        border: 1px solid var(--cp-danger);
+        border-radius: 0.7rem;
+        background: var(--cp-surface);
+        color: var(--cp-danger);
+        font-size: 0.84rem;
+      }
+      .hidden { display: none !important; }
+
+      @media (max-width: 900px) {
+        .portal-header { grid-template-columns: 1fr; }
+        .view-switch { justify-self: stretch; }
+        .header-tools { justify-content: flex-start; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#portal-main">Skip to content</a>
+    <nav class="domain-nav" aria-label="Domains">
+      <a href="/">All domains</a>
+      <a href="/power-grid">Power Grid</a>
+      <a href="/midstream">Midstream</a>
+      <a href="/downstream">Downstream</a>
+      <a href="/downstream/portfolio">Downstream portfolio</a>
+      <a href="/upstream" aria-current="page">Upstream</a>
+    </nav>
+    <header class="portal-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">UP</div>
+        <div class="brand-text">
+          <h1>Upstream · Wellpad Intelligence</h1>
+          <span>Synthetic upstream production portal</span>
+        </div>
+      </div>
+      <nav class="view-switch" id="view-switch" aria-label="Portal views"></nav>
+      <div class="header-tools">
+        <button type="button" id="theme-toggle">Switch theme</button>
+        <button type="button" id="reload-data">Reload snapshot</button>
+      </div>
+    </header>
+
+    <main id="portal-main">
+      <p class="disclosure">
+        <b>Synthetic and fictional data. Operational use prohibited.</b>
+        Every well, pad, asset, device, rate, sample and observation on this page is generated by a
+        deterministic simulator for a fictional onshore field. Nothing here is a real well, a real
+        measurement, a fiscal allocation, a custody-transfer record, an integrity verdict or a
+        quantified release. Fidelity beside estimate: every derived indicator on this page is a bounded
+        synthetic estimate and is not an exact physical location, an exact rate, or a calibrated result.
+        Do not use any value here for operational, safety, environmental, commercial or regulatory
+        decisions.
+      </p>
+      <div class="banner hidden" id="error-banner" role="alert"></div>
+      <section id="view-body"></section>
+    </main>
+
+    <div class="live-console" id="live-console" aria-label="Live wellpad operations"></div>
+    <dialog class="live-dialog" id="live-dialog"></dialog>
+
+    <script>
+      const VIEWS = {
+        command: { label: "Field Command", compact: "Command", description: "Dense field overview" },
+        story: { label: "Production Story", compact: "Story", description: "How the field is behaving" },
+        evidence: { label: "Evidence Trail", compact: "Evidence", description: "Workflow evidence workbench" },
+      };
+      const DEFAULT_VIEW = "command";
+      const LIVE_POLL_MS = 5000;
+
+      const state = {
+        view: new URLSearchParams(window.location.search).get("view") || DEFAULT_VIEW,
+        snapshot: null,
+        live: null,
+        control: null,
+        runs: [],
+        scenarios: [],
+        pendingScenario: "",
+        busy: false,
+      };
+      if (!Object.prototype.hasOwnProperty.call(VIEWS, state.view)) {
+        state.view = DEFAULT_VIEW;
+      }
+
+      function escapeHtml(value) {
+        return String(value === null || value === undefined ? "" : value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function words(value) {
+        if (value === null || value === undefined || value === "") return "unavailable";
+        return String(value).replaceAll("_", " ");
+      }
+
+      function num(value, digits) {
+        if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+        return Number(value).toFixed(digits === undefined ? 2 : digits);
+      }
+
+      async function request(url, options) {
+        const response = await fetch(url, options);
+        const type = response.headers.get("content-type") || "";
+        if (!type.includes("application/json")) {
+          throw new Error(
+            "The running Flask process uses an outdated portal API. Stop it and restart it so /api/upstream and its control/live endpoints are served."
+          );
+        }
+        const payload = await response.json();
+        if (!response.ok) {
+          const detail = payload && payload.error ? words(payload.error) : response.status;
+          throw new Error("Portal request failed: " + detail);
+        }
+        return payload;
+      }
+
+      function showError(error) {
+        const banner = document.getElementById("error-banner");
+        banner.textContent = error ? String(error.message || error) : "";
+        banner.classList.toggle("hidden", !error);
+      }
+
+      function healthPill(value) {
+        const safe = String(value || "unknown");
+        return '<span class="pill ' + escapeHtml(safe) + '">' + escapeHtml(words(safe)) + "</span>";
+      }
+
+      function sparkline(values) {
+        const numeric = (values || []).filter((item) => typeof item === "number");
+        if (!numeric.length) return '<div class="spark"><i class="gap"></i></div>';
+        const low = Math.min(...numeric);
+        const high = Math.max(...numeric);
+        const span = high - low || 1;
+        const bars = (values || [])
+          .map((item) => {
+            if (typeof item !== "number") return '<i class="gap" style="height:6%"></i>';
+            const ratio = ((item - low) / span) * 92 + 8;
+            return '<i style="height:' + ratio.toFixed(1) + '%"></i>';
+          })
+          .join("");
+        return '<div class="spark">' + bars + "</div>";
+      }
+
+      /* ---------------- Field Command ---------------- */
+
+      function renderCommand(snapshot) {
+        if (!snapshot) return '<div class="panel"><p class="empty">Snapshot unavailable.</p></div>';
+        const source = snapshot.source || {};
+        const kpis = snapshot.kpis || {};
+        const overview = snapshot.overview || {};
+        const quality = snapshot.quality || {};
+        const summary = kpis.production_summary;
+        const handoff = kpis.handoff;
+        const condition = kpis.condition;
+        const environment = kpis.environment;
+        const goodPercent = ((quality.good_fraction || 0) * 100).toFixed(1);
+
+        const cards = [
+          {
+            title: "Synthetic oil volume",
+            value: summary ? num(summary.oil_volume_m3, 2) : "—",
+            unit: "m3 (period)",
+            meta: summary ? words(summary.allocation_claim) : "no production summary loaded",
+          },
+          {
+            title: "Synthetic gas volume",
+            value: summary ? num(summary.gas_volume_ksm3, 3) : "—",
+            unit: "ksm3 (period)",
+            meta: summary ? "uptime index " + num(summary.uptime_index, 3) : "not available",
+          },
+          {
+            title: "Synthetic water volume",
+            value: summary ? num(summary.water_volume_m3, 2) : "—",
+            unit: "m3 (period)",
+            meta: summary ? words(summary.quality_class) : "not available",
+          },
+          {
+            title: "Handoff context",
+            value: handoff ? words(handoff.reconciliation_state) : "—",
+            unit: "",
+            meta: handoff
+              ? words(handoff.custody_claim) + " · rate index " + num(handoff.operational_rate_index, 3)
+              : "no handoff context loaded",
+          },
+          {
+            title: "Weakest condition index",
+            value: condition ? num(condition.health_index, 3) : "—",
+            unit: "",
+            meta: condition ? words(condition.diagnosis_claim) : "no condition monitoring loaded",
+          },
+          {
+            title: "Environmental observation",
+            value: environment ? words(environment.qualitative_level) : "—",
+            unit: "",
+            meta: environment ? words(environment.quantified_release_claim) : "no observation loaded",
+          },
+          {
+            title: "Good quality share",
+            value: goodPercent,
+            unit: "% of runtime records",
+            meta: (quality.runtime_record_count || 0) + " runtime records verified",
+          },
+          {
+            title: "Attention evidence",
+            value: String(overview.attention_event_count || 0),
+            unit: "events",
+            meta: (overview.raised_alarm_count || 0) + " raised journal entries",
+          },
+        ];
+
+        const cardMarkup = cards
+          .map(
+            (card) =>
+              '<div class="card"><h3>' +
+              escapeHtml(card.title) +
+              '</h3><span class="value">' +
+              escapeHtml(card.value) +
+              ' <span class="unit">' +
+              escapeHtml(card.unit) +
+              '</span></span><p class="meta">' +
+              escapeHtml(card.meta) +
+              "</p></div>"
+          )
+          .join("");
+
+        const wells = (snapshot.wells || [])
+          .map((well) => {
+            const test = well.latest_well_test;
+            return (
+              '<div class="card"><h3>' +
+              escapeHtml(well.display_name || well.well_id) +
+              "</h3><p>" +
+              healthPill(well.state) +
+              " " +
+              '<span class="pill">' +
+              escapeHtml(words(well.lift_type)) +
+              "</span></p>" +
+              '<p class="meta">' +
+              escapeHtml(words(well.pad_display_name)) +
+              " · " +
+              escapeHtml(words(well.lifecycle_state)) +
+              " · " +
+              escapeHtml(well.asset_count) +
+              " assets</p>" +
+              '<p class="meta">' +
+              (test
+                ? "synthetic test " +
+                  escapeHtml(num(test.oil_rate_m3d, 2)) +
+                  " m3/d oil · " +
+                  escapeHtml(num(test.gas_rate_ksm3d, 3)) +
+                  " ksm3/d gas · " +
+                  escapeHtml(words(test.allocation_claim))
+                : "no synthetic well test in this run") +
+              "</p></div>"
+            );
+          })
+          .join("");
+
+        const areas = (snapshot.areas || [])
+          .map(
+            (area) =>
+              '<div class="card"><h3>' +
+              escapeHtml(area.area_id) +
+              "</h3><p>" +
+              escapeHtml(area.area_name || "") +
+              '</p><p class="meta">' +
+              escapeHtml(area.asset_count) +
+              " assets · " +
+              escapeHtml(area.attention_count) +
+              " attention events</p></div>"
+          )
+          .join("");
+
+        const health = (snapshot.equipment_health || [])
+          .map(
+            (item) =>
+              "<tr><td>" +
+              escapeHtml(item.asset_id) +
+              "</td><td>" +
+              escapeHtml(words(item.asset_type)) +
+              "</td><td>" +
+              escapeHtml(item.area_id) +
+              "</td><td>" +
+              healthPill(item.state) +
+              "</td><td>" +
+              escapeHtml(words(item.worst_quality)) +
+              "</td><td>" +
+              escapeHtml(item.health_index === null || item.health_index === undefined ? "—" : num(item.health_index, 3)) +
+              "</td><td>" +
+              escapeHtml(item.open_alarm_count || 0) +
+              "</td></tr>"
+          )
+          .join("");
+
+        return (
+          '<div class="panel"><header><h2>Fictional field snapshot</h2>' +
+          '<p class="hint">Run ' +
+          escapeHtml(source.run_id) +
+          " · scenario " +
+          escapeHtml(words(source.scenario)) +
+          " · " +
+          escapeHtml(source.site || "") +
+          " · " +
+          escapeHtml(source.facility || "") +
+          "</p></header>" +
+          '<div class="grid kpi">' +
+          cardMarkup +
+          "</div></div>" +
+          '<div class="panel"><header><h2>Fictional wells</h2>' +
+          '<p class="hint">Generic fictional wells only. No registry identifiers, no coordinates, no geological targets and no recoverable-volume estimates are modelled.</p></header>' +
+          '<div class="grid cards">' +
+          (wells || '<p class="empty">No well records were loaded.</p>') +
+          "</div></div>" +
+          '<div class="panel"><header><h2>Owning areas</h2>' +
+          '<p class="hint">Each record family has exactly one owning area in the fictional 12-area matrix.</p></header>' +
+          '<div class="grid tiles">' +
+          (areas || '<p class="empty">No area records were loaded.</p>') +
+          "</div></div>" +
+          '<div class="panel"><header><h2>Equipment health</h2>' +
+          '<p class="hint">Health is a synthetic observation summary, never a diagnosis, an integrity verdict or a trip decision.</p></header>' +
+          '<div class="scroll"><table><thead><tr><th>Asset</th><th>Type</th><th>Area</th><th>State</th><th>Worst quality</th><th>Condition index</th><th>Open alarms</th></tr></thead><tbody>' +
+          (health || '<tr><td colspan="7" class="empty">No asset records were loaded.</td></tr>') +
+          "</tbody></table></div></div>"
+        );
+      }
+
+      /* ---------------- Production Story ---------------- */
+
+      function renderStory(snapshot) {
+        if (!snapshot) return '<div class="panel"><p class="empty">Snapshot unavailable.</p></div>';
+        const coverage = snapshot.coverage || {};
+        const quality = snapshot.quality || {};
+        const delivery = snapshot.delivery || {};
+        const overview = snapshot.overview || {};
+        const missing = (coverage.missing_families || []).map(words).join(", ");
+
+        function counts(map) {
+          const entries = Object.entries(map || {});
+          if (!entries.length) return '<p class="empty">Nothing recorded.</p>';
+          const total = entries.reduce((sum, entry) => sum + entry[1], 0) || 1;
+          return entries
+            .sort((left, right) => right[1] - left[1])
+            .map(
+              (entry) =>
+                '<div class="card"><h3>' +
+                escapeHtml(words(entry[0])) +
+                '</h3><span class="value">' +
+                escapeHtml(entry[1]) +
+                '</span><div class="bar"><i style="width:' +
+                ((entry[1] / total) * 100).toFixed(1) +
+                '%"></i></div></div>'
+            )
+            .join("");
+        }
+
+        return (
+          '<div class="panel"><header><h2>What this fictional field is doing</h2></header>' +
+          "<p>The simulator produced " +
+          escapeHtml(overview.well_count || 0) +
+          " fictional wells across " +
+          escapeHtml(overview.pad_count || 0) +
+          " pads, feeding a fictional central facility with " +
+          escapeHtml(overview.asset_count || 0) +
+          " assets and " +
+          escapeHtml(overview.device_count || 0) +
+          " edge devices. Sparse workflow evidence — well tests, production summaries, laboratory results, " +
+          "condition monitoring, environmental observations, maintenance and inspection context — is layered " +
+          "on top of a continuous measurement layer.</p>" +
+          '<p class="hint">Fidelity beside estimate: this narrative summarises synthetic evidence and is not an exact ' +
+          "physical location, an exact rate or a calibrated laboratory result.</p></div>" +
+          '<div class="panel"><header><h2>Artifact coverage</h2>' +
+          '<p class="hint">' +
+          (missing
+            ? "Absent families in this run: " + escapeHtml(missing) + ". Absent families are pruned artifacts, not evidence of loss."
+            : "Every record family in the manifest was loaded and checksum verified.") +
+          "</p></header>" +
+          '<div class="grid tiles">' +
+          (coverage.available_families || [])
+            .map(
+              (name) =>
+                '<div class="card"><h3>' + escapeHtml(words(name)) + "</h3><p class=\"meta\">loaded</p></div>"
+            )
+            .join("") +
+          "</div></div>" +
+          '<div class="panel"><header><h2>Quality classes</h2>' +
+          '<p class="hint">Numeric zero with a process-off or de-energised origin is a physical zero. A null value with a ' +
+          "non-good quality class is unavailable communications. They are never the same thing.</p></header>" +
+          '<div class="grid tiles">' +
+          counts(quality.quality_class_counts) +
+          "</div></div>" +
+          '<div class="panel"><header><h2>Delivery behaviour</h2>' +
+          '<p class="hint">Late, stale, duplicate, out-of-order and store-and-forward deliveries are modelled explicitly.</p></header>' +
+          '<div class="grid tiles">' +
+          counts(quality.delivery_state_counts) +
+          "</div>" +
+          '<p class="hint">Peak synthetic latency ' +
+          escapeHtml(num(delivery.max_latency_ms, 1)) +
+          " ms · peak queue depth " +
+          escapeHtml(delivery.max_queue_depth || 0) +
+          " · sequence gaps " +
+          escapeHtml(delivery.sequence_gap_total || 0) +
+          "</p></div>" +
+          '<div class="panel"><header><h2>Freshness</h2></header><div class="grid tiles">' +
+          counts(quality.freshness_state_counts) +
+          "</div></div>"
+        );
+      }
+
+      /* ---------------- Evidence Trail ---------------- */
+
+      function renderEvidence(snapshot) {
+        if (!snapshot) return '<div class="panel"><p class="empty">Snapshot unavailable.</p></div>';
+        const workflows = snapshot.workflows || {};
+        const provenance = snapshot.provenance || {};
+        const policy = snapshot.policy || {};
+
+        function table(title, hint, rows, headers, mapper) {
+          const body = (rows || []).map(mapper).join("");
+          return (
+            '<div class="panel"><header><h2>' +
+            escapeHtml(title) +
+            '</h2><p class="hint">' +
+            escapeHtml(hint) +
+            "</p></header>" +
+            '<div class="scroll"><table><thead><tr>' +
+            headers.map((item) => "<th>" + escapeHtml(item) + "</th>").join("") +
+            "</tr></thead><tbody>" +
+            (body ||
+              '<tr><td colspan="' + headers.length + '" class="empty">Not present in this run.</td></tr>') +
+            "</tbody></table></div></div>"
+          );
+        }
+
+        const events = table(
+          "Events",
+          "Synthetic observations with an interpretation field. An event is evidence, never an instruction.",
+          workflows.events,
+          ["Time", "Type", "Asset", "Severity", "Interpretation", "Quality"],
+          (item) =>
+            "<tr><td>" +
+            escapeHtml(item.event_time_utc) +
+            "</td><td>" +
+            escapeHtml(words(item.event_type)) +
+            "</td><td>" +
+            escapeHtml(item.asset_id || "—") +
+            "</td><td>" +
+            healthPill(item.severity === "attention" ? "attention" : "unknown") +
+            "</td><td>" +
+            escapeHtml(words(item.interpretation)) +
+            "</td><td>" +
+            escapeHtml(words(item.quality_class)) +
+            "</td></tr>"
+        );
+
+        const alarms = table(
+          "Alarm journal",
+          "A synthetic journal of raised and cleared entries. No alarm limits, trip points or safety logic are modelled.",
+          workflows.alarm_journal,
+          ["Time", "Asset", "State", "Priority class", "Message"],
+          (item) =>
+            "<tr><td>" +
+            escapeHtml(item.event_time_utc) +
+            "</td><td>" +
+            escapeHtml(item.asset_id || "—") +
+            "</td><td>" +
+            escapeHtml(words(item.alarm_state)) +
+            "</td><td>" +
+            escapeHtml(words(item.priority_class)) +
+            "</td><td>" +
+            escapeHtml(item.message || "") +
+            "</td></tr>"
+        );
+
+        const tests = table(
+          "Well tests",
+          "Synthetic well test context with an explicit uncertainty index. Not a fiscal allocation.",
+          workflows.well_tests,
+          ["Time", "Well", "Method", "Oil m3/d", "Gas ksm3/d", "Water m3/d", "Uncertainty"],
+          (item) =>
+            "<tr><td>" +
+            escapeHtml(item.event_time_utc) +
+            "</td><td>" +
+            escapeHtml(item.well_id || "—") +
+            "</td><td>" +
+            escapeHtml(words(item.test_method_class)) +
+            "</td><td>" +
+            escapeHtml(num(item.oil_rate_m3d, 2)) +
+            "</td><td>" +
+            escapeHtml(num(item.gas_rate_ksm3d, 3)) +
+            "</td><td>" +
+            escapeHtml(num(item.water_rate_m3d, 2)) +
+            "</td><td>" +
+            escapeHtml(num(item.rate_uncertainty_index, 3)) +
+            "</td></tr>"
+        );
+
+        const condition = table(
+          "Condition monitoring",
+          "Synthetic health, vibration, thermal and restriction indices. Never a remaining-life claim.",
+          workflows.condition_monitoring,
+          ["Time", "Asset", "Health", "Vibration", "Thermal", "Diagnosis claim"],
+          (item) =>
+            "<tr><td>" +
+            escapeHtml(item.event_time_utc) +
+            "</td><td>" +
+            escapeHtml(item.asset_id || "—") +
+            "</td><td>" +
+            escapeHtml(num(item.health_index, 3)) +
+            "</td><td>" +
+            escapeHtml(num(item.vibration_index, 3)) +
+            "</td><td>" +
+            escapeHtml(num(item.thermal_index, 3)) +
+            "</td><td>" +
+            escapeHtml(words(item.diagnosis_claim)) +
+            "</td></tr>"
+        );
+
+        const environmental = table(
+          "Environmental observations",
+          "Qualitative synthetic detection context only. No leak rate, no quantification and no source attribution.",
+          workflows.environmental_observations,
+          ["Time", "Class", "Level", "Detector availability", "Quantification", "Attribution"],
+          (item) =>
+            "<tr><td>" +
+            escapeHtml(item.event_time_utc) +
+            "</td><td>" +
+            escapeHtml(words(item.observation_class)) +
+            "</td><td>" +
+            escapeHtml(words(item.qualitative_level)) +
+            "</td><td>" +
+            escapeHtml(num(item.detector_availability_index, 3)) +
+            "</td><td>" +
+            escapeHtml(words(item.quantified_release_claim)) +
+            "</td><td>" +
+            escapeHtml(words(item.source_attribution)) +
+            "</td></tr>"
+        );
+
+        const runs = (state.runs || [])
+          .map(
+            (run) =>
+              "<tr><td>" +
+              escapeHtml(run.run_id) +
+              "</td><td>" +
+              escapeHtml(words(run.scenario)) +
+              "</td><td>" +
+              escapeHtml((run.simulation || {}).start_utc || "—") +
+              "</td><td>" +
+              escapeHtml(Object.keys(run.record_counts || {}).length) +
+              "</td></tr>"
+          )
+          .join("");
+
+        const files = (provenance.files || [])
+          .map(
+            (file) =>
+              "<tr><td>" +
+              escapeHtml(file.path) +
+              "</td><td>" +
+              escapeHtml(words(file.record_type)) +
+              "</td><td>" +
+              escapeHtml(file.record_count) +
+              "</td><td>" +
+              (file.loaded ? "verified" : "pruned") +
+              "</td></tr>"
+          )
+          .join("");
+
+        return (
+          '<div class="panel"><header><h2>Publication policy</h2></header>' +
+          "<table><tbody>" +
+          "<tr><th>Synthetic</th><td>" + escapeHtml(String(policy.is_synthetic)) + "</td></tr>" +
+          "<tr><th>Operational use</th><td>" + escapeHtml(words(policy.operational_use)) + "</td></tr>" +
+          "<tr><th>Private truth publication</th><td>" + escapeHtml(words(policy.private_truth_publication)) + "</td></tr>" +
+          "<tr><th>Custody transfer use</th><td>" + escapeHtml(words(policy.custody_transfer_use)) + "</td></tr>" +
+          "<tr><th>Allocation claim</th><td>" + escapeHtml(words(policy.allocation_claim)) + "</td></tr>" +
+          "<tr><th>Release quantification</th><td>" + escapeHtml(words(policy.release_quantification_claim)) + "</td></tr>" +
+          "<tr><th>Fidelity beside estimate</th><td>bounded synthetic estimate — not an exact physical location and not a calibrated measurement</td></tr>" +
+          "<tr><th>Standards relationship</th><td>" + escapeHtml(words(policy.standards_relationship)) + "</td></tr>" +
+          "</tbody></table></div>" +
+          events +
+          alarms +
+          tests +
+          condition +
+          environmental +
+          '<div class="panel"><header><h2>Published runs</h2>' +
+          '<p class="hint">Only the sparse monitoring evidence layer is published. Private ground truth is never published.</p></header>' +
+          '<div class="scroll"><table><thead><tr><th>Run</th><th>Scenario</th><th>Start</th><th>Public families</th></tr></thead><tbody>' +
+          (runs || '<tr><td colspan="4" class="empty">No published runs are visible.</td></tr>') +
+          "</tbody></table></div></div>" +
+          '<div class="panel"><header><h2>Local artifacts</h2>' +
+          '<p class="hint">Checksums are verified before any artifact is rendered. The private ground truth family is never opened.</p></header>' +
+          '<div class="scroll"><table><thead><tr><th>Path</th><th>Record type</th><th>Records</th><th>State</th></tr></thead><tbody>' +
+          (files || '<tr><td colspan="4" class="empty">No manifest entries.</td></tr>') +
+          "</tbody></table></div></div>"
+        );
+      }
+
+      /* ---------------- Live wellpad console ---------------- */
+
+      function renderLive() {
+        const console_ = document.getElementById("live-console");
+        const live = state.live;
+        const control = state.control || {};
+        const scenarios =
+          (live && live.scenarios) || state.scenarios || [];
+        const selected = state.pendingScenario || (live && live.scenario ? live.scenario.id : "");
+        const options = scenarios
+          .map(
+            (item) =>
+              '<option value="' +
+              escapeHtml(item.id) +
+              '"' +
+              (item.id === selected ? " selected" : "") +
+              ">" +
+              escapeHtml(words(item.id)) +
+              "</option>"
+          )
+          .join("");
+
+        if (!live) {
+          console_.innerHTML =
+            '<div class="live-head"><h2>Live wellpad console</h2></div>' +
+            '<p class="live-note">The live feed is disabled or unavailable on this deployment.</p>';
+          return;
+        }
+
+        const playback = live.playback || {};
+        const summary = live.summary || {};
+        const tiles = (live.assets || [])
+          .map(
+            (asset) =>
+              '<button type="button" class="live-tile" data-asset="' +
+              escapeHtml(asset.asset_id) +
+              '"><strong>' +
+              escapeHtml(asset.display_name || asset.asset_id) +
+              "</strong><span>" +
+              escapeHtml(words(asset.asset_type)) +
+              " · " +
+              escapeHtml(asset.area_id) +
+              "</span> " +
+              healthPill(asset.health) +
+              "</button>"
+          )
+          .join("");
+
+        const events = (live.events || [])
+          .slice(0, 6)
+          .map(
+            (event) =>
+              "<li>" +
+              escapeHtml(event.event_time_utc) +
+              " · " +
+              escapeHtml(words(event.event_type)) +
+              " · " +
+              escapeHtml(words(event.severity)) +
+              "</li>"
+          )
+          .join("");
+
+        console_.innerHTML =
+          '<div class="live-head"><h2>Live wellpad console</h2>' +
+          '<span class="pill">' +
+          escapeHtml(summary.nominal || 0) +
+          " nominal</span>" +
+          '<span class="pill degraded">' +
+          escapeHtml(summary.degraded || 0) +
+          " degraded</span>" +
+          '<span class="pill impaired">' +
+          escapeHtml(summary.impaired || 0) +
+          " impaired</span>" +
+          '<select id="live-scenario" aria-label="Live scenario">' +
+          options +
+          "</select>" +
+          '<button type="button" class="primary" id="live-apply"' +
+          (state.busy ? " disabled" : "") +
+          ">Apply to live feed</button>" +
+          '<button type="button" id="live-start"' +
+          (control.enabled ? "" : " disabled") +
+          ">Start simulation</button></div>" +
+          '<div class="live-grid">' +
+          (tiles || '<p class="empty">No live assets.</p>') +
+          "</div>" +
+          '<ul class="live-events">' +
+          (events || "<li>No synthetic events yet in this cycle.</li>") +
+          "</ul>" +
+          '<p class="live-note">Playback of a ' +
+          escapeHtml(Math.round((playback.horizon_seconds || 0) / 60)) +
+          " minute synthetic horizon sampled every " +
+          escapeHtml(playback.interval_seconds || 0) +
+          " seconds. The horizon repeats, so values recycle each cycle. Fidelity beside estimate — this is not " +
+          "an exact physical location, an exact rate or a calibrated measurement.</p>" +
+          '<p class="live-note">Published record types: ' +
+          escapeHtml((control.record_types || []).map(words).join(" · ")) +
+          ". Private ground truth is never published.</p>";
+
+        const select = document.getElementById("live-scenario");
+        if (select) {
+          select.addEventListener("change", (event) => {
+            state.pendingScenario = event.target.value;
+          });
+        }
+        const apply = document.getElementById("live-apply");
+        if (apply) apply.addEventListener("click", applyScenario);
+        const start = document.getElementById("live-start");
+        if (start) start.addEventListener("click", startSimulation);
+        console_.querySelectorAll(".live-tile").forEach((tile) => {
+          tile.addEventListener("click", () => openAsset(tile.dataset.asset));
+        });
+      }
+
+      async function applyScenario() {
+        const scenario = state.pendingScenario || (state.live && state.live.scenario.id);
+        if (!scenario) return;
+        state.busy = true;
+        renderLive();
+        try {
+          await request("/api/upstream/live/scenario", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Upstream-Control": "live-scenario",
+            },
+            body: JSON.stringify({ scenario: scenario }),
+          });
+          showError(null);
+        } catch (error) {
+          showError(error);
+        } finally {
+          state.busy = false;
+          await refreshLive();
+        }
+      }
+
+      async function startSimulation() {
+        const scenario = state.pendingScenario || (state.live && state.live.scenario.id);
+        if (!scenario) return;
+        try {
+          await request("/api/upstream/control/start", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Upstream-Control": "simulation-start",
+            },
+            body: JSON.stringify({ scenario: scenario }),
+          });
+          showError(null);
+        } catch (error) {
+          showError(error);
+        }
+      }
+
+      async function openAsset(assetId) {
+        const dialog = document.getElementById("live-dialog");
+        try {
+          const detail = await request("/api/upstream/live/assets/" + encodeURIComponent(assetId));
+          const asset = detail.asset || {};
+          const rows = (asset.measurements || [])
+            .map(
+              (item) =>
+                '<div class="card"><h3>' +
+                escapeHtml(words(item.measurement)) +
+                '</h3><span class="value">' +
+                escapeHtml(item.value === null ? "—" : num(item.value, 3)) +
+                ' <span class="unit">' +
+                escapeHtml(item.unit || "") +
+                "</span></span>" +
+                sparkline(item.sparkline) +
+                '<p class="meta">' +
+                healthPill(item.health) +
+                " " +
+                escapeHtml(words(item.health_reason)) +
+                " · delivery " +
+                escapeHtml(words(item.delivery_state)) +
+                "</p></div>"
+            )
+            .join("");
+          dialog.innerHTML =
+            "<h2>" +
+            escapeHtml(asset.display_name || asset.asset_id) +
+            "</h2>" +
+            '<p class="hint">' +
+            escapeHtml(words(asset.asset_type)) +
+            " · area " +
+            escapeHtml(asset.area_id) +
+            " · " +
+            healthPill(asset.health) +
+            "</p>" +
+            '<div class="grid tiles">' +
+            (rows || '<p class="empty">No live measurements.</p>') +
+            "</div>" +
+            '<p class="live-note">Fidelity beside estimate — a bounded synthetic estimate, not an exact physical ' +
+            "location and not a calibrated measurement. Private ground truth is never published.</p>" +
+            '<div class="live-controls"><button type="button" id="live-close">Close</button></div>';
+          dialog.showModal();
+          const close = document.getElementById("live-close");
+          if (close) close.addEventListener("click", () => dialog.close());
+          showError(null);
+        } catch (error) {
+          showError(error);
+        }
+      }
+
+      /* ---------------- Shell ---------------- */
+
+      function renderViewSwitch() {
+        const nav = document.getElementById("view-switch");
+        nav.innerHTML = Object.entries(VIEWS)
+          .map(
+            (entry) =>
+              '<button type="button" data-view="' +
+              escapeHtml(entry[0]) +
+              '" aria-pressed="' +
+              (state.view === entry[0] ? "true" : "false") +
+              '" title="' +
+              escapeHtml(entry[1].description) +
+              '">' +
+              escapeHtml(entry[1].label) +
+              "</button>"
+          )
+          .join("");
+        nav.querySelectorAll("button").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.view = button.dataset.view;
+            const url = new URL(window.location.href);
+            url.searchParams.set("view", state.view);
+            window.history.replaceState({}, "", url);
+            renderViewSwitch();
+            renderBody();
+          });
+        });
+      }
+
+      function renderBody() {
+        const body = document.getElementById("view-body");
+        if (state.view === "story") body.innerHTML = renderStory(state.snapshot);
+        else if (state.view === "evidence") body.innerHTML = renderEvidence(state.snapshot);
+        else body.innerHTML = renderCommand(state.snapshot);
+      }
+
+      async function refreshSnapshot() {
+        try {
+          state.snapshot = await request("/api/upstream");
+          showError(null);
+        } catch (error) {
+          state.snapshot = null;
+          showError(error);
+        }
+        renderBody();
+      }
+
+      async function refreshRuns() {
+        try {
+          const payload = await request("/api/upstream/runs");
+          state.runs = payload.runs || [];
+        } catch (error) {
+          state.runs = [];
+        }
+      }
+
+      async function refreshControl() {
+        try {
+          state.control = await request("/api/upstream/control/status");
+        } catch (error) {
+          state.control = { enabled: false, record_types: [] };
+        }
+      }
+
+      async function refreshScenarios() {
+        try {
+          const payload = await request("/api/upstream/scenarios");
+          state.scenarios = payload.scenarios || [];
+        } catch (error) {
+          state.scenarios = [];
+        }
+      }
+
+      async function refreshLive() {
+        try {
+          state.live = await request("/api/upstream/live");
+        } catch (error) {
+          state.live = null;
+        }
+        renderLive();
+      }
+
+      document.getElementById("theme-toggle").addEventListener("click", () => {
+        const next =
+          document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+      });
+      document.getElementById("reload-data").addEventListener("click", () => {
+        refreshSnapshot();
+        refreshRuns().then(renderBody);
+      });
+
+      (async () => {
+        renderViewSwitch();
+        await refreshSnapshot();
+        await refreshRuns();
+        await refreshControl();
+        await refreshScenarios();
+        await refreshLive();
+        renderBody();
+        window.setInterval(refreshLive, LIVE_POLL_MS);
+      })();
+    </script>
+  </body>
+</html>

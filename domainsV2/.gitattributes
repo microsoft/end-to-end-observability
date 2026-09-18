@@ -1,0 +1,5 @@
+*.ps1 text eol=lf
+*.py text eol=lf
+# Preserve all bytes covered by the manifests, overriding text rules above.
+support/** -text
+energy_domains_v2/replay_data/** -text

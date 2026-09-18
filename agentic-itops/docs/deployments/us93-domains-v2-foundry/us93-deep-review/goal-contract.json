@@ -1,0 +1,35 @@
+{
+  "mode": "research-and-plan",
+  "phase": "complete",
+  "completedAt": "2026-09-14T20:25:03-04:00",
+  "verdict": "APPROVE for research/plan completeness: independent conditional review plus reviewer-authorized parent correction closure. Deployment NOT ready.",
+  "tier": "T2",
+  "startedAt": "2026-09-14T19:58:53-04:00",
+  "deadline": "2026-09-14T20:58:53-04:00",
+  "goal": "Deep-review every file/folder in agentic-itops and recreate a deployment plan covering all nine defined agents, supporting deterministic skills, declared integrations and Domains V2 consumer boundary.",
+  "workItem": {"id": 93, "revision": 5, "title": "Deploy Foundry agents", "state": "Active", "acceptanceCriteria": "Absent; proposed criteria must be labeled"},
+  "root": "C:\\Users\\shumwilkin\\end-to-end-observability\\agentic-itops",
+  "commit": "924b637885338e5ba09c76b5e3444a87cdb5defd",
+  "deliverables": ["Per-file coverage/hash ledger", "Evidence-backed findings with file/line references", "All-agent/tool/host/runtime parity matrix", "Recreated deployment plan with dependency graph, costs, approval gates, validation and rollback", "Verification verdict and retrospective"],
+  "successCriteria": [
+    "Every on-disk file is inventoried, assigned and reviewed; any exclusions or generated-only checks are explicit.",
+    "All nine prompt agents and code skills are traced from definitions/generators through deployment and runtime/test coverage.",
+    "Documentation claims are reconciled with actual tools, hosting, SDKs, data, tests and operational behavior.",
+    "Objective offline checks and contract probes distinguish implemented/tested from proposed/live-unverified behavior.",
+    "Plan preserves complete agent roles and identifies incompatible/unimplemented bindings without silently simplifying scope.",
+    "Plan includes Domains V2 observation-only integration, safe identity/network boundaries, bounded operation, quality gates and rollback.",
+    "Integrated verification approves research completeness or explicitly identifies unresolved review coverage."
+  ],
+  "nonGoals": ["Repository implementation", "Deployment", "Model calls", "Knowledge uploads", "Dependency/extension installation", "Azure changes", "Producer controls", "Work-item writes", "Commits"],
+  "artifacts": "Session files only",
+  "approvalPoints": ["Implementation", "All cloud/data/permission/network/cost changes", "External publication or work-item updates", "Destructive cleanup"],
+  "budget": {"maxMinutes": 60, "maxParentToolCalls": 100, "maxDelegates": 4, "maxToolCallsPerDelegate": 25, "maxCorrectionCycles": 3},
+  "reviewOwnership": {
+    "agents-docs": ["agents", "docs", "README.md", "scripts\\emit_agent_manifests.py"],
+    "data-tests": ["data", "evaluations", "tests", "scripts\\generate_sample_data.py"],
+    "parent": ["agentic_itops", "tools", "scripts\\deploy_to_foundry.py", "scripts\\provision_agents.py", "scripts\\emit_openapi.py", ".env.example", ".gitignore", "pytest.ini", "requirements.txt", "requirements-live.txt"]
+  },
+  "evidencePolicy": "Fresh local source and direct offline results; public official sources for current API feasibility; earlier Azure snapshots explicitly historical, not new runtime authorization proof.",
+  "residualRiskPolicy": "Unimplemented deployment capabilities may remain only as explicit pre-deployment gates. No security, cloud or model-quality acceptance is inferred. User owns future consequential approvals.",
+  "toolingBoundary": "Foundry auto-setup is not run because it may install extensions; no Foundry execution workflow/sub-skill is entered during read-only source review."
+}

@@ -1,0 +1,3 @@
+# Deployment-only worker composition: bounded Function host plus real Search retrieval.
+-r requirements-functions.txt
+-r requirements-search.txt

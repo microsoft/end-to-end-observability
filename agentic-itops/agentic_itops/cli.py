@@ -25,7 +25,7 @@ from .normalizer import (
     normalization_report,
 )
 from .orchestrator import FoundryReasoner, StubReasoner, run_demo
-from .safety_gate import ChangeRequest, ChangeSafetyGate
+from .safety_gate import ChangeRequest, ChangeSafetyGate, load_policy
 from .tools import search_knowledge
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -104,9 +104,7 @@ def cmd_hygiene(args: argparse.Namespace) -> int:
 
 def cmd_gate(args: argparse.Namespace) -> int:
     gate = ChangeSafetyGate(
-        policy=None if not args.policy else __import__("yaml").safe_load(
-            Path(args.policy).read_text(encoding="utf-8")
-        )
+        policy=load_policy(args.policy) if args.policy else None
     )
     request = ChangeRequest(
         action=args.action,
@@ -145,10 +143,14 @@ def cmd_search(args: argparse.Namespace) -> int:
 
 
 def cmd_demo(args: argparse.Namespace) -> int:
+    if args.foundry and args.at not in (None, ""):
+        raise ValueError("--at is offline-only; Foundry gate evaluation uses the current UTC time")
     payloads = _load(args.input)
     reasoner = FoundryReasoner() if args.foundry else StubReasoner()
     results = run_demo(
-        payloads, reasoner=reasoner, limit=args.limit, evaluate_at=_parse_at(args.at)
+        payloads, reasoner=reasoner, limit=args.limit,
+        evaluate_at=_parse_at(args.at if args.at is not None else
+                              ("" if args.foundry else DEFAULT_DEMO_AT)),
     )
 
     if args.json:
@@ -268,8 +270,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_demo.add_argument("--foundry", action="store_true", help="use Foundry agents instead of stubs")
     p_demo.add_argument(
         "--at",
-        default=DEFAULT_DEMO_AT,
-        help="pin gate evaluation time (ISO-8601); pass '' to use wall clock",
+        default=None,
+        help="pin gate time (ISO-8601); offline default uses scenario time, Foundry uses wall clock",
     )
     p_demo.add_argument("--json", action="store_true")
     p_demo.set_defaults(func=cmd_demo)
@@ -280,7 +282,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except (OSError, ValueError, RuntimeError) as exc:
+        parser.exit(2, f"error: {exc}\n")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,130 @@
+{
+  "files": [
+    {
+      "path": "agents\\00-ops-orchestrator\\agent.yaml",
+      "review": "full-content",
+      "summary": "Coordinator manifest; four connected specialists, two OpenAPI tools, generic UAMI roles, shallow output schema; not emitted by the generator."
+    },
+    {
+      "path": "agents\\00-ops-orchestrator\\instructions.md",
+      "review": "full-content",
+      "summary": "Memory-first incident sequence, grounded proposals, verbatim gate decision, comms last; no integration of triage, postmortem, hygiene, or industry."
+    },
+    {
+      "path": "agents\\02-triage-dedup\\agent.yaml",
+      "review": "full-content",
+      "summary": "Resource Graph severity/suppression agent; clustering description conflicts with instructions; protected suppression semantics not enforced by schema."
+    },
+    {
+      "path": "agents\\02-triage-dedup\\instructions.md",
+      "review": "full-content",
+      "summary": "Already-deduplicated signals, business-context severity, protected-resource suppression restrictions; safety versus dev precedence needs specification."
+    },
+    {
+      "path": "agents\\03-rca-investigator\\agent.yaml",
+      "review": "full-content",
+      "summary": "Three OpenAPI tools plus managed-identity remote MCP declaration; hypotheses-only required output lacks nested evidence constraints."
+    },
+    {
+      "path": "agents\\03-rca-investigator\\instructions.md",
+      "review": "full-content",
+      "summary": "Changes before telemetry and resource context; ranked confidence and citations; requires explicit adaptation for observation-only evidence."
+    },
+    {
+      "path": "agents\\04-runbook-memory\\agent.yaml",
+      "review": "full-content",
+      "summary": "Hybrid Azure AI Search top-three binding and reader identity; structured retrieval fields are not enforced in output schema."
+    },
+    {
+      "path": "agents\\04-runbook-memory\\instructions.md",
+      "review": "full-content",
+      "summary": "Query construction, documented actions, honest no-match, verbatim prohibitions, distinct runbook/postmortem item contracts."
+    },
+    {
+      "path": "agents\\05-remediation-planner\\agent.yaml",
+      "review": "full-content",
+      "summary": "Search and Resource Graph tools; action/target/classification/rollback required, but blast radius and other mandatory instruction fields optional."
+    },
+    {
+      "path": "agents\\05-remediation-planner\\instructions.md",
+      "review": "full-content",
+      "summary": "Single grounded proposal, annotation fallback, mitigation/fix distinction, no authorization; target and synthetic-use safeguards require host enforcement."
+    },
+    {
+      "path": "agents\\07-incident-comms\\agent.yaml",
+      "review": "full-content",
+      "summary": "No-tool drafting agent with unnecessarily uniform reader-role declaration; customer output and redaction list optional."
+    },
+    {
+      "path": "agents\\07-incident-comms\\instructions.md",
+      "review": "full-content",
+      "summary": "Audience-specific JSON drafts, confirmed customer impact, redaction, no restoration promises or unproven execution claims."
+    },
+    {
+      "path": "agents\\08-postmortem-drafter\\agent.yaml",
+      "review": "full-content",
+      "summary": "Promises write-back but only Search and change-history tools with reader identity; incomplete required-section schema."
+    },
+    {
+      "path": "agents\\08-postmortem-drafter\\instructions.md",
+      "review": "full-content",
+      "summary": "Six-section blameless evidence-grounded postmortem, recurrence and delay costs; publication and synthetic lifecycle contracts missing."
+    },
+    {
+      "path": "agents\\09-alert-hygiene\\agent.yaml",
+      "review": "full-content",
+      "summary": "OpenAPI scoring tool plus prompt explanation; recommendations untyped and percentage unbounded."
+    },
+    {
+      "path": "agents\\09-alert-hygiene\\instructions.md",
+      "review": "full-content",
+      "summary": "Exported alert-history interpretation with evidence and protected assets; cannot infer engineer actions or use observation counts as firings."
+    },
+    {
+      "path": "agents\\10-industry-signal-pack\\agent.yaml",
+      "review": "full-content",
+      "summary": "Search-backed six-industry parameter defaulting to energy; optional safety/prohibition outputs and unconstrained output industry."
+    },
+    {
+      "path": "agents\\10-industry-signal-pack\\instructions.md",
+      "review": "full-content",
+      "summary": "Sector criticality, frameworks and automation exclusions; advisory context requires deterministic policy binding and cautious mechanical diagnosis."
+    },
+    {
+      "path": "docs\\architecture.md",
+      "review": "full-content",
+      "summary": "Portfolio, canonical envelope, deterministic code boundaries, correlation, tool patterns and offline/live evidence limits; lifecycle integration not established."
+    },
+    {
+      "path": "docs\\deploying-to-azure.md",
+      "review": "full-content",
+      "summary": "Five-agent deployment, file-search substitution, local code skills, Responses API and smoke-test procedure; not a full-nine target plan."
+    },
+    {
+      "path": "docs\\governance.md",
+      "review": "full-content",
+      "summary": "Two governance postures, deny-biased policy, identities and known gaps; universal prompt-clause and generated-manifest claims do not match assigned sources."
+    },
+    {
+      "path": "docs\\hackathon-guide.md",
+      "review": "full-content",
+      "summary": "Reduced two-day scope with explicit agent deferrals, Search/Functions topology and stale no-live-deployment claim; unsuitable for all-nine acceptance."
+    },
+    {
+      "path": "docs\\walkthrough.md",
+      "review": "full-content",
+      "summary": "Offline demo expectations, correlation, memory, gate and hygiene; RCA ordering, test counts, synthetic narrative and posture need reconciliation."
+    },
+    {
+      "path": "README.md",
+      "review": "full-content",
+      "summary": "Nine-prompt/eleven-component portfolio, code versus prompt boundary and honest offline limitations; live-configuration claims do not cover observation semantics."
+    },
+    {
+      "path": "scripts\\emit_agent_manifests.py",
+      "review": "full-content",
+      "summary": "Fully read without execution; unconditionally regenerates eight manifests from duplicate tool/schema constants and uniform identity, excluding orchestrator and instructions."
+    }
+  ],
+  "unreviewed": []
+}

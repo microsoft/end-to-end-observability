@@ -1,0 +1,930 @@
+{
+  "fileCount": 102,
+  "reviewedCount": 102,
+  "unreviewed": [],
+  "sourceLines": 10638,
+  "reviewMethods": {
+    "full-content": 101,
+    "structured-full-scan": 1
+  },
+  "files": [
+    {
+      "path": ".env.example",
+      "bytes": 1477,
+      "lines": 35,
+      "sha256": "03ea3734f49a41575c4dbdf1316cee70b75f66bfab17947f63667ca1d45e1c27",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Configuration contract; sample values are not loaded automatically, five legacy IDs, Function/MCP placeholders."
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 241,
+      "lines": 12,
+      "sha256": "2926b2eb71e5dffb483a4ffaf97a58fb46c4c68602c4dbe95f7792a046b57040",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Excludes environment, Python cache and single Foundry deployment state; no ignored files present in inventory."
+    },
+    {
+      "path": "README.md",
+      "bytes": 9757,
+      "lines": 227,
+      "sha256": "32ed9f50168eec917a555afdf7266b2238445cdf478167371f8f8b7386722814",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Nine-prompt/eleven-component portfolio, code versus prompt boundary and honest offline limitations; live-configuration claims do not cover observation semantics."
+    },
+    {
+      "path": "agentic_itops\\__init__.py",
+      "bytes": 1194,
+      "lines": 49,
+      "sha256": "e9dcb620a1de0fdba404d8d698d9d24637736a977e4a1c57388a438bc5171cd0",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Public deterministic skill exports/version; no deployment host."
+    },
+    {
+      "path": "agentic_itops\\__main__.py",
+      "bytes": 181,
+      "lines": 10,
+      "sha256": "8821c5a9d365a856d354b4c6d6b2658b63c2f83c1baaa460c41e9ae04b15ea60",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "CLI entrypoint; no service loop."
+    },
+    {
+      "path": "agentic_itops\\adapters\\__init__.py",
+      "bytes": 849,
+      "lines": 29,
+      "sha256": "86b9d5b163a7f85e09ac9eb6740673cda63091b8812bff410b84ba9b970f46cb",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Registers five alert-source adapters; no observation/finding source."
+    },
+    {
+      "path": "agentic_itops\\adapters\\azure_monitor.py",
+      "bytes": 7454,
+      "lines": 198,
+      "sha256": "ebeefaaf3d03098a85b3f79b85afbd7f9b32869475aac8ab29ff0900146326a0",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Three essentials layouts; list traversal drops Common Alert Schema metric value/threshold."
+    },
+    {
+      "path": "agentic_itops\\adapters\\base.py",
+      "bytes": 2064,
+      "lines": 67,
+      "sha256": "0e58bd71b82d3d5ba4542c642ac3f8c8dc34b9b675abdd5cad7acb3811070a84",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Dotted getter cannot traverse arrays; registry suppresses matcher errors."
+    },
+    {
+      "path": "agentic_itops\\adapters\\datadog.py",
+      "bytes": 4337,
+      "lines": 114,
+      "sha256": "71c80439b5212c7fef880f43cb7856ca3f4a7f2fb891098875086057d12851a0",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "User-templated webhook mapping with tags; timestamps remain strings, unknown states explicit."
+    },
+    {
+      "path": "agentic_itops\\adapters\\prometheus.py",
+      "bytes": 4244,
+      "lines": 109,
+      "sha256": "4dc5bfc5f27042a368ca27c6a3a5fd219626e19d8aeb6dfdb9c75099b0ed14fd",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Single-alert mapping; raw batches lose all but first outside JSON file expander."
+    },
+    {
+      "path": "agentic_itops\\adapters\\servicenow.py",
+      "bytes": 3023,
+      "lines": 80,
+      "sha256": "c19b77e955ea1e0040d064789a09498ab12dd2ba62a22d4990ff67daadd6b08d",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Ticket mapping with metric-free correlation; opened_at is not resolution event time."
+    },
+    {
+      "path": "agentic_itops\\adapters\\splunk.py",
+      "bytes": 3243,
+      "lines": 88,
+      "sha256": "a9ef585ce67e8bc7b1ff867be68a554c7378989b6a0b35901b5744693fa5c13d",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Saved-search mapping always fired; raw/time strings need ingestion contracts."
+    },
+    {
+      "path": "agentic_itops\\classify.py",
+      "bytes": 6378,
+      "lines": 185,
+      "sha256": "adc830922c6dbc405094e10f848ea2953932a69d6c8df992d75d204d8fd71b9c",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Heuristic severity/symptom/environment mappings; not synthetic domain detection."
+    },
+    {
+      "path": "agentic_itops\\cli.py",
+      "bytes": 11792,
+      "lines": 287,
+      "sha256": "a2c8b7d88ab671ca5317a6b0fe79a9aff81d94321ee53262f4daa797de647119",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "File-based CLI, no all-agent runner; empty policy fallback, hidden failures and historical live-demo time."
+    },
+    {
+      "path": "agentic_itops\\envelope.py",
+      "bytes": 9034,
+      "lines": 261,
+      "sha256": "a120c36e432190f853c4b767d7cfaecf27b7f4565a9530061da46e075ac6640b",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Incident/resource/metric schema, broad metric aliases and delimiter-based fingerprints; no typed Domains V2 run/series context."
+    },
+    {
+      "path": "agentic_itops\\hygiene.py",
+      "bytes": 8902,
+      "lines": 220,
+      "sha256": "559b451bac37efd7949af7aba1ab7cf91dd13816b358777b4b964bd4f1a1273e",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Noise arithmetic; lifecycle row/firing conflation, empty volume and unsupported intervention claims."
+    },
+    {
+      "path": "agentic_itops\\normalizer.py",
+      "bytes": 10277,
+      "lines": 266,
+      "sha256": "d6955b1f653c26e974e6609c80a9af0b3cb57546ba2c61950ab469f9c0c0631a",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Adapter dispatch, two-pass correlation and IO; ambiguous attachment and string-time lifecycle reproduced."
+    },
+    {
+      "path": "agentic_itops\\orchestrator.py",
+      "bytes": 18616,
+      "lines": 454,
+      "sha256": "4f10482a67e53158da8b05f3329b5d124ece0dfd6d9c786da536464d4bcb4f6c",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Three reasoning calls, local evidence path, gate proposal mismatch, tolerant outputs/truncation and no execution."
+    },
+    {
+      "path": "agentic_itops\\policies\\default.yaml",
+      "bytes": 3905,
+      "lines": 117,
+      "sha256": "bf65379e332730ab7a186ebb0cba500c2d702377fb1781a44dc8bb238d8f08b8",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Sample read_only false; fictional allow patterns and illustrative change freezes, not deployable production policy."
+    },
+    {
+      "path": "agentic_itops\\safety_gate.py",
+      "bytes": 15394,
+      "lines": 380,
+      "sha256": "a89a72cae2a3bde109e11b91926b80b1f3c372aa60059208d9a9a3900947bcd8",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Deterministic gate; incomplete policy scope validation, dry-run/time semantics and ephemeral audit record."
+    },
+    {
+      "path": "agentic_itops\\tools\\__init__.py",
+      "bytes": 887,
+      "lines": 28,
+      "sha256": "92f41798dd9228e6bb5252cb9bf44ab51622cf46f6a25ac398655345b945c8b5",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Four tools exported; documented stub/live parity is incomplete."
+    },
+    {
+      "path": "agentic_itops\\tools\\change_history.py",
+      "bytes": 3789,
+      "lines": 101,
+      "sha256": "30d6520eab269a52e819c018bc3190ccb8b4a940b3eb1e59333d9835cbe5cff0",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Stub service/time behavior differs from live; only Activity Log live, service ignored, sorting absent."
+    },
+    {
+      "path": "agentic_itops\\tools\\log_analytics.py",
+      "bytes": 4421,
+      "lines": 116,
+      "sha256": "f63a5b0aa4448c4d16f811c2063ca180ce5ef255ba0c6e4d560085fd10a73ba7",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Fixture intent dispatcher; live timespan/status/row-bound issues; no approved observation reader."
+    },
+    {
+      "path": "agentic_itops\\tools\\resource_graph.py",
+      "bytes": 2623,
+      "lines": 72,
+      "sha256": "018ab96838f1f77c1dbc6ea3e311ee67abc1b3bbf936b820f263aa0b42c5e920",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Stub context richer than live metadata projection; no subscription limit or bare-name support in live path."
+    },
+    {
+      "path": "agentic_itops\\tools\\runbook_index.py",
+      "bytes": 9675,
+      "lines": 273,
+      "sha256": "e0f055bba6f4176f14e20668e025e4c0e13ebf11495e1460bbec181333ed9926",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "BM25 with documented_actions; live key-only lexical search drops actions and min-score behavior."
+    },
+    {
+      "path": "agents\\00-ops-orchestrator\\agent.yaml",
+      "bytes": 1478,
+      "lines": 49,
+      "sha256": "3ab1f6440a56211eaa650cca184407e3897d5420b6cb96c32229a6174e0ac735",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Coordinator manifest; four connected specialists, two OpenAPI tools, generic UAMI roles, shallow output schema; not emitted by the generator."
+    },
+    {
+      "path": "agents\\00-ops-orchestrator\\instructions.md",
+      "bytes": 3033,
+      "lines": 66,
+      "sha256": "bcf3447fb44fca4fe58c05edb7f1800975c3808755d0f93d7e03cefa79de3e94",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Memory-first incident sequence, grounded proposals, verbatim gate decision, comms last; no integration of triage, postmortem, hygiene, or industry."
+    },
+    {
+      "path": "agents\\02-triage-dedup\\agent.yaml",
+      "bytes": 952,
+      "lines": 42,
+      "sha256": "fc36f4423c47ae249a0fa96eac12dfb15dd6075252f984ecc684523bf5870ddc",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Resource Graph severity/suppression agent; clustering description conflicts with instructions; protected suppression semantics not enforced by schema."
+    },
+    {
+      "path": "agents\\02-triage-dedup\\instructions.md",
+      "bytes": 1739,
+      "lines": 44,
+      "sha256": "22df6dd3f99be259f94bfe74ca7eed5b9356714d256c99dd533ad1a57cb01844",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Already-deduplicated signals, business-context severity, protected-resource suppression restrictions; safety versus dev precedence needs specification."
+    },
+    {
+      "path": "agents\\03-rca-investigator\\agent.yaml",
+      "bytes": 1102,
+      "lines": 43,
+      "sha256": "662b726bb892f6c1f1d55f8e753508b5377be0362917f0eb618628b9e6f76280",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Three OpenAPI tools plus managed-identity remote MCP declaration; hypotheses-only required output lacks nested evidence constraints."
+    },
+    {
+      "path": "agents\\03-rca-investigator\\instructions.md",
+      "bytes": 3546,
+      "lines": 93,
+      "sha256": "259d064ba4668176a2d34ccd70b8062641caf58f0edcb8db09dc1a5a1175b259",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Changes before telemetry and resource context; ranked confidence and citations; requires explicit adaptation for observation-only evidence."
+    },
+    {
+      "path": "agents\\04-runbook-memory\\agent.yaml",
+      "bytes": 723,
+      "lines": 31,
+      "sha256": "55e774533b5ab381cedb037bc96de9fcdeae51f927ca023aa9c878dc136d4b2b",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Hybrid Azure AI Search top-three binding and reader identity; structured retrieval fields are not enforced in output schema."
+    },
+    {
+      "path": "agents\\04-runbook-memory\\instructions.md",
+      "bytes": 2635,
+      "lines": 74,
+      "sha256": "1b487d64807e2e28b4c3893d3b0f7a7659544da21e7d3e1628b7428eabc20d98",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Query construction, documented actions, honest no-match, verbatim prohibitions, distinct runbook/postmortem item contracts."
+    },
+    {
+      "path": "agents\\05-remediation-planner\\agent.yaml",
+      "bytes": 1223,
+      "lines": 54,
+      "sha256": "90cc82bc43287add1b36bda9302a3be98ac94b2a89edd0a394afdbec1e167c04",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Search and Resource Graph tools; action/target/classification/rollback required, but blast radius and other mandatory instruction fields optional."
+    },
+    {
+      "path": "agents\\05-remediation-planner\\instructions.md",
+      "bytes": 2959,
+      "lines": 70,
+      "sha256": "9cfffb877b55396d3a6b8ca46c4b8464290fc1ef68e036870a23b6d8f18061b8",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Single grounded proposal, annotation fallback, mitigation/fix distinction, no authorization; target and synthetic-use safeguards require host enforcement."
+    },
+    {
+      "path": "agents\\07-incident-comms\\agent.yaml",
+      "bytes": 609,
+      "lines": 27,
+      "sha256": "f0b0d6233db597a7af5d28e2ed6b44b123eac3a3866b38262faca4519158ec1c",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "No-tool drafting agent with unnecessarily uniform reader-role declaration; customer output and redaction list optional."
+    },
+    {
+      "path": "agents\\07-incident-comms\\instructions.md",
+      "bytes": 2447,
+      "lines": 69,
+      "sha256": "d59fe1a6f71e3c3eef3138c7c8b7bdf898cb6ef3f12c607758ba036c00c8e4eb",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Audience-specific JSON drafts, confirmed customer impact, redaction, no restoration promises or unproven execution claims."
+    },
+    {
+      "path": "agents\\08-postmortem-drafter\\agent.yaml",
+      "bytes": 998,
+      "lines": 43,
+      "sha256": "19a41e1ad4006ab2fe37a0ca2a2d8c14546bbd31035f487944e841aa8c7729f4",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Promises write-back but only Search and change-history tools with reader identity; incomplete required-section schema."
+    },
+    {
+      "path": "agents\\08-postmortem-drafter\\instructions.md",
+      "bytes": 2355,
+      "lines": 53,
+      "sha256": "e0a2e8ffc57d995258e0ba84401aaef3a13ed7d583fdee5f6282a6e3d9cd6a43",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Six-section blameless evidence-grounded postmortem, recurrence and delay costs; publication and synthetic lifecycle contracts missing."
+    },
+    {
+      "path": "agents\\09-alert-hygiene\\agent.yaml",
+      "bytes": 794,
+      "lines": 32,
+      "sha256": "a67e7b34af86bdf58dbf54394dfd01cb2375a9e607ef1f1176b1b5f42085e757",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "OpenAPI scoring tool plus prompt explanation; recommendations untyped and percentage unbounded."
+    },
+    {
+      "path": "agents\\09-alert-hygiene\\instructions.md",
+      "bytes": 2339,
+      "lines": 57,
+      "sha256": "ca4d2a02ce0b504ba3e989feaccba530d978cfd436bb72730301ecd2528f10ba",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Exported alert-history interpretation with evidence and protected assets; cannot infer engineer actions or use observation counts as firings."
+    },
+    {
+      "path": "agents\\10-industry-signal-pack\\agent.yaml",
+      "bytes": 1139,
+      "lines": 47,
+      "sha256": "32c55286caa13b86c2046ff5d112d8ad9378ed67a04a5d6ff23e5a7c5d272a0e",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Search-backed six-industry parameter defaulting to energy; optional safety/prohibition outputs and unconstrained output industry."
+    },
+    {
+      "path": "agents\\10-industry-signal-pack\\instructions.md",
+      "bytes": 3221,
+      "lines": 75,
+      "sha256": "346ceefc5fd57b19107565ab609370b13eb52378f5e070a60a6b7395ddc9422c",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Sector criticality, frameworks and automation exclusions; advisory context requires deterministic policy binding and cautious mechanical diagnosis."
+    },
+    {
+      "path": "data\\alert-history\\bulk-amba-sample.jsonl",
+      "bytes": 179772,
+      "lines": 397,
+      "sha256": "9ac37fb23516370d3ac17506303da92633060babc04bb332d0be43c39fd3e1b2",
+      "owner": "data-tests",
+      "review": "structured-full-scan",
+      "summary": "All 397 records parsed; types, nested schema, severity/state pairs, synthetic ARM IDs, unique records and full time range checked. Human-content representatives cover all 17 observed rule/state classes. Snapshot-only outcomes, 12 fictional VM IDs, randomized rule/resource mismatch; not human reading of every row."
+    },
+    {
+      "path": "data\\alerts\\01-azure-monitor-pump-cpu.json",
+      "bytes": 1247,
+      "lines": 34,
+      "sha256": "a80cdc168631be5018e3070b85dc65c94494127ebf361f7fa0e013505ced3429",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Azure Monitor CPU alert; synthetic subscription and placeholder alert ID, fixed time; source-output reproduction matched."
+    },
+    {
+      "path": "data\\alerts\\02-datadog-pump-cpu.json",
+      "bytes": 649,
+      "lines": 19,
+      "sha256": "0a72b976c95a1e0c9504c5500005a224ca527ba53cdadfc692e323521e16a14c",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Datadog CPU signal for same pump; explicit prod/service/ARM tags; fixed scenario; reproduction matched."
+    },
+    {
+      "path": "data\\alerts\\03-prometheus-pump-cpu.json",
+      "bytes": 801,
+      "lines": 25,
+      "sha256": "fe33be647ccd3d3b9275a2bf87dab05eac8171e7ef62409c28edac91d740d08e",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "One-alert Prometheus batch for pump CPU; no multi-alert edge example; reproduction matched."
+    },
+    {
+      "path": "data\\alerts\\04-servicenow-pump-ticket.json",
+      "bytes": 737,
+      "lines": 16,
+      "sha256": "759a5be688ad48f33718cee9462c566075a9c6ce83c84473fff7254546e22eae",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Metric-free human pump ticket intended to attach to CPU incident; fictional identity and fixed timestamp; reproduction matched."
+    },
+    {
+      "path": "data\\alerts\\05-azure-monitor-scada-availability.json",
+      "bytes": 1033,
+      "lines": 22,
+      "sha256": "b7c876223e9266dd4f9abc2e48750ef223249750b6e7c5419f932eeab2b9186d",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Critical SCADA heartbeat alert for governance denial; alert time exposes 20-minute last-seen gap versus fixture note's 15; reproduction matched."
+    },
+    {
+      "path": "data\\alerts\\06-splunk-portal-5xx.json",
+      "bytes": 637,
+      "lines": 17,
+      "sha256": "4058296654d57de99db57768af63c25d07649faa4bdf13aecf62e757b8adee8a",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Portal 5xx signal from Splunk; count and severity strings and release clue; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\change_history.json",
+      "bytes": 1768,
+      "lines": 37,
+      "sha256": "4e7c7002ca52c8a825336d3b2ee1d45519318b3d3f59f41bfff11613c3d8bca7",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Three fictional changes; target/service/reference fields and pedagogical correlation_hint ground-truth-like clues need separation from held-out inference; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_availability.json",
+      "bytes": 282,
+      "lines": 15,
+      "sha256": "0a2db41b2363a9029bc93864f1affd298ac1243cec63f66d1e3ec414047fe245",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "One three-column row; chronology note disagrees with SCADA alert by five minutes; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_cpu.json",
+      "bytes": 627,
+      "lines": 35,
+      "sha256": "212910b554b2c982d290fbcabb929be93f7f122f153e9cdd20347dbb8a4fb089",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Five three-column CPU points with prewritten correlation note; static scenario time, not unbiased held-out evidence; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_deployments.json",
+      "bytes": 317,
+      "lines": 16,
+      "sha256": "c69affaf9e2e7942b842babd17b7df618195b29e89bab1420a9d3f27a8e83cf6",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "One four-column fictional extension deployment row; lacks explicit target resource column; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_generic.json",
+      "bytes": 186,
+      "lines": 12,
+      "sha256": "baaa33925185408f41ad96042922e3c58039e2dd8a59f000cc2733f14eff146a",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "One two-column fallback message row; represents no matched fixture, not actual telemetry evidence; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_iot.json",
+      "bytes": 494,
+      "lines": 29,
+      "sha256": "7da2be4ba2df1e221d428a430815d3676349774fa31e18948c78213c2069c421",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Three four-column pump observation rows with declared cavitation answer; no units, DomainsV2 version, or audit isolation contract; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_requests.json",
+      "bytes": 401,
+      "lines": 29,
+      "sha256": "83f2a663e2ac440567beacb269bd2f4d6dcae672697b780b8a5e4f0c3ac369e6",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Four three-column result-code/count rows supporting portal timeline; no resource column or denominator for actual rate; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\kql_restarts.json",
+      "bytes": 359,
+      "lines": 22,
+      "sha256": "335f02a192fd6085619a6a9c9e66048dd9b67a09a71884e4552ecc0f6d7ba0b8",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Two four-column watchdog restart rows; counts lack explicit window/cumulative semantics; reproduction matched."
+    },
+    {
+      "path": "data\\fixtures\\resource_graph.json",
+      "bytes": 2481,
+      "lines": 77,
+      "sha256": "a9ab89aa3b1458157ddd80c9d6f808ea8b83933e97cd1fdcef2f7fd144a66ca4",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Three fictional resource objects, owners, prod tags and dependencies; human-readable unresolved edges and SCADA OT context are not real execution authority; reproduction matched."
+    },
+    {
+      "path": "data\\postmortems\\PM-2026-06-03-pump-controller-cpu.md",
+      "bytes": 2502,
+      "lines": 63,
+      "sha256": "7f0cf4af42471cbf10f028015bc9123377ead30e17f9e8d981fa9c027694d632",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Historical synthetic polling upgrade/correlation incident; operational details support demo but cannot establish current diagnosis or customer history."
+    },
+    {
+      "path": "data\\postmortems\\PM-2026-07-19-portal-5xx-release.md",
+      "bytes": 1712,
+      "lines": 49,
+      "sha256": "4ab7079acb6750d5abeace02a2bee6e627ba6203160a6cdabdd5ab2489c8a514",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Synthetic wrong-replica deployment incident; no positive retrieval case despite corpus inclusion."
+    },
+    {
+      "path": "data\\postmortems\\PM-2026-08-22-alert-fatigue-review.md",
+      "bytes": 1734,
+      "lines": 49,
+      "sha256": "779d711c5d94e3cecc90ad40cb3bbc615900526735edca711f69087508554b54",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Synthetic missed capacity incident and hygiene narrative; stated self-resolve percentages differ from bulk realized fractions; no-action claims not observable in bulk snapshot fields."
+    },
+    {
+      "path": "data\\runbooks\\RB-003-disk-capacity-exhaustion.md",
+      "bytes": 870,
+      "lines": 33,
+      "sha256": "b1afabb11a40dfc85fc0c3cf6e0f1b777698f3a5dabcae4b342a45987a5ac88e",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Disk capacity guidance; clear_cache target unspecified; critical prohibition against deleting application data."
+    },
+    {
+      "path": "data\\runbooks\\RB-008-portal-5xx-after-deployment.md",
+      "bytes": 1481,
+      "lines": 45,
+      "sha256": "9cc26e785aa8a52fcee79e994ad3e990cd5ff03bb79117730e75073f68bd592c",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Post-release rollback versus app-pool recycle guidance; recycle limit and sample blanket rollback-safety assertion require bounded customer applicability."
+    },
+    {
+      "path": "data\\runbooks\\RB-014-pump-controller-cpu-saturation.md",
+      "bytes": 2382,
+      "lines": 65,
+      "sha256": "470fd57fd797c1c374c34c46f85202df20d39746d87d0c4f9b9f483033484b8e",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Pump CPU runbook; restart service only, never host; OT exclusion, no repeated restart after failed return; generic restart verb loses important action semantics."
+    },
+    {
+      "path": "data\\runbooks\\RB-021-scada-historian-heartbeat-loss.md",
+      "bytes": 2107,
+      "lines": 56,
+      "sha256": "7b3083f4144517365ffbd6ae33e082f542008c7ec797fc354c6cd4c48c9c7e2e",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Safety-critical OT boundary; no automated change authority; named engineer/control-room process, evidence and page then stop."
+    },
+    {
+      "path": "data\\runbooks\\RB-030-memory-pressure-and-oom.md",
+      "bytes": 891,
+      "lines": 32,
+      "sha256": "a0fed19f1d38350cc2e701ebe18b0adf79423d0460826ec8e7c6aa27ee29d7de",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Scale-out mitigation and preserve heap-dump evidence; not proof of leak root cause or authorization to change production."
+    },
+    {
+      "path": "data\\runbooks\\RB-047-certificate-expiry.md",
+      "bytes": 828,
+      "lines": 27,
+      "sha256": "df408978bc2ab4415fe0398a7658b7945ca4a14ac42d935d0dcc4a6b8c81f490",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Certificate owner/endpoint/change-record guidance; explicit no automated secret/certificate rotation or Key Vault mutation."
+    },
+    {
+      "path": "data\\runbooks\\RB-052-network-connectivity-degradation.md",
+      "bytes": 968,
+      "lines": 34,
+      "sha256": "d6cd7fd8c167325ff6745268f7038a60be47caa724922d7f3d0dc3aba0aa8c2b",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Connectivity evidence/escalation and hygiene note; no positive retrieval dataset case."
+    },
+    {
+      "path": "data\\runbooks\\RB-061-iot-telemetry-gap.md",
+      "bytes": 1289,
+      "lines": 40,
+      "sha256": "d34fd19095fe07114f645d9624d41e9112407112aa27d65b7ca26884a4d75e78",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Telemetry freshness and mechanical condition guidance; notify control room, no IT remediation for mechanical signature; thin DomainsV2 grounding."
+    },
+    {
+      "path": "docs\\architecture.md",
+      "bytes": 10612,
+      "lines": 230,
+      "sha256": "bfe6694c1dcb18d415ca819e2ac4b23dbdbc485aa1eb236f2beac42fa8b453da",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Portfolio, canonical envelope, deterministic code boundaries, correlation, tool patterns and offline/live evidence limits; lifecycle integration not established."
+    },
+    {
+      "path": "docs\\deploying-to-azure.md",
+      "bytes": 5875,
+      "lines": 157,
+      "sha256": "c0f44d86711219fc26db1075f6f151ef99b57178435d298fedc5757e3e104392",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Five-agent deployment, file-search substitution, local code skills, Responses API and smoke-test procedure; not a full-nine target plan."
+    },
+    {
+      "path": "docs\\governance.md",
+      "bytes": 7251,
+      "lines": 177,
+      "sha256": "aad55e761888d6bc427f6b98cd81c9793d7a9d0ad507a25c0cacc9afb7b5cf93",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Two governance postures, deny-biased policy, identities and known gaps; universal prompt-clause and generated-manifest claims do not match assigned sources."
+    },
+    {
+      "path": "docs\\hackathon-guide.md",
+      "bytes": 6030,
+      "lines": 146,
+      "sha256": "22b25c6dd43ab25a8b24e53f81a664de7dfd1dc8af0229cd9d2ffd45f8e75ac8",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Reduced two-day scope with explicit agent deferrals, Search/Functions topology and stale no-live-deployment claim; unsuitable for all-nine acceptance."
+    },
+    {
+      "path": "docs\\walkthrough.md",
+      "bytes": 8398,
+      "lines": 253,
+      "sha256": "9dc5e0111d5d02cc3afe69fd61a08d64981a7c2f0bf7290a548345ef6b768822",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Offline demo expectations, correlation, memory, gate and hygiene; RCA ordering, test counts, synthetic narrative and posture need reconciliation."
+    },
+    {
+      "path": "evaluations\\README.md",
+      "bytes": 6309,
+      "lines": 150,
+      "sha256": "1683a6a0f02e98742ae9ce3c6a7256c8a2da49284db66b877e3d5807efb2a63c",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Documents 41 cases and four suites; openly excludes model/adversarial/customer coverage; every-runbook claim inaccurate and MRR includes no-match case."
+    },
+    {
+      "path": "evaluations\\build_datasets.py",
+      "bytes": 18633,
+      "lines": 492,
+      "sha256": "991bb05f0708cfa35c87836db3e0df21dc5cb71212bff7f2dba75d873dfcd801",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Complete dataset builder with 10/4/10/17 manually expected cases; all output rows reproduced in memory; default source-tree writes and no nine-agent/DomainsV2 cases."
+    },
+    {
+      "path": "evaluations\\datasets\\correlation_cases.jsonl",
+      "bytes": 1165,
+      "lines": 4,
+      "sha256": "58c83bb6117a7837842b62335a7fcbf266ede909be0fac93bafc142383198aef",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "All four case rows read and parsed; intended 1/1/2/3 incident counts, weak exact-membership checks, full-scenario comment says six tools although only five vendors."
+    },
+    {
+      "path": "evaluations\\datasets\\normalization_cases.jsonl",
+      "bytes": 5233,
+      "lines": 10,
+      "sha256": "9fa96d879c8e5b807b6ce1149e1804b92e3327292199a064c643eb811b3939ba",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "All ten case rows read and parsed; covers five vendors and two Azure shapes, severity/classification/resolution edges, but not full schema or multi-alert batch contracts."
+    },
+    {
+      "path": "evaluations\\datasets\\retrieval_cases.jsonl",
+      "bytes": 1405,
+      "lines": 10,
+      "sha256": "c4c8d477071d85e5f337c242671a66da49107799e7e587d1bafa316399f0220f",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "All ten case rows read and parsed; seven runbooks plus two postmortems and one far-off-topic abstention; RB-052 and July portal postmortem not positively evaluated."
+    },
+    {
+      "path": "evaluations\\datasets\\safety_gate_cases.jsonl",
+      "bytes": 7031,
+      "lines": 17,
+      "sha256": "317142ee6517999e6b76884a90937a4d23a5ae655bb163da7eae6b4ea457c25c",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "All seventeen blocking case rows read and parsed; useful verdict/freeze/scope regressions, no executor semantic/no-fiction contract, incomplete malformed-input and approval matrix."
+    },
+    {
+      "path": "evaluations\\evaluators.py",
+      "bytes": 7055,
+      "lines": 224,
+      "sha256": "c626db520a7aecd5d274379b486e613dbe4d48c651cb43241565d15e4a066c13",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Result containers, field checks, dataset loader, retrieval metrics and rendering; missing file returns empty, empty suite PASS, substring document matching, missing path indistinguishable from expected null."
+    },
+    {
+      "path": "evaluations\\run_evals.py",
+      "bytes": 6497,
+      "lines": 194,
+      "sha256": "739f329ae69ee08917e0108b89b09bcef0aae750e14e733e3961287234429264",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Four-suite runner; missing suites can exit 0, limited first-incident source subset checks, unhandled blocking-case exceptions, conditional wall-clock evaluation, no prompt-agent acceptance."
+    },
+    {
+      "path": "pytest.ini",
+      "bytes": 59,
+      "lines": 4,
+      "sha256": "d758037d9c1a2c37d7cbab1e27ab4e18eec73411cd7393351e633ee2653af723",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Tests root and pythonpath configuration; quiet runner."
+    },
+    {
+      "path": "requirements-live.txt",
+      "bytes": 271,
+      "lines": 11,
+      "sha256": "71885cb775a52f48c67f2c7987acbe1b9a46c83b89b68b9e2189f7358d3e2d1e",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Unbounded live SDK versions; no compatible modern agent lock or hosting framework."
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 379,
+      "lines": 10,
+      "sha256": "0ebe8885c8b27f8ed514539353b3a98d9650a5eca8348634bf171052e3c8a6fb",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Offline PyYAML/pytest minimum bounds; no production packaging."
+    },
+    {
+      "path": "scripts\\deploy_to_foundry.py",
+      "bytes": 7502,
+      "lines": 211,
+      "sha256": "13808cdd4b0409f87df10235acaece07bf2fad1cd25a9186fd9e7b02a11d7f3c",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Five-agent modern deployer, FileSearch substitution, missing tools/versioning, indexing/state/cleanup gaps."
+    },
+    {
+      "path": "scripts\\emit_agent_manifests.py",
+      "bytes": 10233,
+      "lines": 280,
+      "sha256": "1e52ebf4a167da3f17c54d47708baa429c16b589773586b5b4bd8404def6296d",
+      "owner": "agents-docs",
+      "review": "full-content",
+      "summary": "Fully read without execution; unconditionally regenerates eight manifests from duplicate tool/schema constants and uniform identity, excluding orchestrator and instructions."
+    },
+    {
+      "path": "scripts\\emit_openapi.py",
+      "bytes": 14641,
+      "lines": 359,
+      "sha256": "d0f9eee37586530829034f4a8be13da61853efdac328398a1d6a293d075ad696",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Source of all six OpenAPI contracts; structural parity checked without writing outputs."
+    },
+    {
+      "path": "scripts\\generate_sample_data.py",
+      "bytes": 18885,
+      "lines": 496,
+      "sha256": "1f6cbca75604e64ccc1525fc60a94ea2bef34630e30f60fb974b0acf922bfe35",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Complete 16-output synthetic generator reviewed and reconstructed twice in memory with redirected/intercepted writes. No-seed outputs match; optional external type seed, fixed dates, randomized resolved snapshots and diagnosis hints limit reproducibility/grounding claims."
+    },
+    {
+      "path": "scripts\\provision_agents.py",
+      "bytes": 6366,
+      "lines": 169,
+      "sha256": "f4c29c3867252aa356e9be316475fbd81e60c043ed4d821756eb25ad142a57d6",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Nine-agent legacy route; unresolved OpenAPI URLs, incomplete auth/search bindings and skipped dependencies."
+    },
+    {
+      "path": "tests\\__init__.py",
+      "bytes": 2,
+      "lines": 1,
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Empty package initializer (two-byte newline content); no logic."
+    },
+    {
+      "path": "tests\\test_offline_guarantee.py",
+      "bytes": 5370,
+      "lines": 136,
+      "sha256": "2e081520680b3f771ed28ad84223019c5942be1b8bf0fd7b8abfa6a898580bee",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Three functions/seven parametrized cases; subprocess stub smoke, normalization-only credential stripping, legacy import hook and narrow static import scan; no comprehensive fail-fast network denial."
+    },
+    {
+      "path": "tests\\test_skills.py",
+      "bytes": 13042,
+      "lines": 329,
+      "sha256": "906ad23d8af0f7484b196df3e232f1d1e803c286e62451a681232915315eca54",
+      "owner": "data-tests",
+      "review": "full-content",
+      "summary": "Forty functions/sixty parametrized cases for fingerprints, classification, severity, environment, normalization, correlation, gate and hygiene; tautological coarse-key check, absent ticket in ticket-edge test, no nine-agent or DomainsV2 contracts."
+    },
+    {
+      "path": "tools\\mcp\\README.md",
+      "bytes": 1334,
+      "lines": 38,
+      "sha256": "e8cc79fb5102e1e1350bbc4042538f100a6a723fcb36853027ae7861dbda3461",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Explicitly non-production MCP limitations; wiring claim requires actual transport."
+    },
+    {
+      "path": "tools\\mcp\\azure_monitor_mcp_stub.py",
+      "bytes": 6394,
+      "lines": 186,
+      "sha256": "e0402dbff86d7d91ca47500d396de9d1aa9b85b60a69030e582a140037c84d10",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "Four-tool stdio demonstration, environment-selectable backends, no authenticated remote transport."
+    },
+    {
+      "path": "tools\\openapi\\alert-hygiene.yaml",
+      "bytes": 1320,
+      "lines": 39,
+      "sha256": "7d27f307fb4f00b679dbb312bbd9daa34960c07033c5b8a463983d090fc73e9e",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "analyzeAlertHygiene contract; requires normalization and correct history semantics."
+    },
+    {
+      "path": "tools\\openapi\\change-history.yaml",
+      "bytes": 1253,
+      "lines": 41,
+      "sha256": "ea453595f9f97973ab16ea9a4c4971ce6cc9e1d4adf71d8214f1fbd987561e9c",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "getRecentChanges promises service/time/ordering beyond current live implementation."
+    },
+    {
+      "path": "tools\\openapi\\change-safety-gate.yaml",
+      "bytes": 2937,
+      "lines": 86,
+      "sha256": "fafdc905c1d2d024ea4a83b54ba4a9bf0cd7f251c5aa06a3e808fd5393274686",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "evaluateChangeRequest contract; trusted target/environment/count derivation must be server-side."
+    },
+    {
+      "path": "tools\\openapi\\log-analytics.yaml",
+      "bytes": 1624,
+      "lines": 52,
+      "sha256": "2bb260cf5e57f0ff453793e1d970b08b74538d6c51efa066864b4f6e343ca77f",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "runKqlQuery request/response; unresolved URL and incomplete result/error schema."
+    },
+    {
+      "path": "tools\\openapi\\resource-graph.yaml",
+      "bytes": 1082,
+      "lines": 32,
+      "sha256": "91f2533a8e38505e767497cc1f4d5748c793f9bd9350b23c0858389a38ed34bc",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "getResourceContext promises criticality/dependencies missing from current live projection."
+    },
+    {
+      "path": "tools\\openapi\\signal-normalizer.yaml",
+      "bytes": 1848,
+      "lines": 52,
+      "sha256": "2553b58162ae39fae98a7d6e6da7f420e7f9690c733c02ee2da8c77665dfc671",
+      "owner": "parent",
+      "review": "full-content",
+      "summary": "normalizeSignals contract; opaque results and no implementation host/error bounds."
+    }
+  ]
+}

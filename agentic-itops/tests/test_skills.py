@@ -292,11 +292,11 @@ class TestChangeSafetyGate:
         decision = ChangeSafetyGate(policy={}).evaluate(self.request())
         assert decision.effect is Effect.DENY
 
-    def test_deny_rule_with_no_predicates_matches_nothing(self):
-        """A malformed rule must not become a catch-all denial."""
+    def test_deny_rule_with_no_predicates_is_rejected(self):
+        """A malformed rule must not silently remove a configured denial."""
         policy = {**load_policy(), "deny": [{"id": "malformed", "reason": "oops"}]}
-        decision = ChangeSafetyGate(policy=policy).evaluate(self.request())
-        assert "malformed" not in decision.matched_rules
+        with pytest.raises(ValueError, match="recognized predicate"):
+            ChangeSafetyGate(policy=policy)
 
 
 # --- hygiene ----------------------------------------------------------

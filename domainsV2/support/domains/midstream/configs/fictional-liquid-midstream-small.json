@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "seed": 20260801,
+  "scenario": "normal_transfer",
+  "site": {
+    "site_id": "fictional-gulf-transfer-001",
+    "display_name": "Gulf Transfer Demonstration",
+    "time_zone": "America/Chicago",
+    "ambient_temperature_c": 31.0
+  },
+  "simulation": {
+    "start_utc": "2026-08-01T12:00:00Z",
+    "end_utc": "2026-08-01T18:00:00Z",
+    "interval_seconds": 300
+  },
+  "fluid": {
+    "density_kg_m3": 842.0,
+    "viscosity_pa_s": 0.018,
+    "temperature_c": 29.0
+  },
+  "pipeline": {
+    "length_m": 18000.0,
+    "diameter_m": 0.508,
+    "roughness_m": 0.000045,
+    "reference_pressure_kpa": 620.0,
+    "effective_bulk_modulus_kpa": 850000.0
+  },
+  "tank": {
+    "diameter_m": 42.0,
+    "height_m": 18.0,
+    "initial_volume_m3": 12500.0
+  },
+  "pump": {
+    "rated_flow_m3_s": 0.22,
+    "rated_head_m": 155.0,
+    "rated_speed_rpm": 1780.0,
+    "efficiency": 0.78,
+    "thermal_time_constant_s": 3600.0,
+    "coast_down_time_constant_s": 20.0
+  },
+  "localization": {
+    "enabled": true,
+    "monitoring_node_count": 7,
+    "hidden_release_route_fraction": 0.62,
+    "pressure_measurement_uncertainty_kpa": 0.25,
+    "flow_measurement_relative_uncertainty": 0.0015,
+    "clock_offset_ms": 8.0,
+    "clock_uncertainty_ms": 2.0,
+    "confirmation_delay_seconds": 900
+  },
+  "output": {
+    "include_csv": true
+  }
+}

@@ -1,0 +1,1684 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Local-only inventory portal for synthetic midstream parts, storeroom locations and nominal stock"
+    />
+    <title>Midstream Inventory | Local Only</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f7f4ef;
+        --cp-bg-elevated: #fcfbf8;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f5f5f5;
+        --cp-border: #dedede;
+        --cp-border-strong: #919191;
+        --cp-text: #242424;
+        --cp-text-muted: #5c5c5c;
+        --cp-text-soft: #6f6f6f;
+        --cp-accent: #b11f4b;
+        --cp-accent-hover: #9a1a41;
+        --cp-accent-soft: rgba(177, 31, 75, 0.08);
+        --cp-accent-fg: #ffffff;
+        --cp-success: #16a34a;
+        --cp-danger: #dc2626;
+        --cp-warning: #f59e0b;
+        --cp-link: #0078d4;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+        --cp-overlay: rgba(255, 255, 255, 0.8);
+        --cp-panel: rgba(255, 255, 255, 0.86);
+        --cp-panel-strong: rgba(255, 255, 255, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.55);
+        --cp-highlight: rgba(177, 31, 75, 0.12);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3d3b3a;
+        --cp-bg-elevated: #343231;
+        --cp-surface: #292929;
+        --cp-surface-soft: #2e2e2e;
+        --cp-border: #474747;
+        --cp-border-strong: #5f5f5f;
+        --cp-text: #dedede;
+        --cp-text-muted: #919191;
+        --cp-text-soft: #b0b0b0;
+        --cp-accent: #fd8ea1;
+        --cp-accent-hover: #fb7b91;
+        --cp-accent-soft: rgba(253, 142, 161, 0.14);
+        --cp-accent-fg: #1a1a1a;
+        --cp-success: #4ade80;
+        --cp-danger: #f87171;
+        --cp-warning: #fbbf24;
+        --cp-link: #4da6ff;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+        --cp-overlay: rgba(41, 41, 41, 0.88);
+        --cp-panel: rgba(41, 41, 41, 0.72);
+        --cp-panel-strong: rgba(41, 41, 41, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.04);
+        --cp-highlight: rgba(253, 142, 161, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font: 15px/1.55 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
+      header.top {
+        border-bottom: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        padding: 22px 0 18px;
+        margin-bottom: 22px;
+      }
+      header.top h1 { margin: 0 0 4px; font-size: 22px; font-weight: 620; }
+      header.top p { margin: 0; color: var(--cp-text-muted); font-size: 13.5px; }
+      .banner {
+        border: 1px solid var(--cp-warning);
+        background: var(--cp-accent-soft);
+        color: var(--cp-text);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        margin-bottom: 20px;
+      }
+      section {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 10px;
+        padding: 18px 20px 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px var(--cp-highlight);
+      }
+      h2 { margin: 0 0 4px; font-size: 16px; font-weight: 620; }
+      h3 { margin: 22px 0 8px; font-size: 13.5px; font-weight: 620; }
+      .sub { margin: 0 0 16px; color: var(--cp-text-muted); font-size: 13px; }
+      .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+      .stat {
+        flex: 1 1 150px;
+        border: 1px solid var(--cp-border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--cp-surface-soft);
+      }
+      .stat .k { font-size: 11.5px; color: var(--cp-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .stat .v { font-size: 21px; font-weight: 640; margin-top: 2px; }
+      .stat .v.unknown { font-size: 15px; color: var(--cp-text-muted); font-weight: 500; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--cp-border); vertical-align: top; }
+      th { font-weight: 600; color: var(--cp-text-muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+      tbody tr:hover { background: var(--cp-surface-soft); }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        white-space: nowrap;
+      }
+      .muted { color: var(--cp-text-muted); }
+      .none { color: var(--cp-text-muted); font-style: italic; }
+      /* Keep the eight-tier map contract while using neutral geography.
+         Rose is reserved for the selected stock position, not location type. */
+      :root {
+        --t-central_warehouse: var(--cp-text);
+        --t-regional_warehouse: var(--cp-text);
+        --t-site_storeroom: var(--cp-text-muted);
+        --t-field_van_stock: var(--cp-text-soft);
+        --t-consignment: var(--cp-text-muted);
+        --t-supplier_held: var(--cp-text-soft);
+        --t-field_cabinet: var(--cp-text-muted);
+        --t-emergency_cache: var(--cp-text);
+        --map-land: var(--cp-bg-elevated);
+        --map-line: var(--cp-border);
+        --map-edge: var(--cp-border-strong);
+        --map-corridor: var(--cp-text-muted);
+        --map-sea: var(--cp-surface-soft);
+        --map-context: var(--cp-bg);
+      }
+      .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0 0; font-size: 12px; }
+      .legend span { display: inline-flex; align-items: center; gap: 6px; color: var(--cp-text-muted); }
+      .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+      .mapwrap {
+        border: 1px solid var(--cp-border);
+        border-radius: 8px;
+        background: var(--map-land);
+        overflow: hidden;
+      }
+      svg.map { display: block; width: 100%; height: auto; }
+
+      /* --- Real ground --------------------------------------------------
+         Four layers, painted back to front. The context layer is neighbouring
+         land far outside the view's own extent, kept faint so it reads as
+         surroundings rather than as part of the subject. The state outline
+         carries the land fill and county lines only divide it. Water is
+         painted last because neither the state nor the county polygons carve
+         out the coastal bays -- the middle of Galveston Bay falls inside the
+         published Texas polygon -- so the water layer is what puts the bays
+         back. Getting that order wrong would draw storerooms on open water.
+         The whole group is aria-hidden: it is the ground, and every fact the
+         page asserts is carried by the markers, the callouts and the tables. */
+      svg.map .geo-context { fill: var(--map-context); stroke: none; }
+      svg.map .geo-outline { fill: var(--map-land); stroke: var(--map-edge); stroke-width: 1.1; }
+      svg.map .geo-county { fill: none; stroke: var(--map-line); stroke-width: 0.8; opacity: 0.85; }
+      svg.map .geo-water { fill: var(--map-sea); stroke: none; }
+      svg.map .scalebar { opacity: 0.9; }
+
+      .zoom { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+      .zoom button {
+        font: inherit; font-size: 12px; padding: 5px 11px; cursor: pointer;
+        border: 1px solid var(--cp-border); border-radius: 999px;
+        background: var(--cp-surface); color: var(--cp-text-muted);
+      }
+      .zoom button[aria-pressed="true"] {
+        background: var(--cp-text); border-color: var(--cp-text); color: var(--cp-surface);
+      }
+      .zoom button:focus-visible { outline: 2px solid var(--cp-text); outline-offset: 2px; }
+
+      /* --- Corridor map: depth and motion -------------------------------
+         Motion here is decorative. It carries one fact the page already
+         states — that the corridor runs from receipt to delivery — and
+         otherwise represents nothing: not a rate, not live movement, not a
+         measured flow. It is labelled as decorative in the legend so a reader
+         cannot mistake a moving dash for data.
+
+         Three rules hold for every animation below:
+           1. Layout anchors never move. Only opacity, stroke-dashoffset and
+              small scales about a marker's own centre are animated — never
+              translation, and never on a group that contains a callout — so
+              the label positions the map checker measures are the positions
+              drawn. Decorative paint (the corridor glow, the marker shadow)
+              does spill a little past the geometry it is applied to; the
+              frame is padded for it, but that is bounded ornament, not the
+              same claim as geometric equivalence.
+           2. Every element that carries information is fully visible with
+              motion switched off. Any rule that starts an element hidden or
+              undrawn is reset in the prefers-reduced-motion block, not merely
+              stopped — a stopped reveal that never runs is an invisible map.
+              Purely ornamental paint may instead be suppressed outright.
+           3. Nothing is said only by moving. The spur dash travels toward the
+              corridor, but the spur also carries a static arrowhead saying
+              the same thing, so a reader with motion off loses no fact. */
+      svg.map .corridor-base {
+        stroke: var(--map-corridor); stroke-width: 9; stroke-linecap: round; opacity: 0.18;
+      }
+      svg.map .corridor-core {
+        stroke: var(--map-corridor); stroke-width: 2.6; stroke-linecap: round;
+        filter: url(#ms-glow);
+      }
+      svg.map .corridor-flow {
+        stroke: var(--map-corridor); stroke-width: 3.6; stroke-linecap: round;
+        stroke-dasharray: 2 17; opacity: 0.9;
+        animation: ms-flow 2.8s linear infinite;
+      }
+      @keyframes ms-flow { to { stroke-dashoffset: -19; } }
+      /* The sheen is a single translucent highlight that travels the line.
+         It is the one purely ornamental element on the map. */
+      svg.map .corridor-sheen {
+        stroke: var(--cp-surface); stroke-width: 5; stroke-linecap: round;
+        stroke-dasharray: 40 2000; opacity: 0.5;
+        animation: ms-sheen 7s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      }
+      @keyframes ms-sheen {
+        0% { stroke-dashoffset: 240; opacity: 0; }
+        12% { opacity: 0.5; }
+        60%, 100% { stroke-dashoffset: -2000; opacity: 0; }
+      }
+      svg.map .spur { stroke: var(--map-edge); stroke-width: 1.4; stroke-dasharray: 4 4; opacity: 0.7; }
+      /* Static twin of the travelling dash. Direction is a fact about the
+         network, so it is drawn, not animated. */
+      svg.map .spur-arrow { opacity: 0.75; }
+      svg.map .pulse-layer { transition: opacity 200ms ease; }
+      svg.map .spur-flow {
+        stroke-width: 2; stroke-linecap: round; fill: none;
+        stroke-dasharray: 1 12; opacity: 0.8;
+        animation: ms-spur 3.4s linear infinite;
+      }
+      /* Positive offset: the dash travels from the storeroom in to the
+         corridor, the direction a part would be drawn from stock. */
+      @keyframes ms-spur { to { stroke-dashoffset: 13; } }
+      /* Pulses are drawn in one layer beneath every marker and callout, so a
+         growing ring can never paint over a label belonging to another
+         storeroom. That layering is why the ring is allowed to exceed the
+         marker's own bounds at all. */
+      svg.map .pulse {
+        fill: none; stroke-width: 1.6;
+        transform-box: fill-box; transform-origin: center;
+        opacity: 0; animation: ms-pulse 3.4s ease-out infinite;
+      }
+      @keyframes ms-pulse {
+        0% { transform: scale(0.8); opacity: 0.55; }
+        70%, 100% { transform: scale(2.4); opacity: 0; }
+      }
+      /* Entrance. Markers scale about their own centre, so a marker never
+         travels away from the point it marks even mid-animation. */
+      svg.map .enter {
+        transform-box: fill-box; transform-origin: center;
+        animation: ms-in 560ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+      }
+      @keyframes ms-in { from { opacity: 0; transform: scale(0.6); } }
+      svg.map .fade { animation: ms-fade 700ms ease-out both; }
+      @keyframes ms-fade { from { opacity: 0; } }
+      svg.map .draw {
+        stroke-dasharray: 1100; stroke-dashoffset: 1100;
+        animation: ms-draw 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+      }
+      @keyframes ms-draw { to { stroke-dashoffset: 0; } }
+
+      /* Hover and focus emphasis. :has lets the rest of the map recede while
+         one storeroom is read; where :has is unsupported nothing dims and the
+         map simply behaves as it did before. */
+      svg.map .loc .body {
+        transform-box: fill-box; transform-origin: center;
+        transition: transform 160ms ease, opacity 200ms ease;
+        cursor: pointer;
+      }
+      svg.map:has(.loc:hover) .loc:not(:hover) { opacity: 0.35; }
+      svg.map:has(.loc:hover) .pulse-layer { opacity: 0.2; }
+      svg.map .loc:hover .body { transform: scale(1.3); }
+      svg.map .body:focus-visible { outline: none; stroke: var(--cp-text); stroke-width: 2.8; }
+      svg.map .asset-dot { transition: transform 160ms ease; transform-box: fill-box; transform-origin: center; }
+      svg.map .asset-dot:hover { transform: scale(1.35); }
+      /* Callouts sit over the land wash and the tick grid, so each carries its
+         own backing rather than relying on what it lands on. */
+      svg.map .callout {
+        paint-order: stroke; stroke: var(--map-land); stroke-width: 2.8px;
+        stroke-linejoin: round; stroke-opacity: 0.9;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        svg.map .corridor-flow,
+        svg.map .corridor-sheen,
+        svg.map .spur-flow,
+        svg.map .pulse,
+        svg.map .enter,
+        svg.map .fade,
+        svg.map .draw { animation: none; }
+        /* Reset, not merely stop: each of these starts hidden or undrawn. */
+        svg.map .enter, svg.map .fade { opacity: 1; transform: none; }
+        svg.map .draw { stroke-dasharray: none; stroke-dashoffset: 0; }
+        svg.map .corridor-sheen { opacity: 0; }
+        svg.map .pulse { opacity: 0.4; }
+        svg.map .loc .body, svg.map .asset-dot, svg.map .pulse-layer { transition: none; }
+      }
+      .bar { height: 9px; border-radius: 999px; background: var(--cp-surface-soft); overflow: hidden; }
+      .bar > i { display: block; height: 100%; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      input[type="search"], select {
+        font: inherit;
+        font-size: 13px;
+        padding: 6px 9px;
+        border-radius: 7px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        color: var(--cp-text);
+      }
+      .err {
+        border: 1px solid var(--cp-warning);
+        background: var(--cp-accent-soft);
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 13.5px;
+      }
+      details summary { cursor: pointer; font-size: 12.5px; color: var(--cp-text-muted); }
+      .fitlist { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; }
+      .wrap { max-width: 1328px; padding-left: 32px; padding-right: 32px; }
+      header.top { padding: 16px 0; margin-bottom: 0; }
+      header.top .wrap { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0; gap: 16px; }
+      header.top h1 { font-size: 16px; letter-spacing: -.02em; margin: 0; }
+      .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--cp-text-muted); }
+      .hero { display: flex; justify-content: space-between; align-items: end; gap: 32px; padding: 40px 0 28px; }
+      .hero h2 { font-size: clamp(32px, 4vw, 52px); line-height: 1.06; letter-spacing: -.055em; max-width: 650px; margin: 12px 0; font-weight: 650; }
+      .hero h2 em { color: var(--cp-accent); font-style: normal; }
+      .hero p { max-width: 440px; color: var(--cp-text-muted); margin: 0; }
+      .local-note { max-width: 240px; border-left: 2px solid var(--cp-accent); padding-left: 16px; font-size: 12px; }
+      section { border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+      h2 { font-size: 20px; letter-spacing: -.025em; }
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+      .stat { background: var(--cp-surface); padding: 16px 20px; border-radius: 16px; }
+      .stat .v { font-size: 32px; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+      .stat small { font-size: 12px; color: var(--cp-text-muted); }
+      .section-head { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 20px; }
+      .section-head .sub { margin-bottom: 0; }
+      .story { display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; }
+      .focus-card { border-right: 1px solid var(--cp-border); padding-right: 40px; }
+      .focus-card h3 { font-size: 21px; margin: 12px 0 4px; letter-spacing: -.02em; }
+      .quantity { font-size: clamp(56px, 7vw, 88px); letter-spacing: -.065em; line-height: 1.1; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .quantity small { font-size: 18px; letter-spacing: 0; color: var(--cp-text-muted); margin-left: 10px; font-weight: 400; }
+      .focus-value { display: flex; align-items: center; justify-content: space-between; margin: 16px 0; gap: 12px; }
+      .pill { display: inline-block; border: 1px solid var(--cp-border); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+      .pill.low, .pill.out_of_stock { color: var(--cp-danger); border-color: var(--cp-danger); background: var(--cp-surface); }
+      .pill.focus { color: var(--cp-accent); border-color: var(--cp-accent); }
+      .gauge { position: relative; height: 12px; background: var(--cp-surface-soft); border-radius: 4px; margin-top: 16px; }
+      .gauge-fill { height: 100%; background: var(--cp-accent); border-radius: 4px; }
+      #focus-story .quantity { animation: stock-reveal 240ms ease-out; }
+      @keyframes stock-reveal {
+        from { opacity: .4; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #focus-story .quantity { animation: none; }
+      }
+      .gauge-min { position: absolute; top: -5px; height: 22px; border-left: 2px solid var(--cp-text); }
+      .gauge-caption { display: flex; justify-content: space-between; font-size: 11px; color: var(--cp-text-muted); margin-top: 8px; gap: 8px; }
+      .stage-title { font-size: 28px; letter-spacing: -.035em; margin: 8px 0; }
+      .stage-copy { min-height: 48px; color: var(--cp-text-muted); font-size: 14px; }
+      .timeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; list-style: none; padding: 0; margin: 24px 0; }
+      .timeline li { border-top: 3px solid var(--cp-border); padding-top: 8px; color: var(--cp-text-muted); font-size: 10px; }
+      .timeline li.done { border-color: var(--cp-accent); }
+      .timeline li[aria-current="step"] { color: var(--cp-accent); font-weight: 700; }
+      .timeline b { display: block; font-size: 13px; margin-bottom: 4px; }
+      button, input, select { font: inherit; }
+      button { color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: .625rem; padding: 9px 14px; cursor: pointer; }
+      button:hover { border-color: var(--cp-border-strong); background: var(--cp-surface-soft); }
+      button.primary { color: var(--cp-accent-fg); background: var(--cp-accent); border-color: var(--cp-accent); min-width: 112px; font-weight: 650; }
+      button.primary:hover { background: var(--cp-accent-hover); }
+      button:disabled { opacity: .45; cursor: not-allowed; }
+      :focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; }
+      .playback { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .playback label { margin-left: auto; font-size: 12px; }
+      .low-strip { margin-top: 24px; border-top: 1px solid var(--cp-border); padding-top: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+      .low-strip strong { color: var(--cp-accent); }
+      .text-button { border: 0; background: none; padding: 4px 0; color: var(--cp-accent); text-decoration: underline; text-underline-offset: 3px; }
+      .locations { display: grid; grid-auto-flow: column; grid-auto-columns: 184px; overflow-x: auto; gap: 8px; padding: 4px 3px 16px; margin: 16px -3px 0; }
+      .location-card { text-align: left; padding: 12px; }
+      .location-card strong, .location-card small { display: block; }
+      .location-card small { color: var(--cp-text-muted); font-size: 11px; margin: 4px 0; }
+      .location-card[aria-pressed="true"] { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+      .location-card .counts { font-size: 12px; }
+      .mapwrap { overflow: auto; background: var(--cp-bg-elevated); }
+      svg.map { min-width: 860px; }
+      svg.map .loc.selected .body { stroke: var(--cp-accent); stroke-width: 3; fill: var(--cp-accent-soft); }
+      svg.map .loc.selected .callout { fill: var(--cp-accent); font-weight: 700; }
+      .stock-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+      .controls { align-items: end; gap: 12px; }
+      .controls label { font-size: 11px; color: var(--cp-text-muted); }
+      .controls label:first-child { flex: 1 1 200px; }
+      .controls input, .controls select { display: block; width: 100%; min-height: 40px; margin-top: 4px; }
+      .table-scroll { overflow-x: auto; }
+      #parts { min-width: 610px; }
+      #parts td { padding: 12px 8px; vertical-align: middle; }
+      .part-button { padding: 0; border: 0; text-align: left; background: none; font-size: 13px; font-weight: 600; }
+      tr.selected { background: var(--cp-accent-soft); }
+      .drawer { position: sticky; top: 20px; background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 12px; padding: 20px; }
+      .drawer h3 { font-size: 19px; margin: 12px 0 4px; }
+      .drawer dl { margin: 16px 0 0; font-size: 12px; }
+      .drawer dt { color: var(--cp-text-muted); margin-top: 12px; }
+      .drawer dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+      .held-list { list-style: none; padding: 0; margin: 8px 0 0; }
+      .held-list button { width: 100%; margin-top: 4px; text-align: left; font-size: 12px; }
+      .drawer .close { float: right; padding: 1px 8px; font-size: 12px; }
+      .activity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .activity-list { list-style: none; padding: 0; margin: 12px 0 0; max-height: 330px; overflow: auto; }
+      .activity-list li { border-bottom: 1px solid var(--cp-border); padding: 12px 0; font-size: 12px; }
+      .activity-list li strong { display: block; font-size: 13px; }
+      .activity-list .stamp { float: right; font-family: Consolas, "Courier New", Courier, monospace; color: var(--cp-text-muted); }
+      code { font-family: Consolas, "Courier New", Courier, monospace; overflow-wrap: anywhere; }
+      .provenance { padding: 8px 0 24px; font-size: 12px; color: var(--cp-text-muted); }
+      .provenance p { max-width: 920px; }
+      .empty { padding: 24px 0; color: var(--cp-text-muted); font-size: 13px; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+      @media (max-width: 1000px) {
+        .stock-layout { grid-template-columns: minmax(0, 1fr); }
+        .drawer { position: static; }
+      }
+      @media (max-width: 720px) {
+        .wrap { padding-left: 16px; padding-right: 16px; }
+        header.top .wrap { flex-wrap: wrap; }
+        .hero { display: block; padding-top: 28px; }
+        .local-note { margin-top: 20px; max-width: none; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .stat { padding: 12px; }
+        section { padding: 20px 16px; }
+        .story, .activity-grid { grid-template-columns: 1fr; gap: 24px; }
+        .focus-card { border-right: 0; border-bottom: 1px solid var(--cp-border); padding: 0 0 24px; }
+        .section-head { flex-wrap: wrap; }
+      }
+      .domain-nav { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+      .domain-nav a { color: var(--cp-link); }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <h1>Midstream inventory <span class="muted">/ Supply studio</span></h1>
+        <p><span class="tag">Synthetic dataset</span> &nbsp; Local only · Read-only</p>
+        <nav class="domain-nav" aria-label="Domain navigation">
+          <a href="/">All domains</a>
+          <a href="/midstream">Midstream transfer &amp; terminal</a>
+          <a href="/midstream/review/inventory" aria-current="page">Midstream inventory</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap" id="root">
+      <p class="muted">Loading inventory…</p>
+    </main>
+
+    <script>
+      const TIER_ORDER = [
+        "central_warehouse",
+        "regional_warehouse",
+        "site_storeroom",
+        "field_cabinet",
+        "emergency_cache",
+        "consignment",
+        "field_van_stock",
+        "supplier_held",
+      ];
+
+      // The map's own view state. The basemap is fetched beside the data and
+      // is optional: if it never arrives the network still draws, at the same
+      // scale, on a plain field.
+      const MAP = { basemap: null, zoom: null, data: null };
+
+      const esc = (value) =>
+        String(value ?? "").replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+        );
+      const humanize = (value) =>
+        String(value ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const tierColor = (type) =>
+        TIER_ORDER.includes(type) ? `var(--t-${type})` : "var(--t-supplier_held)";
+      // Absence must never render as a zero.
+      const num = (value) =>
+        typeof value !== "number" || !Number.isFinite(value) || value < 0
+          ? '<span class="none">unknown</span>'
+          : value.toLocaleString();
+
+      /* ---------------------------------------------------------------
+         The corridor map.
+
+         The ground is real. The boundary and hydrography geometry comes from
+         US Census cartographic boundary and TIGER/Line files, projected
+         offline about the corridor origin so that distance from the origin is
+         true, and cached as one file the page fetches beside its data.
+
+         What is drawn on that ground is not real. The corridor, its assets
+         and every storeroom are fictional and always were. Real geography is
+         used because a supply network that spans 0.1 km to 400 km is
+         unreadable without a sense of scale, and because the distances the
+         dataset asserts only mean something against ground that has some.
+         Placing a fictional point over real land is a drawing decision, not a
+         claim that the point is there: the dataset still carries
+         position_claim "none", it publishes no latitude, longitude or
+         address, and it does not assert that any real facility occupies any
+         position it shows. What it
+         does publish is a planar offset in a fictional grid, and this page
+         does map that grid onto real ground, which is why the sites have to
+         be labelled fictional wherever they are shown.
+
+         There is no compressed axis any more. Every view is a plain linear
+         scale in kilometres, so a centimetre means the same thing everywhere
+         in the picture. The reader changes the extent, never the geometry.
+      --------------------------------------------------------------- */
+
+      // Round up to the next 1, 2 or 5 times a power of ten, so a scale bar
+      // lands on a figure a reader can hold in their head.
+      function niceCeil(value) {
+        if (!(value > 0)) return 1;
+        const pow = Math.pow(10, Math.floor(Math.log10(value)));
+        const unit = value / pow;
+        return (unit <= 1 ? 1 : unit <= 2 ? 2 : unit <= 5 ? 5 : 10) * pow;
+      }
+
+      // Nullish coerces to 0 through Number(), so it is rejected before
+      // coercion rather than silently drawn at the origin.
+      function gridNum(value) {
+        if (value === null || value === undefined || value === "") return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      // One extent per order of magnitude actually present. A level is kept
+      // only if it admits a location the previous level did not: a network
+      // with everything on the corridor should not offer three identical
+      // views of the same thing.
+      function zoomLevels(data) {
+        const offsets = [
+          ...new Set((data.locations || []).map((l) => Number(l.offset_km) || 0)),
+        ].sort((a, b) => a - b);
+        if (!offsets.length) return [{ name: "Corridor", cap: Infinity }];
+        const far = offsets[offsets.length - 1];
+        const names = ["Corridor", "Area", "Network"];
+        const caps = [Math.max(far / 60, 0.5), Math.max(far / 6, 0.5), far];
+        const levels = [];
+        caps.forEach((cap, index) => {
+          const admitted = offsets.filter((o) => o <= cap).length;
+          if (levels.length && admitted === levels[levels.length - 1].admitted) {
+            return;
+          }
+          levels.push({ name: names[index], cap, admitted });
+        });
+        return levels;
+      }
+
+      // The widest extent is the default: it is the only one that shows the
+      // whole network. A closer view is a choice the reader makes, and one the
+      // map then has to declare, because a view that quietly leaves six
+      // storerooms out is not a smaller picture of the network, it is a
+      // different and wrong one.
+      function resolveZoom(levels) {
+        if (MAP.zoom === null || MAP.zoom >= levels.length) {
+          MAP.zoom = Math.max(0, levels.length - 1);
+        }
+        return MAP.zoom;
+      }
+
+      function drawMap(data) {
+        const W = 1120;
+        const H = 460;
+        const maxKm = Math.max(data.corridor_length_km || 18, 1);
+        const levels = zoomLevels(data);
+        const level = levels[resolveZoom(levels)];
+
+        // Locations without a grid position are not drawable. They are counted
+        // and named under the map rather than dropped in silence.
+        const unplaced = [];
+        const placeable = (data.locations || []).filter((loc) => {
+          const ok =
+            gridNum(loc.grid_east_km) !== null &&
+            gridNum(loc.grid_north_km) !== null;
+          if (!ok) unplaced.push(loc.location_code);
+          return ok;
+        });
+
+        // The basemap's axes are kilometres east and kilometres *south* of the
+        // corridor origin, matching SVG's downward y. The dataset gives north,
+        // so it is negated once, here, and nowhere else.
+        const inView = placeable.filter(
+          (loc) => (Number(loc.offset_km) || 0) <= level.cap
+        );
+        const outside = placeable
+          .filter((loc) => (Number(loc.offset_km) || 0) > level.cap)
+          .map((loc) => loc.location_code);
+        const points = [
+          { e: 0, s: 0 },
+          { e: maxKm, s: 0 },
+          ...inView.map((loc) => ({
+            e: gridNum(loc.grid_east_km),
+            s: -gridNum(loc.grid_north_km),
+          })),
+        ];
+        const eastMin = Math.min(...points.map((p) => p.e));
+        const eastMax = Math.max(...points.map((p) => p.e));
+        const southMin = Math.min(...points.map((p) => p.s));
+        const southMax = Math.max(...points.map((p) => p.s));
+        // Room at the top for tick labels and the Receipt/Delivery captions,
+        // and at the bottom for the provenance line.
+        const pad = { l: 48, r: 48, t: 74, b: 62 };
+        const spanE = Math.max(eastMax - eastMin, 0.2);
+        const spanS = Math.max(southMax - southMin, 0.2);
+        // One scale for both axes. Anisotropic fitting would make the picture
+        // fill the box and would make every distance in it a lie.
+        const k = Math.min(
+          (W - pad.l - pad.r) / spanE,
+          (H - pad.t - pad.b) / spanS
+        );
+        const centreE = (eastMin + eastMax) / 2;
+        const centreS = (southMin + southMax) / 2;
+        const originX = (pad.l + W - pad.r) / 2 - centreE * k;
+        const originY = (pad.t + H - pad.b) / 2 - centreS * k;
+        const x = (km) => originX + km * k;
+        const toY = (southKm) => originY + southKm * k;
+        const north = (northKm) => toY(-northKm);
+        const corridorY = toY(0);
+        const extentKm = (W - pad.l - pad.r) / k;
+
+        // Scale bar geometry is settled here rather than at paint time,
+        // because the callout search has to treat the bar as occupied space.
+        // A callout printed under the scale bar is not a placed label.
+        const barKm = Math.max(niceCeil(extentKm / 5), 0.1);
+        const barPx = barKm * k;
+        const barY = 26;
+        const barRight = W - 74;
+        const barX = barRight - barPx;
+
+        const parts = [];
+        const base = MAP.basemap;
+        parts.push(
+          `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(
+            `Map of a fictional ${maxKm.toFixed(1)} kilometre crude transfer ` +
+              `corridor and ${placeable.length} storeroom locations, drawn at the ` +
+              `${level.name} extent, about ${niceCeil(extentKm)} kilometres across. ` +
+              (base
+                ? `The land, county and water outlines are real public-domain US ` +
+                  `Census geography for the ${base.setting || base.region || "coast"}, ` +
+                  `included so distances can be read against ground that has scale. ` +
+                  `The corridor, its assets and every storeroom on it are fictional; ` +
+                  `no marker identifies a real facility, and any coincidence with ` +
+                  `one is unintended. `
+                : `The real-geography background could not be loaded, so the ` +
+                  `network is drawn on a plain field; the distances are unchanged. `) +
+              `Both axes use the same linear kilometre scale. Records that share a ` +
+              `point are grouped and listed rather than drawn on top of one another. ` +
+              `Movement in the drawing is decorative. The corridor's ` +
+              `receipt-to-delivery direction is given by the Receipt and Delivery ` +
+              `labels at each end; each access spur carries a static arrowhead ` +
+              `pointing from its storeroom in to the corridor, the direction stock ` +
+              `would be dispatched.`
+          )}">`
+        );
+
+        // Depth. A wash behind the drawing and a glow on the corridor, so the
+        // line reads as the spine of the picture rather than one more stroke.
+        parts.push(
+          `<defs>
+             <linearGradient id="ms-sky" x1="0" y1="0" x2="0" y2="1">
+               <stop offset="0" stop-color="var(--cp-surface)" stop-opacity="0.85" />
+               <stop offset="0.42" stop-color="var(--map-land)" stop-opacity="0.35" />
+               <stop offset="1" stop-color="var(--map-land)" stop-opacity="0.9" />
+             </linearGradient>
+             <radialGradient id="ms-halo" cx="0.5" cy="0.5" r="0.5">
+               <stop offset="0" stop-color="var(--map-corridor)" stop-opacity="0.22" />
+               <stop offset="1" stop-color="var(--map-corridor)" stop-opacity="0" />
+             </radialGradient>
+             <filter id="ms-glow" x="-8%" y="-400%" width="116%" height="900%">
+               <feGaussianBlur stdDeviation="3.4" result="b" />
+               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+             </filter>
+             <filter id="ms-pin" x="-60%" y="-60%" width="220%" height="220%">
+               <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" flood-opacity="0.28" />
+             </filter>
+           </defs>`,
+          `<rect x="0" y="0" width="${W}" height="${H}" fill="${
+            base ? "var(--map-sea)" : "url(#ms-sky)"
+          }" />`
+        );
+
+        // The real ground, drawn once as a single transformed group: the
+        // cached paths are already in kilometres east and south of the
+        // corridor origin, so one translate/scale puts them in exactly the
+        // same coordinate space as every marker. Strokes are marked
+        // non-scaling, or a coastline would be hairline at the Network extent
+        // and a slab at the Corridor extent.
+        //
+        // Counties are drawn before water on purpose. The Census county
+        // polygons take in the coastal bays as land, so drawn alone they would
+        // paint the bays solid and put a storeroom on what looks like dry
+        // ground. The hydrography layer is what puts the water back.
+        if (base) {
+          const layer = (d, cls) =>
+            d
+              ? `<path class="${cls}" d="${esc(d)}" vector-effect="non-scaling-stroke" />`
+              : "";
+          parts.push(
+            `<g class="basemap" transform="translate(${originX.toFixed(
+              3
+            )} ${originY.toFixed(3)}) scale(${k.toFixed(6)})" aria-hidden="true">`,
+            layer(base.context, "geo-context"),
+            layer(base.outline, "geo-outline"),
+            layer(base.counties, "geo-county"),
+            layer(base.water, "geo-water"),
+            `</g>`
+          );
+        }
+
+        parts.push(
+          `<ellipse cx="${x(maxKm / 2).toFixed(1)}" cy="${corridorY.toFixed(
+            1
+          )}" rx="${Math.max(Math.abs(x(maxKm) - x(0)) * 0.9, 70).toFixed(
+            1
+          )}" ry="86" fill="url(#ms-halo)" pointer-events="none" />`
+        );
+
+        // Pulses are collected here and emitted in one layer beneath
+        // everything that carries information: the tick labels, the corridor,
+        // every marker and every callout. A ring reaches 2.4x its radius, so
+        // drawn in place it would cross the tick labels above the line and,
+        // being inside its own location group, the callout text of earlier
+        // groups.
+        const pulses = [];
+        const pulseSlot = parts.length;
+        parts.push("");
+
+        // Corridor ticks, and only where they can be read. At the Network
+        // extent the whole 18 km line is a few pixels wide, so a tick every
+        // 3 km would be a smear of overlapping labels claiming a precision the
+        // view cannot show. The scale bar carries the distance instead.
+        const corridorPx = Math.abs(x(maxKm) - x(0));
+        if (corridorPx >= 260) {
+          const tickStep = maxKm > 12 ? 3 : 1;
+          for (let km = 0; km <= maxKm + 0.001; km += tickStep) {
+            parts.push(
+              `<line x1="${x(km).toFixed(1)}" y1="${(corridorY - 16).toFixed(
+                1
+              )}" x2="${x(km).toFixed(1)}" y2="${(corridorY - 34).toFixed(
+                1
+              )}" stroke="var(--map-line)" stroke-width="1" stroke-dasharray="2 5" />`,
+              `<text class="tick" x="${x(km).toFixed(1)}" y="${(
+                corridorY - 40
+              ).toFixed(
+                1
+              )}" font-size="10" fill="var(--cp-text-muted)" text-anchor="middle">${km.toFixed(
+                0
+              )} km</text>`
+            );
+          }
+        }
+
+        // The corridor itself. Four strokes: a soft bed, a drawn-in core, the
+        // travelling dashes that carry direction, and a sheen.
+        parts.push(
+          `<line class="corridor-base" x1="${x(0)}" y1="${corridorY}" x2="${x(
+            maxKm
+          )}" y2="${corridorY}" />`,
+          `<line class="corridor-core draw" x1="${x(0)}" y1="${corridorY}" x2="${x(
+            maxKm
+          )}" y2="${corridorY}" />`,
+          `<line class="corridor-flow" x1="${x(0)}" y1="${corridorY}" x2="${x(
+            maxKm
+          )}" y2="${corridorY}" />`,
+          `<line class="corridor-sheen" x1="${x(0)}" y1="${corridorY}" x2="${x(
+            maxKm
+          )}" y2="${corridorY}" />`,
+          `<text class="edge fade" x="${x(
+            0
+          )}" y="${(corridorPx >= 260 ? corridorY - 56 : corridorY - 22).toFixed(
+            1
+          )}" font-size="11.5" font-weight="600" fill="var(--cp-text-muted)">Receipt</text>`,
+          `<text class="edge fade" x="${x(
+            maxKm
+          )}" y="${(corridorPx >= 260 ? corridorY - 56 : corridorY - 22).toFixed(
+            1
+          )}" font-size="11.5" font-weight="600" fill="var(--cp-text-muted)" text-anchor="end">Delivery</text>`
+        );
+
+        // Assets sit on the line. Several assets share a position, so they are
+        // grouped rather than drawn on top of one another: a marker that hides
+        // another marker silently loses a record.
+        const assetGroups = new Map();
+        (data.assets || []).forEach((asset) => {
+          const key = Number(asset.route_position_km).toFixed(3);
+          if (!assetGroups.has(key)) assetGroups.set(key, []);
+          assetGroups.get(key).push(asset);
+        });
+        [...assetGroups.entries()]
+          .sort((a, b) => Number(a[0]) - Number(b[0]))
+          .forEach(([key, group], assetIndex) => {
+            const ax = x(Number(key));
+            const names = group
+              .map((a) => `${a.asset_id} (${humanize(a.asset_type)})`)
+              .sort()
+              .join("; ");
+            const label = `${group.length} asset${
+              group.length === 1 ? "" : "s"
+            } at ${Number(key).toFixed(2)} km: ${names}`;
+            // Focusable, with an accessible name. A <title> alone is reachable
+            // by a pointer and by little else; the table below the map is the
+            // other half of the answer.
+            parts.push(
+              `<circle class="asset-dot enter" style="animation-delay:${(
+                420 + assetIndex * 45
+              ).toFixed(0)}ms" cx="${ax.toFixed(1)}" cy="${corridorY.toFixed(
+                1
+              )}" r="${
+                group.length > 1 ? 6.5 : 4.5
+              }" fill="var(--cp-surface)" stroke="var(--map-corridor)" stroke-width="2" filter="url(#ms-pin)" tabindex="0" role="img" aria-label="${esc(
+                label
+              )}"><title>${esc(label)}</title></circle>`
+            );
+            if (group.length > 1) {
+              parts.push(
+                `<text x="${ax.toFixed(1)}" y="${(
+                  corridorY + 3.5
+                ).toFixed(1)}" font-size="8.5" font-weight="700" text-anchor="middle" fill="var(--map-corridor)" pointer-events="none">${
+                  group.length
+                }</text>`
+              );
+            }
+          });
+
+        // Storeroom markers. Locations that share a point are drawn once, at
+        // the true point, with a callout listing every member. Fanning them
+        // out would have been prettier and would have put four storerooms at
+        // four positions none of them holds.
+        const locationGroups = new Map();
+        inView.forEach((loc) => {
+          const key = `${gridNum(loc.grid_east_km).toFixed(3)}|${gridNum(
+            loc.grid_north_km
+          ).toFixed(3)}`;
+          if (!locationGroups.has(key)) locationGroups.set(key, []);
+          locationGroups.get(key).push(loc);
+        });
+
+        const described = (loc) =>
+          `${loc.location_code} — ${humanize(loc.location_type)}${
+            loc.is_mobile ? " (mobile: home base shown, not a field position)" : ""
+          } at ${Number(loc.route_position_km).toFixed(
+            1
+          )} km on the corridor, ${Number(loc.offset_km).toFixed(1)} km off it`;
+
+        [...locationGroups.values()].forEach((group) => {
+          group.sort((a, b) => a.location_code.localeCompare(b.location_code));
+        });
+        // Deterministic draw order, so the routed lanes below are stable
+        // between reloads rather than dependent on object insertion order.
+        const orderedGroups = [...locationGroups.values()].sort(
+          (a, b) =>
+            Number(a[0].offset_km) - Number(b[0].offset_km) ||
+            Number(a[0].route_position_km) - Number(b[0].route_position_km) ||
+            a[0].location_code.localeCompare(b[0].location_code)
+        );
+
+        const placed = [
+          // The scale bar and its label, so no callout is placed under them.
+          { left: barX - 4, top: barY - 12, width: barPx + 66, height: 24 },
+        ];
+        const dropped = [];
+        const LINE = 14;
+        const MIN_TOP = 6;
+        orderedGroups.forEach((group, groupIndex) => {
+          const first = group[0];
+          // The marker sits at the location's own grid point; the spur starts
+          // at its access point on the corridor. Those are two different
+          // places, and the offset the dataset asserts is the distance between
+          // them, so the spur is drawn between them rather than dropped
+          // vertically from the marker.
+          const ax = x(Number(first.route_position_km));
+          const lx = x(gridNum(first.grid_east_km));
+          const ly = north(gridNum(first.grid_north_km));
+          const delay = 520 + groupIndex * 70;
+          const color = tierColor(first.location_type);
+          if (Number(first.offset_km) > 0) {
+            parts.push(
+              `<line class="spur" x1="${ax.toFixed(1)}" y1="${corridorY.toFixed(
+                1
+              )}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" />`,
+              `<line class="spur-flow" style="animation-delay:${(
+                groupIndex * 260
+              ).toFixed(0)}ms" x1="${ax.toFixed(1)}" y1="${corridorY.toFixed(
+                1
+              )}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(
+                1
+              )}" stroke="${color}" />`
+            );
+            // The arrowhead states the direction the travelling dash also
+            // shows — storeroom in to the corridor — so that fact survives
+            // with motion switched off. It is built from the spur's own unit
+            // vector, because the spur is no longer vertical, and it is
+            // clamped to the drawn length: a short spur gets a short arrow
+            // rather than one overhanging both of its ends.
+            const dx = ax - lx;
+            const dy = corridorY - ly;
+            const span = Math.hypot(dx, dy);
+            if (span > 0.5) {
+              const ux = dx / span;
+              const uy = dy / span;
+              const h = Math.min(3.6, span / 3);
+              const w = Math.min(3.2, span / 3);
+              const mx = (ax + lx) / 2;
+              const my = (corridorY + ly) / 2;
+              const tipX = mx + ux * h;
+              const tipY = my + uy * h;
+              const backX = mx - ux * h;
+              const backY = my - uy * h;
+              parts.push(
+                `<path class="spur-arrow" d="M ${tipX.toFixed(1)} ${tipY.toFixed(
+                  1
+                )} L ${(backX - uy * w).toFixed(1)} ${(backY + ux * w).toFixed(
+                  1
+                )} L ${(backX + uy * w).toFixed(1)} ${(backY - ux * w).toFixed(
+                  1
+                )} Z" fill="${color}" />`
+              );
+            }
+          }
+          // Any group member that is mobile makes the marker a diamond, so
+          // mobile stock can never be hidden inside a circle that reads as a
+          // fixed place. The callout says which members are mobile, because a
+          // mixed group is not "a mobile location".
+          const anyMobile = group.some((loc) => loc.is_mobile);
+          const title = group.map(described).join(" | ");
+          const pulse = `<circle class="pulse" style="animation-delay:${(
+            delay + 260
+          ).toFixed(0)}ms" cx="${lx.toFixed(1)}" cy="${ly.toFixed(
+            1
+          )}" r="10" stroke="${color}" />`;
+          pulses.push(pulse);
+          // The entrance scale lives on a wrapper around the marker alone.
+          // On the location group it would scale the leader and the callout
+          // too, moving label ink away from the position the checker
+          // measured. The callout fades in instead: opacity only.
+          parts.push(
+            `<g class="loc" data-locations="${esc(JSON.stringify(group.map((loc) => loc.location_id)))}">`,
+            `<g class="marker enter" style="animation-delay:${delay.toFixed(
+              0
+            )}ms">`
+          );
+          if (anyMobile) {
+            const s = 7;
+            // The rotation lives on a wrapper, not on the rect: a CSS hover
+            // transform on the rect itself would replace the rotate attribute
+            // and turn the diamond back into a square.
+            parts.push(
+              `<g transform="rotate(45 ${lx.toFixed(1)} ${ly.toFixed(1)})">`,
+              `<rect class="body" x="${(lx - s).toFixed(1)}" y="${(ly - s).toFixed(
+                1
+              )}" width="${
+                s * 2
+              }" height="${
+                s * 2
+              }" rx="2" fill="var(--cp-surface)" stroke="${color}" stroke-width="2.2" stroke-dasharray="3 2" filter="url(#ms-pin)" tabindex="0" role="img" aria-label="${esc(
+                title
+              )}"><title>${esc(title)}</title></rect>`,
+              `</g>`,
+              `</g>`
+            );
+          } else {
+            parts.push(
+              `<circle class="body" cx="${lx.toFixed(1)}" cy="${ly.toFixed(
+                1
+              )}" r="7.5" fill="${color}" stroke="var(--cp-surface)" stroke-width="2" filter="url(#ms-pin)" tabindex="0" role="img" aria-label="${esc(
+                title
+              )}"><title>${esc(title)}</title></circle>`,
+              `</g>`
+            );
+          }
+
+          // Callout placement. The marker stays at the true point; only the
+          // text moves. Candidates are searched outward from the marker in
+          // both directions, and only in-bounds positions are considered: a
+          // callout printed outside the view box is not a placed label, it is
+          // a lost one. If nothing clear is available the callout is dropped
+          // and counted, following the same convention as the upstream page —
+          // the record stays reachable through the marker's accessible name
+          // and through the table below.
+          const width =
+            Math.max(...group.map((loc) => loc.location_code.length)) * 7.4 + 14;
+          const height = group.length * LINE;
+          // Horizontal feasibility is decided before any vertical search.
+          // Preferring the right side, then the left, then neither: a box that
+          // fits on no side of the marker cannot be drawn in bounds at all, so
+          // it takes the same drop path as one that is too tall.
+          const rightLeft = lx + 16;
+          const leftLeft = lx - 16 - width;
+          let left = null;
+          if (rightLeft >= 4 && rightLeft + width <= W - 6) {
+            left = rightLeft;
+          } else if (leftLeft >= 4 && leftLeft + width <= W - 6) {
+            left = leftLeft;
+          }
+          if (left === null) {
+            group.forEach((loc) => dropped.push(loc.location_code));
+            parts.push("</g>");
+            return;
+          }
+          const flip = left === leftLeft;
+          const overlaps = (top) =>
+            placed.some(
+              (box) =>
+                left < box.left + box.width &&
+                left + width > box.left &&
+                top < box.top + box.height &&
+                top + height > box.top
+            );
+          // Room is reserved for all three footer notes whether or not they
+          // are needed, so a callout can never be printed where a note will
+          // later be drawn over it.
+          const maxTop = H - 83 - height;
+          let chosen = null;
+          if (maxTop >= MIN_TOP) {
+            const desired = Math.min(
+              Math.max(ly - height / 2, MIN_TOP),
+              maxTop
+            );
+            for (let step = 0; step <= 60 && chosen === null; step += 1) {
+              const candidates =
+                step === 0
+                  ? [desired]
+                  : [desired + step * LINE, desired - step * LINE];
+              for (const candidate of candidates) {
+                if (candidate < MIN_TOP || candidate > maxTop) continue;
+                if (!overlaps(candidate)) {
+                  chosen = candidate;
+                  break;
+                }
+              }
+            }
+          }
+          if (chosen === null) {
+            group.forEach((loc) => dropped.push(loc.location_code));
+            parts.push("</g>");
+            return;
+          }
+          const top = chosen;
+          placed.push({ left, top, width, height });
+
+          const anchorY = top + height / 2;
+          parts.push(
+            `<line class="fade" style="animation-delay:${(delay + 120).toFixed(
+              0
+            )}ms" x1="${(lx + (flip ? -9 : 9)).toFixed(1)}" y1="${ly.toFixed(
+              1
+            )}" x2="${(flip ? left + width + 2 : left - 2).toFixed(
+              1
+            )}" y2="${anchorY.toFixed(
+              1
+            )}" stroke="var(--map-edge)" stroke-width="1" opacity="0.8" />`
+          );
+          group.forEach((loc, index) => {
+            const ty = top + index * LINE + 10;
+            parts.push(
+              `<text class="callout fade" style="animation-delay:${(
+                delay + 180 + index * 40
+              ).toFixed(0)}ms" x="${(flip ? left + width : left).toFixed(
+                1
+              )}" y="${ty.toFixed(
+                1
+              )}" font-size="11" font-weight="600" text-anchor="${
+                flip ? "end" : "start"
+              }" fill="${tierColor(loc.location_type)}">${esc(
+                loc.location_code
+              )}${loc.is_mobile ? " \u25c7" : ""}</text>`
+            );
+          });
+          parts.push("</g>");
+        });
+
+        parts[pulseSlot] = pulses.length
+          ? `<g class="pulse-layer">${pulses.join("")}</g>`
+          : "";
+
+        // A scale bar, because the whole point of a linear scale is that a
+        // reader can measure with it. It is rounded to a readable figure and
+        // then drawn at exactly that length, so the bar is the measurement
+        // rather than an illustration of one. It sits top right, clear of the
+        // notes that stack up from the bottom edge.
+        parts.push(
+          `<g class="scalebar" aria-hidden="true">`,
+          `<line x1="${barX.toFixed(1)}" y1="${barY}" x2="${barRight.toFixed(
+            1
+          )}" y2="${barY}" stroke="var(--cp-text-muted)" stroke-width="2" />`,
+          `<line x1="${barX.toFixed(1)}" y1="${barY - 4}" x2="${barX.toFixed(
+            1
+          )}" y2="${barY + 4}" stroke="var(--cp-text-muted)" stroke-width="2" />`,
+          `<line x1="${barRight.toFixed(1)}" y1="${
+            barY - 4
+          }" x2="${barRight.toFixed(1)}" y2="${
+            barY + 4
+          }" stroke="var(--cp-text-muted)" stroke-width="2" />`,
+          `<text x="${(barRight + 6).toFixed(1)}" y="${
+            barY + 3.5
+          }" font-size="10.5" fill="var(--cp-text-muted)">${
+            barKm >= 1 ? barKm.toFixed(0) : barKm.toFixed(1)
+          } km</text>`,
+          `</g>`
+        );
+
+        // Anything the picture does not show, said in the picture. Each note
+        // is a line of its own, stacking upward from the provenance rows, and
+        // the callout search reserves room for all three whether or not they
+        // are used: a note that overprints a callout has cost the reader a
+        // record to tell them about a record.
+        const notes = [];
+        if (outside.length) {
+          // A count, not a list. The codes would overflow the view box on a
+          // large network, and a clipped list is a worse answer than a
+          // number: the table below carries every code in full.
+          notes.push(
+            `${outside.length} location${
+              outside.length === 1 ? " lies" : "s lie"
+            } outside this extent and ${
+              outside.length === 1 ? "is" : "are"
+            } not drawn. Choose a wider extent, or see the table below.`
+          );
+        }
+        if (unplaced.length) {
+          notes.push(
+            `${unplaced.length} location${
+              unplaced.length === 1 ? " carries" : "s carry"
+            } no grid position and ${
+              unplaced.length === 1 ? "is" : "are"
+            } not drawn. Each is still listed in the table below.`
+          );
+        }
+        if (dropped.length) {
+          notes.push(
+            `${dropped.length} callout${
+              dropped.length === 1 ? "" : "s"
+            } could not be placed clear and ${
+              dropped.length === 1 ? "is" : "are"
+            } not drawn. Each is named on its marker and in the table below.`
+          );
+        }
+        notes.forEach((note, index) => {
+          parts.push(
+            `<text x="8" y="${(
+              H - 38 - (notes.length - 1 - index) * 15
+            ).toFixed(
+              1
+            )}" font-size="10.5" fill="var(--cp-warning)">${esc(note)}</text>`
+          );
+        });
+
+        // Provenance, in two lines because one would run past the view box.
+        parts.push(
+          `<text x="8" y="${H - 22}" font-size="10.5" fill="var(--cp-text-muted)">${esc(
+            base
+              ? `${
+                  base.setting || base.region || "Coast"
+                } \u2014 real public-domain US Census boundary and hydrography.`
+              : `Real-geography background unavailable; the network is drawn on a plain field.`
+          )} Both axes use one linear kilometre scale.</text>`,
+          `<text x="8" y="${
+            H - 8
+          }" font-size="10.5" fill="var(--cp-text-muted)">The corridor, its assets and every storeroom on it are fictional: no marker identifies a real facility, and any coincidence with one is unintended.</text>`
+        );
+        parts.push("</svg>");
+        return parts.join("");
+      }
+
+      function legend() {
+        return `<div class="legend">${TIER_ORDER.map(
+          (t) =>
+            `<span><i style="background:${tierColor(t)}"></i>${esc(humanize(t))}</span>`
+            ).join("")}<span><i style="background:var(--map-corridor)"></i>Corridor and assets</span>
+          <span>The land, county and water outlines are real public-domain
+          US Census geography, simplified for display and included only so
+          distances can be read at scale. They must not be used for
+          navigation, surveying or any operational decision. Everything drawn
+          on them &mdash; the corridor, its assets and every storeroom &mdash;
+          is fictional: no marker represents or identifies a real facility,
+          company or operation, and any spatial coincidence with one is
+          unintended.</span>
+            <span>A marker carrying a number holds that many records at one point,
+            listed in its callout and in the tables below. A dashed diamond marks a
+            point where at least one record is mobile stock; the callout marks each
+            mobile one with &#9671;, because a shared point may hold both.</span>
+            <span>Movement in the drawing is decorative. It shows the corridor's
+            receipt-to-delivery direction and the storeroom access spurs; it is not
+            a rate, a live position or a measured flow. Stock playback is a separate,
+            explicit local simulation. Both directions it shows are also drawn: the
+            Receipt and Delivery labels give the corridor's direction, and each
+            access spur carries a static arrowhead pointing from its storeroom in
+            to the corridor, the direction stock would be dispatched. Nothing is
+            said only by moving. The drawing stops moving entirely when the system
+            asks for reduced motion.</span></div>`;
+      }
+
+      function stockKey(row) {
+        return JSON.stringify([row.part_master_id, row.location_id]);
+      }
+
+      function quantityStatus(value, threshold = 10) {
+        if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) return "unknown";
+        return value === 0 ? "out_of_stock" : value < threshold ? "low" : "available";
+      }
+
+      const stockQuantity = (value) => num(quantityStatus(value) === "unknown" ? null : value);
+
+      function compareStockRows(a, b, parts) {
+        const rank = { out_of_stock: 0, low: 1, unknown: 2, available: 3 };
+        const criticality = { V: 0, E: 1, D: 2 };
+        const pa = parts.get(a.part_master_id), pb = parts.get(b.part_master_id);
+        return rank[quantityStatus(a.quantity)] - rank[quantityStatus(b.quantity)] ||
+          (criticality[pa.criticality_class] ?? 3) - (criticality[pb.criticality_class] ?? 3) ||
+          String(pa.part_name).localeCompare(String(pb.part_name)) ||
+          String(a.location_code || "").localeCompare(String(b.location_code || ""));
+      }
+
+      function frameHistory(frames, index) {
+        return frames.slice(0, index + 1).flatMap((frame) => [
+          ...frame.movements.map((event) => ({ ...event, event_type: "movement", elapsed_minutes: frame.elapsed_minutes })),
+          ...frame.alerts.map((event) => ({ ...event, event_type: "alert", elapsed_minutes: frame.elapsed_minutes })),
+        ]).reverse();
+      }
+
+      // Fail closed on broken identities or mismatched snapshots; an invalid
+      // quantity itself remains visible as unknown, never a fabricated zero.
+      function validateMovementPayload(payload) {
+        const data = payload?.inventory, movement = payload?.movement;
+        const fail = (message) => { throw new Error(`Invalid inventory response: ${message}`); };
+        if (!data || !movement || !["parts", "locations", "stock", "assets"].every((key) => Array.isArray(data[key]))) fail("missing inventory collections.");
+        if (typeof data.stock_is_known !== "boolean" || (!data.stock_is_known && (data.stock.length || movement.available))) fail("inconsistent opening-stock availability.");
+        if (!Array.isArray(movement.frames) || !movement.frames.length || !Array.isArray(movement.focus) ||
+            typeof movement.available !== "boolean" || movement.threshold !== 10) fail("missing movement frames or threshold.");
+        if (movement.available && (movement.frames.length !== 6 || !movement.focus.length)) fail("the six-stage scenario is incomplete.");
+        if (!movement.available && movement.frames.length !== 1) fail("unavailable playback must contain opening stock only.");
+        const ids = (rows, key) => {
+          const values = rows.map((row) => row?.[key]);
+          if (values.some((id) => typeof id !== "string" || !id.trim()) || new Set(values).size !== values.length) fail(`missing or duplicate ${key}.`);
+          return new Set(values);
+        };
+        const parts = ids(data.parts, "part_master_id"), locations = ids(data.locations, "location_id");
+        const checkStock = (rows) => {
+          if (!Array.isArray(rows)) fail("stock is not a collection.");
+          const keys = new Set();
+          rows.forEach((row) => {
+            if (!row || !parts.has(row.part_master_id) || !locations.has(row.location_id) || keys.has(stockKey(row))) fail("unknown or duplicate stock identity.");
+            keys.add(stockKey(row));
+          });
+          return keys;
+        };
+        const baseline = checkStock(data.stock);
+        movement.frames.forEach((frame, index) => {
+          if (frame?.index !== index || typeof frame.label !== "string" || !Number.isFinite(frame.elapsed_minutes) || frame.elapsed_minutes < 0 ||
+              !["movements", "alerts", "active_alerts"].every((key) => Array.isArray(frame[key]))) fail("malformed frame.");
+          const keys = checkStock(frame.stock);
+          if (keys.size !== baseline.size || [...keys].some((key) => !baseline.has(key))) fail("stock positions changed between frames.");
+          [...frame.movements, ...frame.alerts, ...frame.active_alerts].forEach((event) => {
+            if (!event || !baseline.has(stockKey(event))) fail("event references an unknown stock position.");
+          });
+          frame.movements.forEach((event) => {
+            if (![event.quantity_before, event.delta, event.quantity_after].every((value) => typeof value === "number" && Number.isFinite(value)) ||
+                event.quantity_before + event.delta !== event.quantity_after || event.quantity_after < 0) fail("movement quantities do not reconcile.");
+          });
+          [...frame.alerts, ...frame.active_alerts].forEach((event) => {
+            if (!["fired", "resolved"].includes(event.state) || event.threshold !== movement.threshold ||
+                quantityStatus(event.quantity) === "unknown") fail("malformed alert.");
+          });
+        });
+        const opening = new Map(movement.frames[0].stock.map((row) => [stockKey(row), row.quantity]));
+        if (data.stock.some((row) => opening.get(stockKey(row)) !== row.quantity) || movement.frames[0].movements.length) fail("opening stock does not match the baseline.");
+        if (movement.focus.some((row) => !row || !baseline.has(stockKey(row)) || quantityStatus(opening.get(stockKey(row))) === "unknown")) fail("unknown focus position.");
+        return payload;
+      }
+
+      const UI = { payload: null, index: 0, timer: null, location: "", selected: "", focusIndex: 0, speed: 1800 };
+      const byId = (id) => document.getElementById(id);
+      const currentFrame = () => UI.payload.movement.frames[UI.index];
+      const focusKeys = () => new Set(UI.payload.movement.focus.map(stockKey));
+      const statusPill = (quantity) => {
+        const status = quantityStatus(quantity);
+        return `<span class="pill ${status}">${esc(humanize(status))}</span>`;
+      };
+
+      function render(payload) {
+        UI.payload = validateMovementPayload(payload);
+        const data = payload.inventory, movement = payload.movement;
+        MAP.data = data;
+        byId("root").innerHTML = `
+          <div class="hero">
+            <div><div class="eyebrow">A fictional corridor. A clear stock story.</div>
+              <h2>Every part.<br>In the <em>right place.</em></h2>
+              <p>Find the storeroom. Read the count. Follow a deterministic journey from opening stock to replenishment.</p></div>
+            <div class="local-note"><strong>Portal alert preview</strong><br>Not sent to Azure. Playback stays in this browser tab. No writes. No operational use.</div>
+          </div>
+          <div class="stats" aria-label="Inventory summary">
+            <div class="stat"><div class="k">Catalogued parts</div><div class="v">${num(data.parts.length)}</div><small>Distinct fictional part identities</small></div>
+            <div class="stat"><div class="k">Stock locations</div><div class="v">${num(data.locations.length)}</div><small>Fixed stores &amp; mobile home bases</small></div>
+            <div class="stat"><div class="k">Stock positions</div><div class="v">${num(data.stock_is_known ? data.stock.length : null)}</div><small>Part × location · no mixed-unit totals</small></div>
+            <div class="stat"><div class="k">Active low-stock previews</div><div class="v" id="alert-count">—</div><small id="alert-summary">Loading opening state</small></div>
+          </div>
+          <section aria-labelledby="movement-title">
+            <div class="section-head"><div><div class="eyebrow">01 / The stock story</div><h2 id="movement-title">${esc(movement.title || "Depletion and replenishment")}</h2></div><span class="pill focus">Local deterministic playback</span></div>
+            <div class="story">
+              <div class="focus-card"><label class="eyebrow" for="focus-part">Follow a scenario position</label>
+                <select id="focus-part" style="display:block;max-width:100%;margin-top:8px" ${!movement.focus.length ? "disabled" : ""}>
+                  ${movement.focus.map((row, index) => `<option value="${index}">${esc(row.part_name)} · ${esc(row.location_code)}</option>`).join("") || '<option>No eligible focus position</option>'}
+                </select><div id="focus-story"></div></div>
+              <div><div class="eyebrow" id="stage-clock">Synthetic elapsed · 0 min</div>
+                <h3 class="stage-title" id="stage-title">Opening stock</h3><p class="stage-copy" id="stage-copy"></p>
+                <ol class="timeline" id="timeline" aria-label="Six-stage movement timeline"></ol>
+                <div class="playback" role="group" aria-label="Movement playback">
+                  <button class="primary" id="play" type="button" disabled>▶ Play</button>
+                  <button id="step" type="button" disabled>Step →</button>
+                  <button id="reset" type="button" disabled>↺ Reset</button>
+                  <label for="speed">Pace <select id="speed"><option value="1800">Normal</option><option value="3600">Slow</option><option value="900">Fast</option></select></label>
+                </div><p class="sub" style="margin:12px 0 0">One pass. Stops after replenishment. Step always pauses.</p>
+              </div>
+            </div>
+            <div class="low-strip" id="low-strip"></div>
+            <p class="sr-only" id="playback-status" role="status" aria-live="polite"></p>
+          </section>
+          <section aria-labelledby="network-title">
+            <div class="section-head"><div><div class="eyebrow">02 / Find the location</div><h2 id="network-title">One network. Every storeroom.</h2><p class="sub">Select a location below or a map marker to narrow the stock list. Map motion is decorative, not stock movement.</p></div>
+              <button id="all-locations" type="button">All locations</button></div>
+            <div class="zoom" id="zoom" role="group" aria-label="Map extent"></div>
+            <div class="mapwrap" id="mapwrap" tabindex="0" role="region" aria-label="Fictional network map; scroll horizontally on small screens">${drawMap(data)}</div>
+            <p id="map-selection" class="sub" style="margin:12px 0 0"></p>
+            <div class="locations" id="locations" role="group" aria-label="Storeroom locations"></div>
+            <details class="provenance"><summary>How to read this map · geography, grouping &amp; motion</summary>${legend()}</details>
+          </section>
+          <section aria-labelledby="stock-title">
+            <div class="section-head"><div><div class="eyebrow">03 / Know the count</div><h2 id="stock-title">Stock by part &amp; location</h2><p class="sub" id="stock-context"></p></div><button class="text-button" id="clear-filters" type="button">Clear filters</button></div>
+            <div class="stock-layout">
+              <div><div class="controls">
+                <label for="q">Search parts or locations<input type="search" id="q" placeholder="Name, stock code, part key, location…"></label>
+                <label for="scope">Scope<select id="scope"><option value="">All scopes</option><option value="shared">Shared</option><option value="midstream">Midstream</option></select></label>
+                <label for="crit">Criticality<select id="crit"><option value="">All criticality</option><option value="V">V — vital</option><option value="E">E — essential</option><option value="D">D — desirable</option></select></label>
+                <label for="stock-status">Stock state<select id="stock-status"><option value="">All states</option><option value="attention">Below 10</option><option value="out_of_stock">Out of stock</option><option value="available">Available</option><option value="unknown">Unknown</option><option value="focus">Scenario focus</option></select></label>
+              </div><p class="sub" id="result-count" role="status"></p>
+              <div class="table-scroll"><table id="parts"><thead><tr><th>Part / stock code</th><th>Location</th><th class="num">Quantity / UOM</th><th>State</th></tr></thead><tbody></tbody></table></div></div>
+              <aside class="drawer" id="detail" aria-label="Part and location details" tabindex="-1"></aside>
+            </div>
+          </section>
+          <div class="activity-grid">
+            <section aria-labelledby="alerts-title"><div class="eyebrow">04 / Portal alert preview</div><h2 id="alerts-title">Current attention</h2><p class="sub">Strictly below 10 per stock position. Zero is out of stock. Never sent to Azure.</p><div id="active-alerts"></div></section>
+            <section aria-labelledby="activity-title"><div class="eyebrow">05 / The movement record</div><h2 id="activity-title">Activity, not telemetry</h2><p class="sub">Synthetic elapsed time. History derives from selected frames; reset restores the opening record.</p><ul id="activity" class="activity-list"></ul><details style="margin-top:16px"><summary id="other-history-count">Other alert transitions</summary><ul id="other-history" class="activity-list"></ul></details></section>
+          </div>
+          <details class="provenance"><summary>Synthetic provenance, stock basis &amp; asset directory</summary>
+            <p><strong>Local only.</strong> Every part, storeroom and stock quantity is fictional and synthetic. Not real parts, operational stock or real facility locations. Dataset <code>${esc(data.source_dataset)}</code>. ${esc(data.stock_note)}</p>
+            <p>Opening quantities are folded from the append-only ledger. Subsequent frames are a local synthetic overlay, not ledger writes. No aggregate mixes units of measure. Unknown quantity is never zero. Initially low serialized stock can be intentional in this synthetic model; scenario focus is separately marked.</p>
+            <p>Frame <code>${esc(data.route_frame)}</code>, planar grid <code>${esc(data.grid_frame)}</code>, <code>position_claim: ${esc(data.position_claim)}</code>. Real public-domain geography is simplified for display; the corridor, assets and storerooms are fictional, and no marker identifies a real facility. Any spatial coincidence is unintended. Do not use for navigation, surveying or any operational decision.</p>
+            <h3>Assets on the corridor</h3><div class="table-scroll"><table><thead><tr><th>Asset</th><th>Type</th><th>Corridor km</th></tr></thead><tbody>${data.assets.map((asset) => `<tr><td>${esc(asset.asset_id)}</td><td>${esc(humanize(asset.asset_type))}</td><td>${num(asset.route_position_km)}</td></tr>`).join("")}</tbody></table></div>
+            <p>${num(data.totals?.fitment_rows)} fitment rows · ${num(data.totals?.travel_rows)} travel rows. Synthetic access and fitment metadata are available in the stock detail panel.</p>
+          </details>`;
+        byId("play").onclick = () => UI.timer ? pausePlayback() : playPlayback();
+        byId("step").onclick = () => { pausePlayback(); setFrame(UI.index + 1); };
+        byId("reset").onclick = () => { pausePlayback(); setFrame(0); };
+        byId("speed").onchange = () => {
+          UI.speed = Number(byId("speed").value);
+          if (UI.timer) { pausePlayback(); playPlayback(); }
+        };
+        byId("focus-part").onchange = () => { UI.focusIndex = Number(byId("focus-part").value); drawStory(); };
+        byId("all-locations").onclick = () => selectLocation("");
+        byId("clear-filters").onclick = clearFilters;
+        ["q", "scope", "crit", "stock-status"].forEach((id) => byId(id).addEventListener("input", drawStock));
+        byId("mapwrap").addEventListener("click", mapSelect);
+        byId("mapwrap").addEventListener("keydown", (event) => {
+          if ((event.key === "Enter" || event.key === " ") && event.target.closest(".loc .body")) { event.preventDefault(); mapSelect(event); }
+        });
+        wireZoom(data);
+        updateFrame();
+      }
+
+      function pausePlayback() {
+        clearInterval(UI.timer);
+        UI.timer = null;
+        updatePlaybackControls();
+      }
+
+      function playPlayback() {
+        if (UI.timer || !UI.payload.movement.available || UI.index >= UI.payload.movement.frames.length - 1) return;
+        UI.timer = setInterval(() => setFrame(UI.index + 1), UI.speed);
+        updatePlaybackControls();
+      }
+
+      function setFrame(index) {
+        UI.index = Math.max(0, Math.min(index, UI.payload.movement.frames.length - 1));
+        if (UI.index === UI.payload.movement.frames.length - 1) pausePlayback();
+        updateFrame();
+      }
+
+      function updatePlaybackControls() {
+        const final = UI.index === UI.payload.movement.frames.length - 1;
+        byId("play").textContent = UI.timer ? "Ⅱ Pause" : "▶ Play";
+        byId("play").setAttribute("aria-label", UI.timer ? "Pause movement" : "Play movement");
+        byId("play").disabled = !UI.payload.movement.available || final;
+        byId("step").disabled = !UI.payload.movement.available || final;
+        byId("reset").disabled = UI.index === 0 && !UI.timer;
+      }
+
+      function updateFrame() {
+        const frame = currentFrame(), focuses = focusKeys();
+        const focusLow = frame.active_alerts.filter((row) => focuses.has(stockKey(row))).length;
+        byId("alert-count").textContent = UI.payload.inventory.stock_is_known ? frame.active_alerts.length : "unknown";
+        byId("alert-summary").textContent = UI.payload.inventory.stock_is_known
+          ? `${focusLow} scenario focus · ${frame.active_alerts.length - focusLow} other positions`
+          : "Opening stock unavailable; not zero";
+        drawStory();
+        drawLocations();
+        drawStock();
+        drawDetail();
+        drawActivity();
+        highlightMap();
+        updatePlaybackControls();
+        byId("playback-status").textContent = `${frame.label}. Synthetic elapsed ${frame.elapsed_minutes} minutes. ${focusLow} focus positions below 10.`;
+      }
+
+      function drawStory() {
+        const movement = UI.payload.movement, frame = currentFrame(), focus = movement.focus[UI.focusIndex];
+        byId("stage-clock").textContent = `Synthetic elapsed · ${frame.elapsed_minutes} min · Stage ${UI.index + 1} of ${movement.frames.length}`;
+        byId("stage-title").textContent = frame.label;
+        const copy = [
+          "Start with the exact nominal opening position. Nothing has moved yet.",
+          "A planned issue draws focus stock down to 12. The count is still above the minimum.",
+          "Exactly 10 remains. The strict below-10 alert has not fired.",
+          "At 9, the threshold is crossed. A portal-only low-stock preview fires.",
+          "At zero, stock is explicitly unavailable. The same alert episode stays open.",
+          "A receipt restores the exact opening quantity. The focus alert resolves.",
+        ];
+        byId("stage-copy").textContent = movement.available ? copy[UI.index] : (movement.unavailable_reason || "Movement is unavailable for this dataset. Opening inventory remains available below.");
+        byId("timeline").innerHTML = movement.frames.map((item, index) => `<li class="${index <= UI.index ? "done" : ""}" ${index === UI.index ? 'aria-current="step"' : ""}><b>${String(index + 1).padStart(2, "0")}</b>${esc(item.label)}</li>`).join("");
+        if (focus) {
+          const row = frame.stock.find((item) => stockKey(item) === stockKey(focus));
+          const opening = movement.frames[0].stock.find((item) => stockKey(item) === stockKey(focus));
+          const max = Math.max(opening.quantity, movement.threshold, 1);
+          const known = quantityStatus(row.quantity) !== "unknown";
+          byId("focus-story").innerHTML = `<h3>${esc(focus.part_name)}</h3><div class="muted">${esc(focus.location_code)} <span class="pill focus">Scenario focus</span></div>
+            <div class="focus-value"><div class="quantity" id="focus-quantity">${stockQuantity(row.quantity)}<small>${esc(focus.uom || "UOM unknown")}</small></div>${statusPill(row.quantity)}</div>
+            <div class="gauge" role="img" aria-label="${esc(`Quantity ${known ? row.quantity : "unknown"} ${focus.uom || ""}; minimum ${movement.threshold}; opening ${opening.quantity}`)}"><div class="gauge-fill" style="width:${known ? Math.min(100, row.quantity / max * 100) : 0}%"></div><i class="gauge-min" style="left:${movement.threshold / max * 100}%"></i></div>
+            <div class="gauge-caption"><span>0 ${esc(focus.uom)}</span><strong>Min ${movement.threshold} · alert &lt; ${movement.threshold}</strong><span>Opening ${num(opening.quantity)} ${esc(focus.uom)}</span></div>
+            <button class="text-button" id="locate-focus" type="button" style="margin-top:16px">Locate this stock position →</button>`;
+          byId("locate-focus").onclick = () => selectStock(stockKey(focus), true, true);
+        } else {
+          byId("focus-story").innerHTML = '<p class="empty">No eligible opening position to animate. Browse the actual inventory below; no quantities have been invented.</p>';
+        }
+        const focuses = focusKeys(), focusLow = frame.active_alerts.filter((row) => focuses.has(stockKey(row))).length;
+        const other = frame.active_alerts.length - focusLow;
+        const unknown = frame.stock.filter((row) => quantityStatus(row.quantity) === "unknown").length;
+        if (!UI.payload.inventory.stock_is_known) {
+          byId("low-strip").innerHTML = '<strong>Opening stock unknown</strong><span>No low-stock conclusion is available. Missing inventory is not zero.</span>';
+          return;
+        }
+        byId("low-strip").innerHTML = `<strong>${focusLow} focus position${focusLow === 1 ? "" : "s"} below minimum</strong><span>${other} other low-stock positions · ${unknown} unknown</span><span class="muted">Initial low stock is included; serialized items can be intentionally low.</span><button class="text-button" id="show-low" type="button">Inspect low stock →</button>`;
+        byId("show-low").onclick = () => { clearFilters(); byId("stock-status").value = "attention"; drawStock(); byId("stock-title").scrollIntoView({ block: "start" }); byId("stock-status").focus({ preventScroll: true }); };
+      }
+
+      function drawLocations() {
+        const frame = currentFrame();
+        const focusedIndex = document.activeElement?.dataset.locationIndex;
+        byId("locations").innerHTML = UI.payload.inventory.locations.map((loc, index) => {
+          const rows = frame.stock.filter((row) => row.location_id === loc.location_id);
+          const low = rows.filter((row) => ["low", "out_of_stock"].includes(quantityStatus(row.quantity))).length;
+          const unknown = rows.filter((row) => quantityStatus(row.quantity) === "unknown").length;
+          return `<button type="button" class="location-card" data-location-index="${index}" aria-pressed="${UI.location === loc.location_id}"><strong>${esc(loc.location_code)}</strong><small>${esc(humanize(loc.location_type))}${loc.is_mobile ? " · mobile home base" : ""}</small><span class="counts">${UI.payload.inventory.stock_is_known ? `${rows.length} positions · ${low} below min${unknown ? ` · ${unknown} unknown` : ""}` : "Stock unknown"}</span></button>`;
+        }).join("") || '<p class="empty">No storeroom locations recorded.</p>';
+        byId("locations").querySelectorAll("button").forEach((button) => button.onclick = () => selectLocation(UI.payload.inventory.locations[Number(button.dataset.locationIndex)].location_id));
+        if (focusedIndex !== undefined) byId("locations").querySelector(`[data-location-index="${Number(focusedIndex)}"]`)?.focus({ preventScroll: true });
+        byId("all-locations").setAttribute("aria-pressed", String(!UI.location));
+      }
+
+      function selectLocation(id) {
+        UI.location = id;
+        UI.selected = "";
+        ensureSelectedVisible();
+        drawLocations(); drawStock(); drawDetail(); highlightMap();
+      }
+
+      function selectStock(key, navigate = false, resetFilters = false) {
+        UI.selected = key;
+        const row = currentFrame().stock.find((item) => stockKey(item) === key);
+        if (row) UI.location = row.location_id;
+        if (resetFilters) ["q", "scope", "crit", "stock-status"].forEach((id) => { byId(id).value = ""; });
+        ensureSelectedVisible();
+        drawLocations(); drawStock(); drawDetail(); highlightMap();
+        if (navigate) { byId("detail").scrollIntoView({ block: "nearest" }); byId("detail").focus({ preventScroll: true }); }
+      }
+
+      function ensureSelectedVisible() {
+        const loc = UI.payload.inventory.locations.find((item) => item.location_id === UI.location);
+        if (!loc) return;
+        const levels = zoomLevels(MAP.data);
+        if (Number(loc.offset_km) > levels[resolveZoom(levels)].cap) {
+          MAP.zoom = levels.length - 1;
+          byId("mapwrap").innerHTML = drawMap(MAP.data);
+          wireZoom(MAP.data);
+        }
+      }
+
+      function mapSelect(event) {
+        const group = event.target.closest(".loc");
+        if (!group) return;
+        const ids = JSON.parse(group.dataset.locations);
+        // Coincident records stay at their true point; successive activations
+        // cycle the members while the location rail exposes every choice.
+        const next = (ids.indexOf(UI.location) + 1) % ids.length;
+        selectLocation(ids[next]);
+      }
+
+      function highlightMap() {
+        const loc = UI.payload.inventory.locations.find((item) => item.location_id === UI.location);
+        let visible = false;
+        byId("mapwrap").querySelector("svg.map")?.setAttribute("role", "group");
+        byId("mapwrap").querySelectorAll(".loc").forEach((group) => {
+          const ids = JSON.parse(group.dataset.locations);
+          const selected = ids.includes(UI.location);
+          group.classList.toggle("selected", selected);
+          visible ||= selected;
+          const marker = group.querySelector(".body");
+          if (marker) { marker.setAttribute("role", "button"); marker.setAttribute("aria-pressed", String(selected)); }
+        });
+        byId("map-selection").textContent = loc
+          ? `${loc.location_code} selected · ${loc.is_mobile ? "Mobile home base, not a field position. " : ""}${visible ? "Highlighted marker; shared points contain multiple locations. Activate a shared marker again to cycle locations." : "Outside this extent or missing grid position; choose Network to check the full map."}`
+          : "All locations shown in the list. Markers and location cards are keyboard accessible. Shared markers cycle their locations.";
+      }
+
+      function wireZoom(data) {
+        const levels = zoomLevels(data);
+        resolveZoom(levels);
+        byId("zoom").innerHTML = levels.map((level, index) => `<button type="button" data-zoom="${index}" aria-pressed="${index === MAP.zoom}">${esc(level.name)}</button>`).join("");
+        byId("zoom").querySelectorAll("button").forEach((button) => button.onclick = () => {
+          MAP.zoom = Number(button.dataset.zoom);
+          byId("mapwrap").innerHTML = drawMap(data);
+          byId("zoom").querySelectorAll("button").forEach((other) => other.setAttribute("aria-pressed", String(Number(other.dataset.zoom) === MAP.zoom)));
+          highlightMap();
+        });
+      }
+
+      function clearFilters() {
+        ["q", "scope", "crit", "stock-status"].forEach((id) => { byId(id).value = ""; });
+        selectLocation("");
+      }
+
+      function stockRows() {
+        const rows = currentFrame().stock.slice();
+        const stocked = new Set(rows.map((row) => row.part_master_id));
+        // Catalogued parts without a stocked position are still discoverable.
+        UI.payload.inventory.parts.filter((part) => !stocked.has(part.part_master_id)).forEach((part) => rows.push({ part_master_id: part.part_master_id, location_id: null, quantity: null }));
+        return rows;
+      }
+
+      function drawStock() {
+        const data = UI.payload.inventory, focuses = focusKeys();
+        const term = byId("q").value.trim().toLowerCase(), scope = byId("scope").value, crit = byId("crit").value, status = byId("stock-status").value;
+        const parts = new Map(data.parts.map((part) => [part.part_master_id, part]));
+        const rows = stockRows().filter((row) => {
+          const part = parts.get(row.part_master_id);
+          const state = quantityStatus(row.quantity);
+          return (!UI.location || row.location_id === UI.location) && (!scope || part.part_scope === scope) &&
+            (!crit || part.criticality_class === crit) &&
+            (!status || (status === "attention" ? ["low", "out_of_stock"].includes(state) : status === "focus" ? focuses.has(stockKey(row)) : state === status)) &&
+            (!term || [part.part_name, part.stock_code, part.part_key, row.location_code].join(" ").toLowerCase().includes(term));
+        }).sort((a, b) => compareStockRows(a, b, parts));
+        const loc = data.locations.find((item) => item.location_id === UI.location);
+        byId("stock-context").textContent = `${loc ? loc.location_code : "All locations"} · ${currentFrame().label} · Each quantity belongs to one part, one location and its stated UOM.`;
+        byId("result-count").textContent = `${rows.length} matching ${rows.length === 1 ? "row" : "rows"} · Select a part for fitment, storage and access details.`;
+        document.querySelector("#parts tbody").innerHTML = rows.map((row, index) => {
+          const part = parts.get(row.part_master_id), key = stockKey(row);
+          return `<tr class="${UI.selected === key ? "selected" : ""}"><td><button class="part-button" type="button" data-stock-index="${index}" aria-label="${esc(`${part.part_name} at ${row.location_code || "no recorded location"}; view details`)}">${esc(part.part_name)}</button><br><small class="muted">${esc(part.stock_code)} · ${esc(part.criticality_class || "unknown")}${focuses.has(key) ? ' · <span class="pill focus">Focus</span>' : ""}</small></td>
+            <td>${esc(row.location_code || "No stock position recorded")}<br><small class="muted">${esc(humanize(row.location_type))}</small></td><td class="num"><strong>${stockQuantity(row.quantity)}</strong> ${esc(part.uom || "UOM unknown")}</td><td>${statusPill(row.quantity)}</td></tr>`;
+        }).join("") || '<tr><td colspan="4" class="empty">No stock matches these filters. Clear filters or choose another location.</td></tr>';
+        document.querySelectorAll("[data-stock-index]").forEach((button) => button.onclick = () => selectStock(stockKey(rows[Number(button.dataset.stockIndex)]), true));
+      }
+
+      function drawDetail() {
+        const data = UI.payload.inventory, row = stockRows().find((item) => stockKey(item) === UI.selected);
+        const loc = data.locations.find((item) => item.location_id === (row?.location_id || UI.location));
+        const part = data.parts.find((item) => item.part_master_id === row?.part_master_id);
+        const held = part ? currentFrame().stock.filter((item) => item.part_master_id === part.part_master_id) : [];
+        const field = (label, value) => `<dt>${label}</dt><dd>${value}</dd>`;
+        byId("detail").innerHTML = `<div class="eyebrow">The detail, not the guess</div>${part ? '<button class="close" id="close-detail" type="button" aria-label="Close part details">×</button>' : ""}
+          <h3>${esc(part?.part_name || loc?.location_code || "Choose a stock position")}</h3>
+          ${!part && !loc ? '<p class="sub">Select a part in the list to inspect its exact location, quantity, fitment and storage requirements.</p>' : ""}
+          ${part ? `<p class="sub">${esc(part.stock_code)}<br><code>${esc(part.part_key)}</code></p><div style="font-size:24px"><strong>${stockQuantity(row.quantity)}</strong> ${esc(part.uom || "UOM unknown")}</div>${statusPill(row.quantity)}
+            <h3>Stock at each location</h3><ul class="held-list">${held.map((item, index) => `<li><button type="button" data-held-index="${index}" aria-pressed="${item.location_id === row.location_id}">${esc(item.location_code)} &middot; <strong>${stockQuantity(item.quantity)} ${esc(part.uom)}</strong></button></li>`).join("") || '<li class="none">No stock position recorded</li>'}</ul>
+            <dl>${field("Scope · class · criticality", esc([part.part_scope, part.part_class, part.criticality_class].join(" · ")))}
+            ${field("Tracking", esc(humanize(part.tracking_mode)))}
+            ${field("Required storage class", esc(humanize(part.required_storage_class)))}
+            ${field("Synthetic lead time", `${num(part.nominal_lead_time_days_synthetic)} days · ${esc(humanize(part.lead_band))}`)}
+            ${field("Fitment", part.has_fitment && Array.isArray(part.fits) && part.fits.length
+              ? `<ul class="fitlist">${part.fits.map((fit) => `<li>${esc(humanize(fit.asset_type))} × ${esc(fit.quantity_per_assembly)}</li>`).join("")}</ul>`
+              : `<span class="none">${part.is_site_wide ? "site-wide, " : ""}no fitment recorded</span>`)}
+            </dl>` : ""}
+          ${loc ? `<dl>${field("Location", `<strong>${esc(loc.location_code)}</strong> · ${esc(humanize(loc.location_type))}${loc.is_mobile ? "<br>Mobile: home base shown, not field position" : ""}`)}
+            ${field("Stocking profile", esc(humanize(loc.stocking_profile)))}
+            ${field("Location storage address (synthetic)", ["zone", "aisle", "rack", "shelf", "bin_code"].filter((name) => loc[name] !== null && loc[name] !== undefined && loc[name] !== "").map((name) => `${esc(humanize(name))}: ${esc(loc[name])}`).join("<br>") || "No rack or bin metadata recorded")}
+            ${field("Access geometry (synthetic)", `${num(loc.route_position_km)} km on corridor<br>${num(loc.offset_km)} km off corridor`)}
+            ${field("Supported storage classes", esc((loc.storage_classes_supported || []).map(humanize).join(", ") || "unknown"))}</dl>` : ""}
+          ${part && !loc ? '<p class="none">No stocked location recorded; quantity unknown.</p>' : ""}`;
+        if (byId("close-detail")) byId("close-detail").onclick = () => { UI.selected = ""; drawStock(); drawDetail(); byId("q").focus(); };
+        byId("detail").querySelectorAll("[data-held-index]").forEach((button) => button.onclick = () => selectStock(stockKey(held[Number(button.dataset.heldIndex)]), true, true));
+      }
+
+      function alertItem(alert, focus) {
+        return `<li><span class="stamp">${esc(alert.quantity)} ${esc(alert.uom)}</span><strong>${esc(alert.part_name)}</strong>${esc(alert.location_code)} · ${esc(humanize(alert.status))}${focus ? ' · <span class="pill focus">Focus</span>' : ""}<br><span class="muted">Minimum ${esc(alert.threshold)} · ${esc(humanize(alert.reason))}</span><details><summary>Preview context</summary><p>Stock code: ${esc(alert.stock_code)}<br>Dataset: <code>${esc(alert.source_dataset)}</code><br>Episode: <code>${esc(alert.alert_id)}</code><br>Latest state: T+${esc(alert.elapsed_minutes)} synthetic min<br>Fictional data; no operational use. Not sent to Azure.</p></details></li>`;
+      }
+
+      function drawActivity() {
+        const frame = currentFrame(), focuses = focusKeys();
+        if (!UI.payload.inventory.stock_is_known) {
+          byId("active-alerts").innerHTML = '<p class="empty">Opening stock is unknown. No alert or recovery conclusion is available.</p>';
+          byId("activity").innerHTML = '<li class="muted">No movement can be simulated without known opening stock.</li>';
+          byId("other-history-count").textContent = "Alert history unavailable";
+          byId("other-history").innerHTML = "";
+          return;
+        }
+        const otherOpen = byId("active-alerts").querySelector("details")?.open;
+        const focusAlerts = frame.active_alerts.filter((row) => focuses.has(stockKey(row)));
+        const otherAlerts = frame.active_alerts.filter((row) => !focuses.has(stockKey(row)));
+        byId("active-alerts").innerHTML = `<h3 style="margin-top:12px">Scenario focus · ${focusAlerts.length}</h3><ul class="activity-list">${focusAlerts.map((alert) => alertItem(alert, true)).join("") || '<li class="muted">No active focus alerts at this stage.</li>'}</ul>
+          <details ${otherOpen ? "open" : ""} style="margin-top:16px"><summary>Other low-stock positions · ${otherAlerts.length} (includes initial low)</summary><ul class="activity-list">${otherAlerts.map((alert) => alertItem(alert, false)).join("") || '<li class="muted">No other low-stock positions.</li>'}</ul></details>`;
+        const history = frameHistory(UI.payload.movement.frames, UI.index);
+        const mainHistory = history.filter((event) => event.event_type === "movement" || focuses.has(stockKey(event)));
+        const otherHistory = history.filter((event) => event.event_type === "alert" && !focuses.has(stockKey(event)));
+        byId("other-history-count").textContent = `Other alert transitions · ${otherHistory.length} (includes initial low)`;
+        byId("other-history").innerHTML = otherHistory.map((event) => `<li><span class="stamp">T+${esc(event.elapsed_minutes)} min</span><strong>${esc(event.part_name)} · ${esc(event.state)}</strong>${esc(event.location_code)} · ${num(event.quantity)} ${esc(event.uom)}<br><span class="muted">${esc(humanize(event.reason))} · portal preview only</span></li>`).join("") || '<li class="muted">No other alert transitions.</li>';
+        byId("activity").innerHTML = mainHistory.map((event) => {
+          if (event.event_type === "movement") return `<li><span class="stamp">T+${esc(event.elapsed_minutes)} min</span><strong>${esc(humanize(event.kind))} · ${esc(event.part_name)}</strong>${esc(event.location_code)} · ${num(event.quantity_before)} → ${num(event.quantity_after)} ${esc(event.uom)} <span class="muted">(${event.delta > 0 ? "+" : ""}${esc(event.delta)})</span><br><span class="muted">${esc(humanize(event.reason))}</span></li>`;
+          return `<li><span class="stamp">T+${esc(event.elapsed_minutes)} min</span><strong>Alert ${esc(event.state)} · ${esc(event.part_name)}</strong>${esc(event.location_code)} · ${num(event.quantity)} ${esc(event.uom)}<br><span class="muted">${esc(humanize(event.reason))} · portal preview only</span></li>`;
+        }).join("") || '<li class="muted">Opening stock loaded. No scenario movement yet. Initial low-stock previews are listed under Current attention.</li>';
+      }
+
+      (async () => {
+        const root = document.getElementById("root");
+        // The basemap is fetched alongside the data, not before it. It is
+        // decoration for facts the dataset already carries, so a failure to
+        // load it must cost the reader the ground, never the network: the
+        // rejection is swallowed deliberately and drawMap falls back.
+        const basemap = fetch("/midstream/review/inventory/basemap.json", {
+          headers: { Accept: "application/json" },
+        })
+          .then((response) => (response.ok ? response.json() : null))
+          .catch(() => null);
+        try {
+          const response = await fetch("/api/midstream/review/inventory/movement", {
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) {
+            const detail = await response.json().catch(() => ({}));
+            root.innerHTML = `<div class="err" role="alert"><strong>Inventory unavailable.</strong>
+              ${esc(detail.message || "Generate a midstream dataset first.")}</div>`;
+            return;
+          }
+          const data = await response.json();
+          MAP.basemap = await basemap;
+          render(data);
+        } catch (error) {
+          root.innerHTML = `<div class="err" role="alert"><strong>Inventory unavailable.</strong> ${esc(
+            error.message
+          )}</div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

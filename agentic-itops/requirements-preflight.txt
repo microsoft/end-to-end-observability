@@ -1,0 +1,9 @@
+# Worker-MI count proof only: no model, Search, Blob, native SQL or test SDK profile.
+azure-functions==2.3.0
+azure-identity==1.25.3
+azure-core==1.41.0
+httpx==0.28.1
+jsonschema==4.25.1
+PyJWT[crypto]==2.10.1
+Flask==3.1.1
+PyYAML==6.0.2

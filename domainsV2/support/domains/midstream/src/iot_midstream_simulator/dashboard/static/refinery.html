@@ -1,0 +1,1721 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Fictional oil-midstream transfer, equipment, data-quality, and localization portal"
+    />
+    <title>Midstream Transfer Line Intelligence | Synthetic Terminal Portal</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f7f4ef;
+        --cp-bg-elevated: #fcfbf8;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f5f5f5;
+        --cp-border: #dedede;
+        --cp-border-strong: #919191;
+        --cp-text: #242424;
+        --cp-text-muted: #5c5c5c;
+        --cp-text-soft: #6f6f6f;
+        --cp-accent: #b11f4b;
+        --cp-accent-hover: #9a1a41;
+        --cp-accent-soft: rgba(177, 31, 75, 0.08);
+        --cp-accent-fg: #ffffff;
+        --cp-success: #16a34a;
+        --cp-danger: #dc2626;
+        --cp-warning: #f59e0b;
+        --cp-link: #0078d4;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+        --cp-overlay: rgba(255, 255, 255, 0.8);
+        --cp-panel: rgba(255, 255, 255, 0.86);
+        --cp-panel-strong: rgba(255, 255, 255, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.55);
+        --cp-highlight: rgba(177, 31, 75, 0.12);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3d3b3a;
+        --cp-bg-elevated: #343231;
+        --cp-surface: #292929;
+        --cp-surface-soft: #2e2e2e;
+        --cp-border: #474747;
+        --cp-border-strong: #5f5f5f;
+        --cp-text: #dedede;
+        --cp-text-muted: #919191;
+        --cp-text-soft: #b0b0b0;
+        --cp-accent: #fd8ea1;
+        --cp-accent-hover: #fb7b91;
+        --cp-accent-soft: rgba(253, 142, 161, 0.14);
+        --cp-accent-fg: #1a1a1a;
+        --cp-success: #4ade80;
+        --cp-danger: #f87171;
+        --cp-warning: #fbbf24;
+        --cp-link: #4da6ff;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+        --cp-overlay: rgba(41, 41, 41, 0.88);
+        --cp-panel: rgba(41, 41, 41, 0.72);
+        --cp-panel-strong: rgba(41, 41, 41, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.04);
+        --cp-highlight: rgba(253, 142, 161, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      button, input, select { font: inherit; }
+      a { color: var(--cp-link); }
+      h1, h2, h3, p { margin: 0; }
+      code, .mono {
+        font-family: Consolas, "Courier New", Courier, monospace;
+      }
+      .skip-link {
+        position: fixed;
+        z-index: 50;
+        top: 8px;
+        left: 8px;
+        transform: translateY(-160%);
+        padding: 8px 12px;
+        border-radius: 0.625rem;
+        background: var(--cp-accent);
+        color: var(--cp-accent-fg);
+      }
+      .skip-link:focus { transform: translateY(0); }
+      .portal-header {
+        position: sticky;
+        z-index: 20;
+        top: 0;
+        display: grid;
+        grid-template-columns: minmax(230px, 1fr) auto minmax(230px, 1fr);
+        align-items: center;
+        gap: 16px;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--cp-border);
+        background: var(--cp-panel-strong);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .brand-mark {
+        position: relative;
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        border: 2px solid var(--cp-accent);
+        border-radius: 0.625rem;
+        overflow: hidden;
+      }
+      .brand-mark::before {
+        content: "";
+        position: absolute;
+        width: 19px;
+        height: 27px;
+        top: 5px;
+        left: 10px;
+        border-radius: 60% 40% 60% 40%;
+        background: var(--cp-accent);
+        transform: rotate(45deg);
+        animation: breathe 2.6s ease-in-out infinite;
+      }
+      .brand h1 {
+        overflow: hidden;
+        font-size: 1rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .brand p {
+        overflow: hidden;
+        margin-top: 2px;
+        color: var(--cp-text-muted);
+        font-size: 0.72rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .view-switcher {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-surface-soft);
+      }
+      .view-switcher a {
+        padding: 7px 12px;
+        border-radius: 0.625rem;
+        color: var(--cp-text-muted);
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .view-switcher a:hover { color: var(--cp-text); }
+      .view-switcher a[aria-current="page"] {
+        background: var(--cp-accent);
+        color: var(--cp-accent-fg);
+      }
+      .compact-label { display: none; }
+      .header-state {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+      }
+      .chip, .policy-badge, .state-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .policy-badge {
+        border-color: var(--cp-accent);
+        background: var(--cp-accent-soft);
+        color: var(--cp-accent);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--cp-success);
+        animation: status-pulse 2s ease-out infinite;
+      }
+      .dot.attention { background: var(--cp-warning); }
+      .dot.bad { background: var(--cp-danger); }
+      .policy-strip {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 20px;
+        border-bottom: 1px solid var(--cp-accent);
+        background: var(--cp-accent-soft);
+        color: var(--cp-text);
+        font-size: 0.75rem;
+        font-weight: 650;
+        text-align: center;
+      }
+      main {
+        width: min(1580px, 100%);
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .eyebrow {
+        color: var(--cp-accent);
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .muted { color: var(--cp-text-muted); }
+      .soft { color: var(--cp-text-soft); }
+      .tiny { font-size: 0.7rem; }
+      .card {
+        border: 1px solid var(--cp-border);
+        border-radius: 16px;
+        background: var(--cp-surface);
+        box-shadow: 0 0 2px var(--cp-border), 0 1px 2px var(--cp-border);
+      }
+      .panel { padding: 16px; }
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      .panel-head h2 { font-size: 0.98rem; }
+      .panel-head h3 { font-size: 0.86rem; }
+      .panel-head p {
+        margin-top: 3px;
+        color: var(--cp-text-muted);
+        font-size: 0.72rem;
+      }
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .kpi {
+        position: relative;
+        min-height: 102px;
+        overflow: hidden;
+        padding: 14px;
+      }
+      .kpi::after {
+        content: "";
+        position: absolute;
+        right: -24px;
+        bottom: -28px;
+        width: 64px;
+        height: 64px;
+        border: 12px solid var(--cp-accent-soft);
+        border-radius: 50%;
+      }
+      .kpi-label {
+        color: var(--cp-text-muted);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .kpi-value {
+        margin-top: 8px;
+        font-size: clamp(1.15rem, 2vw, 1.65rem);
+        font-weight: 760;
+      }
+      .kpi-unit {
+        margin-left: 3px;
+        color: var(--cp-text-soft);
+        font-size: 0.68rem;
+        font-weight: 500;
+      }
+      .kpi-meta {
+        margin-top: 6px;
+        color: var(--cp-success);
+        font-size: 0.66rem;
+      }
+      .process-ribbon {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-width: 1160px;
+        padding: 10px 4px 4px;
+      }
+      .process-scroll {
+        overflow-x: auto;
+        padding: 8px 2px 12px;
+      }
+      .asset-stop {
+        width: 96px;
+        flex: 0 0 96px;
+        text-align: center;
+      }
+      .asset-symbol {
+        position: relative;
+        display: grid;
+        width: 68px;
+        height: 68px;
+        margin: auto;
+        place-items: center;
+        border: 1px solid var(--cp-border);
+        border-radius: 16px;
+        background: var(--cp-bg-elevated);
+        color: var(--cp-accent);
+      }
+      .asset-symbol svg {
+        width: 46px;
+        height: 46px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2;
+      }
+      .asset-symbol .filled {
+        fill: var(--cp-accent-soft);
+      }
+      .asset-stop strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 0.66rem;
+        text-transform: capitalize;
+      }
+      .asset-stop span {
+        display: block;
+        margin-top: 2px;
+        color: var(--cp-text-muted);
+        font-size: 0.6rem;
+      }
+      .pipe-link {
+        position: relative;
+        width: 28px;
+        height: 68px;
+        flex: 0 0 28px;
+      }
+      .pipe-link::before {
+        content: "";
+        position: absolute;
+        top: 31px;
+        right: -6px;
+        left: -6px;
+        height: 6px;
+        border-block: 1px solid var(--cp-border-strong);
+        background: var(--cp-accent-soft);
+      }
+      .flow-drop {
+        position: absolute;
+        top: 29px;
+        left: -5px;
+        width: 8px;
+        height: 8px;
+        border-radius: 60% 40% 60% 40%;
+        background: var(--cp-accent);
+        transform: rotate(45deg);
+        animation: flow 1.7s linear infinite;
+      }
+      .flow-drop:nth-child(2) { animation-delay: -0.8s; }
+      .quality-bar {
+        display: flex;
+        height: 9px;
+        overflow: hidden;
+        border-radius: 0.625rem;
+        background: var(--cp-surface-soft);
+      }
+      .quality-bar span { min-width: 2px; }
+      .quality-good { background: var(--cp-success); }
+      .quality-questionable { background: var(--cp-warning); }
+      .quality-bad { background: var(--cp-danger); }
+      .meter-list { display: grid; gap: 11px; }
+      .meter-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+        font-size: 0.72rem;
+      }
+      .meter-row strong { font-size: 0.76rem; }
+      .state-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .state-box {
+        padding: 10px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-surface-soft);
+      }
+      .state-box span {
+        display: block;
+        color: var(--cp-text-muted);
+        font-size: 0.64rem;
+      }
+      .state-box strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.82rem;
+      }
+      .feed-list { display: grid; gap: 8px; }
+      .feed-item {
+        position: relative;
+        padding: 11px 11px 11px 34px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-surface-soft);
+      }
+      .feed-item::before {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 13px;
+        width: 8px;
+        height: 8px;
+        border: 2px solid var(--cp-warning);
+        border-radius: 50%;
+      }
+      .feed-item strong {
+        display: block;
+        font-size: 0.72rem;
+        text-transform: capitalize;
+      }
+      .feed-item span {
+        display: block;
+        margin-top: 3px;
+        color: var(--cp-text-muted);
+        font-size: 0.66rem;
+      }
+      .table-wrap { overflow-x: auto; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.72rem;
+      }
+      th, td {
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--cp-border);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--cp-text-muted);
+        font-weight: 700;
+      }
+      tbody tr:hover { background: var(--cp-accent-soft); }
+      .route-chart {
+        position: relative;
+        min-height: 230px;
+        padding: 12px;
+        overflow: hidden;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-bg-elevated);
+      }
+      .route-chart svg {
+        width: 100%;
+        height: 190px;
+        overflow: visible;
+      }
+      .chart-grid { stroke: var(--cp-border); stroke-width: 1; }
+      .chart-line {
+        fill: none;
+        stroke: var(--cp-accent);
+        stroke-width: 3;
+        stroke-linejoin: round;
+      }
+      .chart-area { fill: var(--cp-accent-soft); stroke: none; }
+      .chart-node {
+        fill: var(--cp-surface);
+        stroke: var(--cp-accent);
+        stroke-width: 3;
+      }
+      .chart-text {
+        fill: var(--cp-text-muted);
+        font: 10px Consolas, "Courier New", Courier, monospace;
+      }
+      .corridor {
+        padding: 14px;
+        border-left: 4px solid var(--cp-accent);
+        border-radius: 0.625rem;
+        background: var(--cp-accent-soft);
+      }
+      .corridor strong {
+        display: block;
+        font-size: 1rem;
+      }
+      .corridor p {
+        margin-top: 5px;
+        color: var(--cp-text-muted);
+        font-size: 0.7rem;
+      }
+      .evidence-ids {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 10px;
+      }
+      .evidence-ids code {
+        padding: 4px 6px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        font-size: 0.6rem;
+      }
+      .provenance-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .error-state {
+        max-width: 720px;
+        margin: 80px auto;
+        padding: 24px;
+        border: 1px solid var(--cp-danger);
+        border-radius: 16px;
+        background: var(--cp-surface);
+      }
+      .error-state h2 { color: var(--cp-danger); }
+      .error-state p { margin-top: 8px; color: var(--cp-text-muted); }
+      footer {
+        padding: 18px 24px 28px;
+        color: var(--cp-text-muted);
+        font-size: 0.68rem;
+        text-align: center;
+      }
+
+      /* Command Center */
+      .command-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.6fr);
+        gap: 14px;
+        margin-bottom: 12px;
+      }
+      .command-title {
+        padding: 20px;
+        background: var(--cp-bg-elevated);
+      }
+      .command-title h2 {
+        margin-top: 5px;
+        font-size: clamp(1.7rem, 3vw, 2.6rem);
+        letter-spacing: -0.04em;
+      }
+      .command-title p {
+        max-width: 760px;
+        margin-top: 7px;
+        color: var(--cp-text-muted);
+      }
+      .command-summary { padding: 16px; }
+      .command-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(330px, 0.7fr);
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .command-main, .command-side {
+        display: grid;
+        min-width: 0;
+        gap: 12px;
+        align-content: start;
+      }
+      .command-main > * { min-width: 0; overflow: hidden; }
+      .command-main .process-ribbon { min-width: 900px; }
+      .command-main .asset-stop { width: 72px; flex-basis: 72px; }
+      .command-main .asset-symbol { width: 58px; height: 58px; }
+      .command-main .asset-symbol svg { width: 39px; height: 39px; }
+      .command-main .pipe-link { width: 18px; height: 58px; flex-basis: 18px; }
+      .command-main .pipe-link::before { top: 27px; }
+      .command-main .flow-drop { top: 25px; }
+      .command-split {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      /* Process Story */
+      .story-shell { display: grid; gap: 18px; }
+      .story-hero {
+        position: relative;
+        min-height: 430px;
+        padding: clamp(24px, 5vw, 64px);
+        overflow: hidden;
+        background: var(--cp-bg-elevated);
+      }
+      .story-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(125deg, var(--cp-highlight), var(--cp-overlay), var(--cp-accent-soft));
+      }
+      .story-hero::after {
+        content: "";
+        position: absolute;
+        right: 7%;
+        bottom: -74px;
+        width: 340px;
+        height: 340px;
+        border: 44px solid var(--cp-accent-soft);
+        border-radius: 50%;
+      }
+      .story-copy {
+        position: relative;
+        z-index: 2;
+        max-width: 780px;
+      }
+      .story-copy h2 {
+        max-width: 680px;
+        margin-top: 10px;
+        font-size: clamp(2.4rem, 7vw, 5.6rem);
+        line-height: 0.93;
+        letter-spacing: -0.06em;
+      }
+      .story-copy > p {
+        max-width: 600px;
+        margin-top: 16px;
+        color: var(--cp-text-muted);
+        font-size: 1rem;
+      }
+      .story-statline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+      .story-stat {
+        min-width: 132px;
+        padding: 10px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-panel-strong);
+      }
+      .story-stat span {
+        display: block;
+        color: var(--cp-text-muted);
+        font-size: 0.63rem;
+        text-transform: uppercase;
+      }
+      .story-stat strong { display: block; margin-top: 3px; font-size: 0.88rem; }
+      .chapter {
+        display: grid;
+        grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+        gap: 18px;
+        padding: 18px 0;
+        border-top: 1px solid var(--cp-border);
+      }
+      .chapter-number {
+        color: var(--cp-accent);
+        font: 700 2rem Consolas, "Courier New", Courier, monospace;
+      }
+      .chapter-label h2 { margin-top: 8px; font-size: 1.25rem; }
+      .chapter-label p { margin-top: 5px; color: var(--cp-text-muted); font-size: 0.75rem; }
+      .chapter-content { min-width: 0; }
+      .story-process {
+        padding: 18px;
+        overflow: hidden;
+        background: var(--cp-bg-elevated);
+      }
+      .story-process .kpi-grid {
+        grid-template-columns: repeat(7, minmax(118px, 1fr));
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+      .story-cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      /* Forensic Workbench */
+      .forensics-shell {
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr) 300px;
+        gap: 10px;
+        align-items: start;
+      }
+      .forensic-rail {
+        position: sticky;
+        top: 90px;
+        display: grid;
+        gap: 10px;
+      }
+      .forensic-center, .forensic-side { display: grid; gap: 10px; }
+      .forensic-side { position: sticky; top: 90px; }
+      .case-id {
+        word-break: break-all;
+        color: var(--cp-accent);
+        font-size: 0.72rem;
+      }
+      .case-list { display: grid; gap: 10px; margin-top: 12px; }
+      .case-list div {
+        padding-bottom: 9px;
+        border-bottom: 1px solid var(--cp-border);
+      }
+      .case-list span {
+        display: block;
+        color: var(--cp-text-muted);
+        font-size: 0.62rem;
+        text-transform: uppercase;
+      }
+      .case-list strong { display: block; margin-top: 3px; font-size: 0.76rem; }
+      .forensic-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-end;
+      }
+      .forensic-title h2 {
+        margin-top: 3px;
+        font-size: clamp(1.5rem, 3vw, 2.4rem);
+        letter-spacing: -0.04em;
+      }
+      .log-terminal {
+        max-height: 330px;
+        overflow: auto;
+        padding: 8px;
+        border: 1px solid var(--cp-border);
+        border-radius: 0.625rem;
+        background: var(--cp-bg-elevated);
+        font: 0.65rem/1.5 Consolas, "Courier New", Courier, monospace;
+      }
+      .log-line {
+        display: grid;
+        grid-template-columns: 128px 150px minmax(0, 1fr);
+        gap: 8px;
+        padding: 5px 4px;
+        border-bottom: 1px solid var(--cp-border);
+      }
+      .log-line span:first-child { color: var(--cp-text-muted); }
+      .log-line span:nth-child(2) { color: var(--cp-accent); }
+
+      @keyframes flow {
+        from { transform: translateX(0) rotate(45deg); opacity: 0; }
+        18% { opacity: 1; }
+        82% { opacity: 1; }
+        to { transform: translateX(34px) rotate(45deg); opacity: 0; }
+      }
+      @keyframes status-pulse {
+        0% { box-shadow: 0 0 0 0 var(--cp-highlight); }
+        70% { box-shadow: 0 0 0 8px var(--cp-accent-soft); }
+        100% { box-shadow: 0 0 0 0 var(--cp-accent-soft); }
+      }
+      @keyframes breathe {
+        50% { transform: rotate(45deg) scale(0.84); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+        }
+        .flow-drop { opacity: 1; transform: translateX(10px) rotate(45deg); }
+      }
+      @media (max-width: 1200px) {
+        .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .forensics-shell { grid-template-columns: 220px minmax(0, 1fr); }
+        .forensic-side { position: static; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 900px) {
+        .portal-header { grid-template-columns: 1fr auto; }
+        .view-switcher { grid-row: 2; grid-column: 1 / -1; justify-content: center; }
+        .header-state .chip { display: none; }
+        .command-hero, .command-layout, .chapter { grid-template-columns: 1fr; }
+        .command-split, .story-cards { grid-template-columns: 1fr; }
+        .story-cards > [style*="grid-column"] { grid-column: auto !important; }
+        .chapter { gap: 8px; }
+        .forensics-shell { grid-template-columns: 1fr; }
+        .forensic-rail, .forensic-side { position: static; }
+        .forensic-side { grid-template-columns: 1fr; }
+        .provenance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 620px) {
+        .portal-header { padding: 10px 12px; }
+        .brand p, .policy-badge { display: none; }
+        .view-switcher {
+          width: calc(100vw - 24px);
+          min-width: 0;
+          max-width: calc(100vw - 24px);
+          justify-content: stretch;
+          overflow: hidden;
+        }
+        .view-switcher a {
+          width: 0;
+          min-width: 0;
+          flex: 1 1 33.333%;
+          padding-inline: 5px;
+          font-size: 0.66rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          text-align: center;
+        }
+        .full-label { display: none; }
+        .compact-label { display: inline; }
+        .policy-strip {
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          padding-inline: 12px;
+        }
+        main { padding: 12px; }
+        .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .state-grid, .provenance-grid { grid-template-columns: 1fr; }
+        .story-hero { min-height: 360px; padding: 28px 20px; }
+        .story-copy h2 { font-size: 2.8rem; }
+        .story-process .kpi-grid { grid-template-columns: repeat(2, minmax(145px, 1fr)); }
+        .forensic-title { align-items: flex-start; flex-direction: column; }
+        .log-line { grid-template-columns: 1fr; gap: 2px; }
+      }
+
+      /* Live transfer console */
+      .live-console { padding: 0 24px 20px; display: grid; gap: 14px; }
+      .live-console section {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 14px;
+        box-shadow: var(--cp-shadow);
+        padding: 18px 20px;
+      }
+      .live-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+      .live-head h2 { margin: 0; font-size: 1.05rem; letter-spacing: 0.02em; }
+      .live-head p { margin: 2px 0 0; color: var(--cp-text-muted); font-size: 0.82rem; }
+      .live-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+      .live-pill {
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+        border-radius: 999px;
+        padding: 3px 11px;
+        font-size: 0.76rem;
+        color: var(--cp-text-muted);
+      }
+      .live-pill strong { color: var(--cp-text); font-weight: 600; }
+      .live-pill.nominal { border-color: var(--cp-success); color: var(--cp-success); }
+      .live-pill.degraded { border-color: var(--cp-warning); color: var(--cp-warning); }
+      .live-pill.impaired { border-color: var(--cp-danger); color: var(--cp-danger); }
+      .live-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .live-controls select,
+      .live-controls button {
+        font: inherit;
+        border-radius: 8px;
+        border: 1px solid var(--cp-border-strong);
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .live-controls button.primary {
+        background: var(--cp-accent);
+        border-color: var(--cp-accent);
+        color: var(--cp-accent-fg);
+      }
+      .live-controls button.primary:hover { background: var(--cp-accent-hover); }
+      .live-controls button[disabled] { cursor: progress; opacity: 0.6; }
+      .live-note { margin: 10px 0 0; font-size: 0.78rem; color: var(--cp-text-soft); }
+      .live-wall {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+        margin-top: 14px;
+      }
+      .live-asset {
+        border: 1px solid var(--cp-border);
+        border-left: 3px solid var(--cp-success);
+        border-radius: 11px;
+        background: var(--cp-bg-elevated);
+        padding: 11px 13px;
+        text-align: left;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        transition: border-color 120ms ease, transform 120ms ease;
+      }
+      .live-asset:hover { transform: translateY(-2px); border-color: var(--cp-accent); }
+      .live-asset.degraded { border-left-color: var(--cp-warning); }
+      .live-asset.impaired { border-left-color: var(--cp-danger); }
+      .live-asset.unknown { border-left-color: var(--cp-border-strong); }
+      .live-asset-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+      .live-asset-id { font-weight: 600; font-size: 0.82rem; word-break: break-word; }
+      .live-asset-type { font-size: 0.72rem; color: var(--cp-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+      .live-tag { display: flex; justify-content: space-between; gap: 8px; font-size: 0.78rem; padding: 3px 0; border-top: 1px dashed var(--cp-border); }
+      .live-tag:first-of-type { border-top: 0; margin-top: 6px; }
+      .live-tag-name { color: var(--cp-text-muted); }
+      .live-tag-value { font-variant-numeric: tabular-nums; }
+      .live-tag-value.degraded { color: var(--cp-warning); }
+      .live-tag-value.impaired { color: var(--cp-danger); }
+      .live-spark { display: flex; align-items: flex-end; gap: 1px; height: 26px; margin-top: 8px; }
+      .live-spark span { flex: 1 1 auto; background: var(--cp-accent-soft); border-top: 2px solid var(--cp-accent); min-height: 1px; }
+      .live-events { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+      .live-events li {
+        display: grid;
+        grid-template-columns: 165px 1fr;
+        gap: 10px;
+        font-size: 0.78rem;
+        border-left: 2px solid var(--cp-warning);
+        padding-left: 10px;
+      }
+      .live-events li.information { border-left-color: var(--cp-success); }
+      .live-events time { color: var(--cp-text-muted); font-variant-numeric: tabular-nums; }
+      .live-runs { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.8rem; }
+      .live-runs th, .live-runs td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--cp-border); }
+      .live-runs th { color: var(--cp-text-muted); font-weight: 600; }
+      .live-empty { color: var(--cp-text-soft); font-size: 0.82rem; margin: 12px 0 0; }
+      .live-dialog {
+        border: 1px solid var(--cp-border);
+        border-radius: 14px;
+        background: var(--cp-surface);
+        color: var(--cp-text);
+        box-shadow: var(--cp-shadow);
+        padding: 20px 22px;
+        max-width: 620px;
+        width: 92vw;
+      }
+      .live-dialog::backdrop { background: var(--cp-overlay); }
+      .live-dialog table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
+      .live-dialog th, .live-dialog td { text-align: left; padding: 5px 7px; border-bottom: 1px solid var(--cp-border); }
+      @media (prefers-reduced-motion: reduce) {
+        .live-asset { transition: none; }
+        .live-asset:hover { transform: none; }
+      }
+      @media (max-width: 900px) {
+        .live-console { padding: 0 12px 16px; }
+        .live-events li { grid-template-columns: 1fr; gap: 2px; }
+      }
+      .domain-nav { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 24px; background: var(--cp-surface); }
+      .domain-nav a { color: var(--cp-link); }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#portal-content">Skip to portal content</a>
+    <header class="portal-header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <h1>Midstream Transfer Line Intelligence</h1>
+          <p id="site-name">Fictional terminal-to-refinery transfer</p>
+        </div>
+      </div>
+      <nav class="view-switcher" aria-label="Portal visual styles" id="view-switcher"></nav>
+      <div class="header-state">
+        <span class="chip"><i class="dot" id="header-dot"></i><span id="header-state">Loading</span></span>
+        <span class="policy-badge">Synthetic only</span>
+      </div>
+    </header>
+    <nav class="domain-nav" aria-label="Domain navigation">
+      <a href="/">All domains</a>
+      <a href="/midstream" aria-current="page">Midstream transfer &amp; terminal</a>
+      <a href="/midstream/review/inventory" id="inventory-link" hidden>Midstream inventory</a>
+    </nav>
+    <div class="policy-strip" role="note">
+      <strong>Operational use prohibited.</strong>
+      <span>Midstream transfers to the refinery receiving boundary; no refining inside it is modeled. Fictional, physics-lite data. No field calibration, custody transfer, safety action, or exact-location claim.</span>
+    </div>
+    <main id="portal-content" tabindex="-1" aria-live="polite"></main>
+    <div class="live-console" id="live-console" aria-label="Live transfer operations"></div>
+    <dialog class="live-dialog" id="live-dialog"></dialog>
+    <footer>
+      Synthetic analytics demonstration · Ground truth excluded from this portal · Refreshes every 15 seconds
+    </footer>
+
+    <script>
+      fetch("/midstream/review/inventory", { method: "HEAD" })
+        .then(response => { if (response.ok) document.getElementById("inventory-link").hidden = false; })
+        .catch(() => {});
+      const views = {
+        command: { label: "Command Center", compact: "Command", description: "Dense operations overview" },
+        story: { label: "Process Story", compact: "Story", description: "Animated narrative" },
+        forensics: { label: "Forensics", compact: "Evidence", description: "Evidence workbench" },
+      };
+      const params = new URLSearchParams(window.location.search);
+      const selectedView = Object.hasOwn(views, params.get("view")) ? params.get("view") : "command";
+      document.body.dataset.view = selectedView;
+
+      const escapeHtml = value =>
+        String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      const words = value => escapeHtml(String(value ?? "unavailable").replaceAll("_", " "));
+      const number = (value, digits = 2) =>
+        value === null || value === undefined
+          ? "Unavailable"
+          : Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+      const formatMeasurement = item =>
+        item && item.value !== null
+          ? `${number(item.value, 3)}<span class="kpi-unit">${escapeHtml(item.unit)}</span>`
+          : "Unavailable";
+      const kilometers = meters =>
+        meters === null || meters === undefined ? "Unavailable" : `${number(meters / 1000, 2)} km`;
+      const stateClass = state =>
+        ["missing", "bad", "unavailable"].includes(state)
+          ? "bad"
+          : ["stale", "questionable", "degraded", "attention", "abstained"].includes(state)
+          ? "attention"
+          : "";
+
+      const linkFor = view => {
+        const query = new URLSearchParams(window.location.search);
+        query.set("view", view);
+        return `/midstream?${query.toString()}`;
+      };
+      document.getElementById("view-switcher").innerHTML = Object.entries(views)
+        .map(
+          ([key, value]) =>
+            `<a href="${escapeHtml(linkFor(key))}" ${
+              key === selectedView ? 'aria-current="page"' : ""
+            } title="${escapeHtml(value.description)}"><span class="full-label">${escapeHtml(value.label)}</span><span class="compact-label">${escapeHtml(value.compact)}</span></a>`
+        )
+        .join("");
+
+      const icon = type => {
+        const icons = {
+          receipt_terminal: `<svg viewBox="0 0 48 48" aria-hidden="true"><path class="filled" d="M7 12h34v29H7z"/><path d="M7 12h34v29H7zM13 12V6h22v6M13 21h22M13 29h22M13 36h15"/></svg>`,
+          storage_tank: `<svg viewBox="0 0 48 48" aria-hidden="true"><ellipse class="filled" cx="24" cy="9" rx="16" ry="6"/><path d="M8 9v30c0 4 7 7 16 7s16-3 16-7V9M8 39c0 4 7 7 16 7s16-3 16-7"/></svg>`,
+          control_valve: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M3 25h12M33 25h12M15 15l9 10-9 10zM33 15l-9 10 9 10zM24 7v18"/><circle cx="24" cy="6" r="4"/></svg>`,
+          strainer: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M3 15h10l22 26M35 15h10M13 10v10l22 26 7-7L20 10zM20 20l6-6M26 27l6-6"/></svg>`,
+          pump_driver: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M3 25h9M36 25h9"/><circle class="filled" cx="24" cy="25" r="13"/><path d="M24 14v22M14 25h20M17 18l14 14M31 18L17 32"/></svg>`,
+          pipeline_segment: `<svg viewBox="0 0 48 48" aria-hidden="true"><rect class="filled" x="3" y="17" width="42" height="15" rx="3"/><path d="M11 17v15M37 17v15M7 24h31M34 20l7 4-7 4"/></svg>`,
+          block_station: `<svg viewBox="0 0 48 48" aria-hidden="true"><path class="filled" d="M6 21L24 7l18 14v23H6z"/><path d="M3 44h42M15 44V27h18v17M24 27v17"/></svg>`,
+          pig_receiver: `<svg viewBox="0 0 48 48" aria-hidden="true"><path class="filled" d="M3 17h34c5 0 8 3 8 8s-3 8-8 8H3z"/><path d="M10 14v22M34 17v16M16 25h15"/></svg>`,
+          metering_skid: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M3 42h42M8 42V18h32v24M15 18v-6h18v6"/><circle class="filled" cx="24" cy="28" r="9"/><path d="M24 28l6-5"/></svg>`,
+          refinery_receiving_boundary: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M3 43h42M7 43V23h12v20M30 43V10h8v33M27 17h14M27 27h14M34 10V4"/></svg>`,
+        };
+        return icons[type] || `<svg viewBox="0 0 48 48" aria-hidden="true"><rect class="filled" x="8" y="8" width="32" height="32" rx="5"/><path d="M16 24h16M24 16v16"/></svg>`;
+      };
+
+      const processAssets = data => {
+        const assets = new Map(data.assets.map(asset => [asset.asset_id, asset]));
+        const edges = data.topology.filter(edge => ["flows_to", "hands_off_to"].includes(edge.relationship));
+        const targets = new Set(edges.map(edge => edge.target_asset_id));
+        let current = edges.find(edge => !targets.has(edge.source_asset_id))?.source_asset_id;
+        const next = new Map(edges.map(edge => [edge.source_asset_id, edge.target_asset_id]));
+        const ordered = [];
+        while (current && assets.has(current) && ordered.length <= edges.length) {
+          ordered.push(assets.get(current));
+          current = next.get(current);
+        }
+        return ordered;
+      };
+
+      const processRibbon = data =>
+        `<div class="process-scroll"><div class="process-ribbon">${processAssets(data)
+          .map(
+            (asset, index) =>
+              `${index ? '<div class="pipe-link" aria-hidden="true"><i class="flow-drop"></i><i class="flow-drop"></i></div>' : ""}
+              <div class="asset-stop">
+                <div class="asset-symbol">${icon(asset.asset_type)}</div>
+                <strong>${words(asset.asset_type)}</strong>
+                <span>${words(asset.health.state)}</span>
+              </div>`
+          )
+          .join("")}</div></div>`;
+
+      const kpiCards = data => {
+        const labels = {
+          receipt_flow: "Receipt flow",
+          receipt_pressure: "Receipt pressure",
+          tank_level: "Tank level",
+          pump_power: "Pump power",
+          imbalance: "Measured imbalance",
+          pressure_loss: "Pressure loss",
+          transferred_volume: "Transferred volume",
+        };
+        return `<section class="kpi-grid" aria-label="Current transfer metrics">${Object.entries(data.kpis)
+          .map(
+            ([key, item]) =>
+              `<article class="card kpi">
+                <div class="kpi-label">${escapeHtml(labels[key] || key)}</div>
+                <div class="kpi-value">${formatMeasurement(item)}</div>
+                <div class="kpi-meta">● ${words(item?.quality?.validity || "unavailable")} synthetic signal</div>
+              </article>`
+          )
+          .join("")}</section>`;
+      };
+
+      const routeChart = data => {
+        const nodes = data.route.monitoring_nodes.filter(node => node.pressure?.value !== null);
+        if (nodes.length < 2) return `<div class="route-chart"><p class="muted">Route pressure evidence unavailable.</p></div>`;
+        const values = nodes.map(node => Number(node.pressure.value));
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const span = Math.max(max - min, 1);
+        const points = nodes.map((node, index) => {
+          const x = 35 + (index / (nodes.length - 1)) * 530;
+          const y = 165 - ((Number(node.pressure.value) - min) / span) * 125;
+          return { x, y, node };
+        });
+        const line = points.map(point => `${point.x},${point.y}`).join(" ");
+        const area = `35,165 ${line} 565,165`;
+        return `<div class="route-chart" role="img" aria-label="Pressure profile across ${nodes.length} fictional monitoring nodes">
+          <svg viewBox="0 0 600 195" preserveAspectRatio="none">
+            <path class="chart-grid" d="M35 40H565M35 102H565M35 165H565"/>
+            <polygon class="chart-area" points="${area}"></polygon>
+            <polyline class="chart-line" points="${line}"></polyline>
+            ${points
+              .map(
+                point =>
+                  `<circle class="chart-node" cx="${point.x}" cy="${point.y}" r="5"></circle>
+                   <text class="chart-text" x="${point.x}" y="184" text-anchor="middle">${number(point.node.route_distance_m / 1000, 1)}km</text>`
+              )
+              .join("")}
+          </svg>
+          <p class="tiny muted">Fictional route distance · latest verified node pressure · no geographic coordinates</p>
+        </div>`;
+      };
+
+      const localizationPanel = data => {
+        const detector = data.localization.detector;
+        if (!detector) {
+          return `<div class="corridor"><strong>Detector output unavailable</strong><p>No localization artifact is present in this dataset.</p></div>`;
+        }
+        const state = detector.detection_state;
+        const corridor =
+          state === "estimated"
+            ? `Bounded corridor ${kilometers(detector.lower_route_distance_m)}–${kilometers(detector.upper_route_distance_m)}`
+            : state === "abstained"
+            ? "Location estimate withheld"
+            : "No location estimate required";
+        const detail =
+          state === "estimated"
+            ? `Change-point estimate ${kilometers(detector.estimated_route_distance_m)} on a fictional route. Candidate intervals: ${(detector.candidate_segment_ids || []).map(words).join(", ")}.`
+            : state === "abstained"
+            ? words(detector.abstention_reason)
+            : "Measured flow balance remains within the configured synthetic noise floor.";
+        return `<div class="corridor">
+          <span class="state-pill"><i class="dot ${stateClass(state)}"></i>${words(state)}</span>
+          <strong>${corridor}</strong>
+          <p>${detail}</p>
+          <p><b>Fidelity:</b> ${words(detector.fidelity)}. This is a bounded fictional estimate, not an exact physical location or transient-wave result.</p>
+        </div>`;
+      };
+
+      const qualityPanel = data => {
+        const counts = data.quality.validity_counts;
+        const total = Math.max(data.quality.latest_record_count, 1);
+        const good = counts.good || 0;
+        const questionable = (counts.questionable || 0) + (counts.stale || 0);
+        const bad = total - good - questionable;
+        return `<div class="meter-list">
+          <div>
+            <div class="meter-row"><span>Latest evidence usability</span><strong>${number(data.quality.good_fraction * 100, 1)}% good</strong></div>
+            <div class="quality-bar" aria-label="${good} good, ${questionable} questionable, ${bad} unavailable records">
+              <span class="quality-good" style="width:${(good / total) * 100}%"></span>
+              <span class="quality-questionable" style="width:${(questionable / total) * 100}%"></span>
+              <span class="quality-bad" style="width:${(bad / total) * 100}%"></span>
+            </div>
+          </div>
+          <div class="state-grid">
+            <div class="state-box"><span>Clock offset</span><strong>${number(data.communications.max_abs_clock_offset_ms, 2)} ms</strong></div>
+            <div class="state-box"><span>Clock uncertainty</span><strong>${number(data.communications.max_clock_uncertainty_ms, 2)} ms</strong></div>
+            <div class="state-box"><span>Max log latency</span><strong>${number(data.communications.max_latency_ms, 1)} ms</strong></div>
+            <div class="state-box"><span>Max queue depth</span><strong>${number(data.communications.max_queue_depth, 0)}</strong></div>
+          </div>
+        </div>`;
+      };
+
+      const equipmentTable = data =>
+        `<div class="table-wrap"><table>
+          <thead><tr><th>Equipment</th><th>Derived state</th><th>Evidence</th><th>Quality</th><th>Latest transition</th></tr></thead>
+          <tbody>${data.equipment_health
+            .filter(item => item.asset_type !== "pipeline_monitoring_node")
+            .map(
+              item =>
+                `<tr>
+                  <td><code>${escapeHtml(item.asset_id)}</code><br><span class="tiny muted">${words(item.asset_type)}</span></td>
+                  <td><span class="state-pill"><i class="dot ${stateClass(item.state)}"></i>${words(item.state)}</span></td>
+                  <td>${number(item.measurement_count, 0)} latest signals</td>
+                  <td>${words(item.worst_quality)}</td>
+                  <td>${words(item.latest_event_state || "none")}</td>
+                </tr>`
+            )
+            .join("")}</tbody>
+        </table></div>`;
+
+      const eventFeed = data =>
+        `<div class="feed-list">${[...data.events]
+          .reverse()
+          .map(
+            item =>
+              `<article class="feed-item">
+                <strong>${words(item.event_type)}</strong>
+                <span>${words(item.state_transition?.from)} → ${words(item.state_transition?.to)}</span>
+                <span class="mono">${escapeHtml(item.event_time_utc)}</span>
+              </article>`
+          )
+          .join("") || '<p class="muted">No synthetic events.</p>'}</div>`;
+
+      const logFeed = data =>
+        `<div class="feed-list">${[...data.device_logs]
+          .reverse()
+          .slice(0, 10)
+          .map(
+            item =>
+              `<article class="feed-item">
+                <strong>${words(item.code)}</strong>
+                <span>${escapeHtml(item.message)}</span>
+                <span>${words(item.category)} · ${escapeHtml(item.event_time_utc)}</span>
+              </article>`
+          )
+          .join("") || '<p class="muted">No synthetic device logs.</p>'}</div>`;
+
+      const provenance = data =>
+        `<div class="provenance-grid">
+          <div class="state-box"><span>Generator</span><strong>${escapeHtml(data.source.generator.name)} ${escapeHtml(data.source.generator.version)}</strong></div>
+          <div class="state-box"><span>Schema</span><strong>${escapeHtml(data.source.schema_version)}</strong></div>
+          <div class="state-box"><span>Artifacts</span><strong>${number(data.provenance.artifact_count, 0)} checksum entries</strong></div>
+          <div class="state-box"><span>Ground truth</span><strong>${data.provenance.ground_truth_excluded_from_api ? "Excluded from API" : "Unavailable"}</strong></div>
+        </div>`;
+
+      const confirmation = data => {
+        const item = data.localization.confirmation;
+        return `<div class="state-grid">
+          <div class="state-box"><span>Confirmation state</span><strong>${words(item.result)}</strong></div>
+          <div class="state-box"><span>Available after</span><strong>${escapeHtml(item.available_after_utc || "Not scheduled")}</strong></div>
+          <div class="state-box"><span>Evidence type</span><strong>${item.available ? "Delayed synthetic record" : "No confirmation record"}</strong></div>
+          <div class="state-box"><span>Fidelity</span><strong>${words(item.fidelity)}</strong></div>
+        </div>`;
+      };
+
+      const commandView = data =>
+        `<div class="command-hero">
+          <section class="card command-title">
+            <div class="eyebrow">Operations command · ${words(data.source.scenario)}</div>
+            <h2>${words(data.overview.transfer_state)} transfer at the refinery boundary</h2>
+            <p>One verified view of process state, equipment evidence, communications health, and bounded localization output.</p>
+          </section>
+          <aside class="card command-summary">
+            <div class="panel-head"><div><h2>Current disposition</h2><p>${escapeHtml(data.source.event_time_utc)}</p></div></div>
+            <div class="state-grid">
+              <div class="state-box"><span>Evidence</span><strong>${words(data.overview.evidence_state)}</strong></div>
+              <div class="state-box"><span>Attention events</span><strong>${number(data.overview.attention_event_count, 0)}</strong></div>
+              <div class="state-box"><span>Equipment</span><strong>${number(data.overview.equipment_count, 0)}</strong></div>
+              <div class="state-box"><span>Pressure nodes</span><strong>${number(data.overview.monitoring_node_count, 0)}</strong></div>
+            </div>
+          </aside>
+        </div>
+        ${kpiCards(data)}
+        <div class="command-layout">
+          <div class="command-main">
+            <section class="card panel"><div class="panel-head"><div><h2>Transfer path</h2><p>Topology-derived flow order and current asset evidence state.</p></div></div>${processRibbon(data)}</section>
+            <div class="command-split">
+              <section class="card panel"><div class="panel-head"><div><h2>Route pressure profile</h2><p>Latest spatial evidence.</p></div></div>${routeChart(data)}</section>
+              <section class="card panel"><div class="panel-head"><div><h2>Localization evidence</h2><p>${words(data.localization.detector?.method || "unavailable")}</p></div></div>${localizationPanel(data)}</section>
+            </div>
+            <section class="card panel"><div class="panel-head"><div><h2>Equipment evidence board</h2><p>Derived state is not vendor-grade diagnosis.</p></div></div>${equipmentTable(data)}</section>
+          </div>
+          <aside class="command-side">
+            <section class="card panel"><div class="panel-head"><div><h2>Data and communications</h2><p>Freshness, clock, queue, and latency evidence.</p></div></div>${qualityPanel(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Confirmation status</h2><p>No confirmed coordinates are exposed.</p></div></div>${confirmation(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Events</h2><p>State transitions, separate from device logs.</p></div></div>${eventFeed(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Device and detector logs</h2><p>Recent system-originated evidence.</p></div></div>${logFeed(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Provenance</h2><p>Verified complete artifacts.</p></div></div>${provenance(data)}</section>
+          </aside>
+        </div>`;
+
+      const storyView = data =>
+        `<div class="story-shell">
+          <section class="card story-hero">
+            <div class="story-copy">
+              <div class="eyebrow">Process story · ${words(data.source.scenario)}</div>
+              <h2>Follow the crude transfer evidence.</h2>
+              <p>From receipt terminal to refinery gate, this fictional run shows what moved, what the sensors saw, what the detector concluded, and what remained unknown.</p>
+              <div class="story-statline">
+                <div class="story-stat"><span>Transfer</span><strong>${words(data.overview.transfer_state)}</strong></div>
+                <div class="story-stat"><span>Detector</span><strong>${words(data.overview.evidence_state)}</strong></div>
+                <div class="story-stat"><span>Evidence quality</span><strong>${number(data.quality.good_fraction * 100, 1)}% good</strong></div>
+                <div class="story-stat"><span>Simulation time</span><strong>${escapeHtml(data.source.event_time_utc)}</strong></div>
+              </div>
+            </div>
+          </section>
+          <section class="chapter">
+            <div class="chapter-label"><div class="chapter-number">01</div><h2>What moved</h2><p>Current transfer quantities and topology.</p></div>
+            <div class="chapter-content card story-process">${kpiCards(data)}${processRibbon(data)}</div>
+          </section>
+          <section class="chapter">
+            <div class="chapter-label"><div class="chapter-number">02</div><h2>What sensors saw</h2><p>Pressure profile and delivery quality across the modeled route.</p></div>
+            <div class="chapter-content story-cards">
+              <div class="card panel" style="grid-column:span 2">${routeChart(data)}</div>
+              <div class="card panel"><div class="panel-head"><div><h2>Evidence health</h2><p>Not a normal-operation guarantee.</p></div></div>${qualityPanel(data)}</div>
+            </div>
+          </section>
+          <section class="chapter">
+            <div class="chapter-label"><div class="chapter-number">03</div><h2>What the system concluded</h2><p>Bounded estimate or explicit abstention.</p></div>
+            <div class="chapter-content story-cards">
+              <div class="card panel" style="grid-column:span 2"><div class="panel-head"><div><h2>Detector result</h2><p>${words(data.localization.detector?.method || "unavailable")}</p></div></div>${localizationPanel(data)}</div>
+              <div class="card panel"><div class="panel-head"><div><h2>Later confirmation</h2><p>Synthetic status only.</p></div></div>${confirmation(data)}</div>
+            </div>
+          </section>
+          <section class="chapter">
+            <div class="chapter-label"><div class="chapter-number">04</div><h2>How the run unfolded</h2><p>Process transitions and device evidence remain distinct.</p></div>
+            <div class="chapter-content story-cards">
+              <div class="card panel"><div class="panel-head"><div><h2>Events</h2></div></div>${eventFeed(data)}</div>
+              <div class="card panel" style="grid-column:span 2"><div class="panel-head"><div><h2>Device and detector log</h2></div></div>${logFeed(data)}</div>
+            </div>
+          </section>
+          <section class="chapter">
+            <div class="chapter-label"><div class="chapter-number">05</div><h2>What this does not prove</h2><p>No operations, calibration, or exact location.</p></div>
+            <div class="chapter-content card panel">
+              <div class="story-cards">
+                <div class="state-box"><span>Leak model</span><strong>${words(data.policy.leak_model)}</strong></div>
+                <div class="state-box"><span>Localization</span><strong>${words(data.policy.localization_model)}</strong></div>
+                <div class="state-box"><span>Field calibration</span><strong>${words(data.policy.field_calibration)}</strong></div>
+              </div>
+              <div style="margin-top:12px">${provenance(data)}</div>
+            </div>
+          </section>
+        </div>`;
+
+      const forensicLogs = data =>
+        `<div class="log-terminal" aria-label="Timestamped device and detector evidence">${[...data.device_logs]
+          .reverse()
+          .map(
+            item =>
+              `<div class="log-line"><span>${escapeHtml(item.event_time_utc)}</span><span>${words(item.code)}</span><span>${escapeHtml(item.message)}</span></div>`
+          )
+          .join("")}</div>`;
+
+      const forensicsView = data => {
+        const detector = data.localization.detector;
+        const evidenceIds = detector?.evidence_telemetry_ids || [];
+        return `<div class="forensics-shell">
+          <aside class="forensic-rail">
+            <section class="card panel">
+              <div class="eyebrow">Case file</div>
+              <h2 style="margin-top:5px">Synthetic evidence review</h2>
+              <p class="case-id" style="margin-top:8px">${escapeHtml(data.source.run_id)}</p>
+              <div class="case-list">
+                <div><span>Scenario</span><strong>${words(data.source.scenario)}</strong></div>
+                <div><span>Simulation time</span><strong>${escapeHtml(data.source.event_time_utc)}</strong></div>
+                <div><span>Detector state</span><strong>${words(detector?.detection_state || "unavailable")}</strong></div>
+                <div><span>Confirmation</span><strong>${words(data.localization.confirmation.result)}</strong></div>
+                <div><span>Ground truth</span><strong>Excluded from API</strong></div>
+              </div>
+            </section>
+            <section class="card panel">
+              <div class="panel-head"><div><h2>Model boundaries</h2></div></div>
+              <div class="case-list">
+                <div><span>Leak model</span><strong>${words(data.policy.leak_model)}</strong></div>
+                <div><span>Exact location</span><strong>${words(data.policy.exact_location_claim)}</strong></div>
+                <div><span>Truth access</span><strong>${words(data.policy.detector_truth_access)}</strong></div>
+              </div>
+            </section>
+          </aside>
+          <div class="forensic-center">
+            <section class="card panel">
+              <div class="forensic-title">
+                <div><div class="eyebrow">Evidence workbench</div><h2>Bounded localization analysis</h2></div>
+                <span class="state-pill"><i class="dot ${stateClass(detector?.detection_state)}"></i>${words(detector?.detection_state || "unavailable")}</span>
+              </div>
+            </section>
+            <section class="card panel">
+              <div class="panel-head"><div><h2>Route pressure evidence</h2><p>${number(data.route.monitoring_nodes.length, 0)} fictional monitoring nodes.</p></div></div>
+              ${routeChart(data)}
+              <div style="margin-top:12px">${localizationPanel(data)}</div>
+            </section>
+            <section class="card panel">
+              <div class="panel-head"><div><h2>Detector contract</h2><p>All distances are bounded fictional route estimates.</p></div></div>
+              <div class="table-wrap"><table><tbody>
+                <tr><th>Method</th><td>${words(detector?.method)}</td></tr>
+                <tr><th>Model version</th><td><code>${escapeHtml(detector?.model_version || "unavailable")}</code></td></tr>
+                <tr><th>Evidence window</th><td>${escapeHtml(detector?.evidence_window_start_utc || "unavailable")} → ${escapeHtml(detector?.evidence_window_end_utc || "unavailable")}</td></tr>
+                <tr><th>Residual</th><td>${number(detector?.residual_value, 6)} ${escapeHtml(detector?.residual_unit || "")}</td></tr>
+                <tr><th>Confidence class</th><td>${words(detector?.confidence_class)}</td></tr>
+                <tr><th>Confidence basis</th><td>${(detector?.confidence_basis || []).map(words).join(" · ") || "Unavailable"}</td></tr>
+                <tr><th>Fidelity beside estimate</th><td>${words(detector?.fidelity)} — not an exact physical location or transient-wave result</td></tr>
+              </tbody></table></div>
+              <div class="evidence-ids">
+                ${evidenceIds.slice(0, 10).map(id => `<code>${escapeHtml(id)}</code>`).join("")}
+                ${evidenceIds.length > 10 ? `<code>+${evidenceIds.length - 10} more evidence IDs</code>` : ""}
+              </div>
+            </section>
+            <section class="card panel">
+              <div class="panel-head"><div><h2>Timestamped device evidence</h2><p>Clock, communications, detector, and sensor lifecycle records.</p></div></div>
+              ${forensicLogs(data)}
+            </section>
+            <section class="card panel"><div class="panel-head"><div><h2>Equipment evidence</h2><p>Derived state, not equipment diagnosis.</p></div></div>${equipmentTable(data)}</section>
+          </div>
+          <aside class="forensic-side">
+            <section class="card panel"><div class="panel-head"><div><h2>Evidence integrity</h2></div></div>${qualityPanel(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Confirmation</h2><p>Status only; no confirmed distance is served.</p></div></div>${confirmation(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Provenance</h2></div></div>${provenance(data)}</section>
+            <section class="card panel"><div class="panel-head"><div><h2>Event chain</h2></div></div>${eventFeed(data)}</section>
+          </aside>
+        </div>`;
+      };
+
+      const render = data => {
+        document.getElementById("site-name").textContent = data.source.site;
+        document.getElementById("header-state").textContent = `${data.overview.transfer_state} · ${data.overview.evidence_state}`;
+        const headerDot = document.getElementById("header-dot");
+        headerDot.className = `dot ${stateClass(data.overview.evidence_state)}`;
+        const renderer = {
+          command: commandView,
+          story: storyView,
+          forensics: forensicsView,
+        }[selectedView];
+        document.getElementById("portal-content").innerHTML = renderer(data);
+      };
+
+      const showError = error => {
+        document.getElementById("header-state").textContent = "Data unavailable";
+        document.getElementById("header-dot").className = "dot bad";
+        document.getElementById("portal-content").innerHTML =
+          `<section class="error-state"><h2>Verified dataset unavailable</h2><p>${escapeHtml(error.message)}</p></section>`;
+      };
+
+      const loadPortal = () =>
+        fetch("/api/midstream")
+          .then(response => {
+            if (!response.ok) throw new Error("The portal could not load a complete checksum-verified snapshot");
+            return response.json();
+          })
+          .then(data => {
+            if (!data.source || !data.overview || !data.quality || !data.localization) {
+              throw new Error("The running Flask process uses an outdated portal API. Stop it and restart python -m flask --app app run");
+            }
+            return data;
+          })
+          .then(render)
+          .catch(showError);
+
+      loadPortal();
+      window.setInterval(loadPortal, 15000);
+
+      /* ---------------- Live transfer console ---------------- */
+
+      const liveRoot = document.getElementById("live-console");
+      const liveDialog = document.getElementById("live-dialog");
+      const liveState = { snapshot: null, runs: [], control: null, busy: false, error: null };
+
+      const clockOf = value => escapeHtml(String(value ?? "").slice(11, 19) || "unavailable");
+
+      const sparkBars = points => {
+        const usable = points.filter(value => value !== null && Number.isFinite(value));
+        if (usable.length < 2) return "";
+        const low = Math.min(...usable);
+        const high = Math.max(...usable);
+        const span = high - low || 1;
+        return `<div class="live-spark" aria-hidden="true">${points
+          .map(value => {
+            const height = value === null || !Number.isFinite(value) ? 2 : 4 + ((value - low) / span) * 20;
+            return `<span style="height:${height.toFixed(1)}px"></span>`;
+          })
+          .join("")}</div>`;
+      };
+
+      const liveAssetCard = asset => `
+        <button type="button" class="live-asset ${escapeHtml(asset.health)}" data-asset="${escapeHtml(asset.asset_id)}">
+          <div class="live-asset-head">
+            <span class="live-asset-id">${escapeHtml(asset.asset_id)}</span>
+            <span class="live-asset-type">${words(asset.asset_type)}</span>
+          </div>
+          ${asset.measurements
+            .slice(0, 4)
+            .map(
+              item => `<div class="live-tag">
+                <span class="live-tag-name">${words(item.measurement)}</span>
+                <span class="live-tag-value ${escapeHtml(item.health)}">${formatMeasurement(item)}</span>
+              </div>`
+            )
+            .join("")}
+          ${sparkBars(asset.measurements[0] ? asset.measurements[0].sparkline : [])}
+        </button>`;
+
+      const liveScenarioPicker = snapshot => {
+        const options = (snapshot.scenarios || [])
+          .map(
+            item =>
+              `<option value="${escapeHtml(item.id)}"${item.id === snapshot.scenario.id ? " selected" : ""}>${words(item.id)}</option>`
+          )
+          .join("");
+        return `<div class="live-controls">
+          <label class="live-pill" for="live-scenario">Live scenario</label>
+          <select id="live-scenario" aria-label="Live scenario">${options}</select>
+          <button type="button" class="primary" id="live-apply"${liveState.busy ? " disabled" : ""}>Apply to live feed</button>
+        </div>`;
+      };
+
+      const liveControlPanel = () => {
+        const control = liveState.control;
+        if (!control || !control.enabled) {
+          return `<section>
+            <div class="live-head"><div><h2>On-demand run</h2><p>Batch generation to the data lake is disabled on this deployment.</p></div></div>
+            <p class="live-empty">Set the midstream control flag on the app to enable operator-triggered runs.</p>
+          </section>`;
+        }
+        const job = control.job || { state: "idle" };
+        const scenarios = (liveState.snapshot?.scenarios || [])
+          .map(item => `<option value="${escapeHtml(item.id)}">${words(item.id)}</option>`)
+          .join("");
+        return `<section>
+          <div class="live-head">
+            <div><h2>On-demand run</h2><p>Generate a bounded synthetic run, publish evidence logs to the data lake, and raise Azure Monitor alerts.</p></div>
+            <div class="live-meta">
+              <span class="live-pill"><strong>${words(job.state)}</strong></span>
+              ${job.run_id ? `<span class="live-pill">run <strong>${escapeHtml(job.run_id)}</strong></span>` : ""}
+              ${job.alert_instance_count !== undefined && job.alert_instance_count !== null ? `<span class="live-pill">alerts <strong>${escapeHtml(job.alert_instance_count)}</strong></span>` : ""}
+            </div>
+          </div>
+          <div class="live-controls">
+            <label class="live-pill" for="run-scenario">Run scenario</label>
+            <select id="run-scenario" aria-label="Run scenario">${scenarios}</select>
+            <button type="button" class="primary" id="run-start"${liveState.busy || ["queued", "running"].includes(job.state) ? " disabled" : ""}>Start run</button>
+          </div>
+          <p class="live-note">Published record types: ${(control.record_types || []).map(words).join(" · ")}. Private ground truth is never published.</p>
+        </section>`;
+      };
+
+      const liveRunsPanel = () => {
+        const runs = liveState.runs;
+        return `<section>
+          <div class="live-head"><div><h2>Published evidence runs</h2><p>Finalized synthetic runs available from the data lake.</p></div></div>
+          ${
+            runs.length === 0
+              ? `<p class="live-empty">No published runs yet. Start an on-demand run to populate the data lake.</p>`
+              : `<table class="live-runs"><thead><tr><th>Run</th><th>Scenario</th><th>Events</th><th>Detector outputs</th><th>Ground truth</th></tr></thead><tbody>
+                  ${runs
+                    .slice(0, 12)
+                    .map(
+                      run => `<tr>
+                        <td><code>${escapeHtml(run.run_id)}</code></td>
+                        <td>${words(run.normalized_config?.scenario)}</td>
+                        <td>${escapeHtml(run.record_counts?.events ?? 0)}</td>
+                        <td>${escapeHtml(run.record_counts?.detector_outputs ?? 0)}</td>
+                        <td>Excluded</td>
+                      </tr>`
+                    )
+                    .join("")}
+                </tbody></table>`
+          }
+        </section>`;
+      };
+
+      const renderLive = () => {
+        const snapshot = liveState.snapshot;
+        if (!snapshot) {
+          liveRoot.innerHTML = liveState.error
+            ? `<section><div class="live-head"><div><h2>Live transfer feed</h2></div></div><p class="live-empty">${escapeHtml(liveState.error)}</p></section>`
+            : "";
+          return;
+        }
+        const summary = snapshot.summary;
+        const playback = snapshot.playback;
+        liveRoot.innerHTML = `
+          <section>
+            <div class="live-head">
+              <div>
+                <h2>Live transfer feed</h2>
+                <p>${escapeHtml(snapshot.scenario.description)}</p>
+              </div>
+              <div class="live-meta">
+                <span class="live-pill nominal">nominal <strong>${escapeHtml(summary.nominal)}</strong></span>
+                <span class="live-pill degraded">degraded <strong>${escapeHtml(summary.degraded)}</strong></span>
+                <span class="live-pill impaired">impaired <strong>${escapeHtml(summary.impaired)}</strong></span>
+                <span class="live-pill">assets <strong>${escapeHtml(summary.asset_count)}</strong></span>
+                <span class="live-pill">measurements <strong>${escapeHtml(summary.measurement_count)}</strong></span>
+                <span class="live-pill">updated <strong>${clockOf(snapshot.generated_at_utc)}</strong></span>
+              </div>
+            </div>
+            ${liveScenarioPicker(snapshot)}
+            <p class="live-note">Playback of a ${escapeHtml(Math.round(playback.horizon_seconds / 60))} minute synthetic horizon sampled every ${escapeHtml(playback.interval_seconds)} seconds. The horizon repeats, so values recycle each cycle. Fidelity beside estimate — this is not an exact physical location or a calibrated measurement.</p>
+            <div class="live-wall">${snapshot.assets.map(liveAssetCard).join("")}</div>
+          </section>
+          <section>
+            <div class="live-head"><div><h2>Live event chain</h2><p>Scenario events raised so far in this playback cycle.</p></div></div>
+            ${
+              snapshot.events.length === 0
+                ? `<p class="live-empty">No events raised yet in this cycle.</p>`
+                : `<ul class="live-events">${snapshot.events
+                    .map(
+                      event => `<li class="${escapeHtml(event.severity)}">
+                        <time>${escapeHtml(event.event_time_utc)}</time>
+                        <span>${words(event.event_type)} · ${escapeHtml(event.asset_id)} · ${words(event.state_from)} → ${words(event.state_to)}</span>
+                      </li>`
+                    )
+                    .join("")}</ul>`
+            }
+          </section>
+          ${liveControlPanel()}
+          ${liveRunsPanel()}`;
+      };
+
+      const loadLive = () =>
+        fetch("/api/midstream/live")
+          .then(response => {
+            if (!response.ok) throw new Error("The live transfer feed is unavailable");
+            return response.json();
+          })
+          .then(data => {
+            liveState.snapshot = data;
+            liveState.error = null;
+          })
+          .catch(error => {
+            liveState.error = error.message;
+          })
+          .then(renderLive);
+
+      const loadControl = () =>
+        fetch("/api/midstream/control/status")
+          .then(response => (response.ok ? response.json() : null))
+          .then(data => {
+            liveState.control = data;
+          })
+          .catch(() => {});
+
+      const loadRuns = () =>
+        fetch("/api/midstream/runs")
+          .then(response => (response.ok ? response.json() : { runs: [] }))
+          .then(data => {
+            liveState.runs = data.runs || [];
+          })
+          .catch(() => {
+            liveState.runs = [];
+          });
+
+      const openAssetDialog = assetId =>
+        fetch(`/api/midstream/live/assets/${encodeURIComponent(assetId)}`)
+          .then(response => {
+            if (!response.ok) throw new Error("That asset is not on the live feed");
+            return response.json();
+          })
+          .then(detail => {
+            const asset = detail.asset;
+            liveDialog.innerHTML = `
+              <div class="live-head">
+                <div><h2>${escapeHtml(asset.asset_id)}</h2><p>${words(asset.asset_type)} · ${kilometers(asset.route_distance_m)} along the fictional route</p></div>
+                <div class="live-controls"><button type="button" id="live-close">Close</button></div>
+              </div>
+              <table><thead><tr><th>Measurement</th><th>Value</th><th>Validity</th><th>Health</th><th>Samples</th></tr></thead><tbody>
+                ${asset.measurements
+                  .map(
+                    item => `<tr>
+                      <td>${words(item.measurement)}</td>
+                      <td>${formatMeasurement(item)}</td>
+                      <td>${words(item.validity)}</td>
+                      <td>${words(item.health)} (${words(item.health_reason)})</td>
+                      <td>${escapeHtml(item.sample_count)}</td>
+                    </tr>`
+                  )
+                  .join("")}
+              </tbody></table>
+              <p class="live-note">History window ${escapeHtml(Math.round(detail.history_seconds / 60))} minutes. Synthetic values only; operational use prohibited.</p>`;
+            liveDialog.showModal();
+            liveDialog.querySelector("#live-close").addEventListener("click", () => liveDialog.close());
+          })
+          .catch(error => {
+            liveDialog.innerHTML = `<p class="live-empty">${escapeHtml(error.message)}</p>`;
+            liveDialog.showModal();
+          });
+
+      const postLive = (url, header, scenario, after) => {
+        liveState.busy = true;
+        renderLive();
+        return fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Midstream-Control": header },
+          body: JSON.stringify({ scenario }),
+        })
+          .then(response => response.json().catch(() => ({})))
+          .then(() => after())
+          .catch(() => {})
+          .then(() => {
+            liveState.busy = false;
+            renderLive();
+          });
+      };
+
+      liveRoot.addEventListener("click", event => {
+        const card = event.target.closest("[data-asset]");
+        if (card) {
+          openAssetDialog(card.dataset.asset);
+          return;
+        }
+        if (event.target.id === "live-apply") {
+          const scenario = liveRoot.querySelector("#live-scenario").value;
+          postLive("/api/midstream/live/scenario", "live-scenario", scenario, loadLive);
+        }
+        if (event.target.id === "run-start") {
+          const scenario = liveRoot.querySelector("#run-scenario").value;
+          postLive("/api/midstream/control/start", "simulation-start", scenario, () =>
+            loadControl().then(loadRuns)
+          );
+        }
+      });
+
+      liveDialog.addEventListener("click", event => {
+        if (event.target === liveDialog) liveDialog.close();
+      });
+
+      const refreshLive = () => Promise.all([loadLive(), loadControl().then(loadRuns)]).then(renderLive);
+      refreshLive();
+      window.setInterval(loadLive, 5000);
+      window.setInterval(() => loadControl().then(loadRuns).then(renderLive), 20000);
+    </script>
+  </body>
+</html>

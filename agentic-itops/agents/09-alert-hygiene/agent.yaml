@@ -11,22 +11,113 @@ tools:
   name: alert_hygiene
   spec: ../../tools/openapi/alert-hygiene.yaml
   auth: managed_identity
-output_schema:
-  type: object
-  required:
-  - executive_summary
-  - recommendations
-  properties:
-    executive_summary:
-      type: string
-    estimated_volume_reduction_pct:
-      type: number
-    recommendations:
-      type: array
-    do_not_touch:
-      type: array
 identity:
   type: user_assigned_managed_identity
   required_roles:
   - Monitoring Reader
   - Reader
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps:
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
+    executive_summary:
+      type: string
+      minLength: 1
+    estimated_volume_reduction_pct:
+      type:
+      - number
+      - 'null'
+      minimum: 0
+      maximum: 100
+    recommendations:
+      type: array
+      items:
+        type: object
+        properties:
+          rule_name:
+            type: string
+            minLength: 1
+          current_behavior:
+            type: string
+            minLength: 1
+          proposed_change:
+            type: string
+            minLength: 1
+          evidence:
+            type: array
+            items:
+              type: string
+              minLength: 1
+            minItems: 1
+          expected_effect:
+            type: string
+            minLength: 1
+        required:
+        - rule_name
+        - current_behavior
+        - proposed_change
+        - evidence
+        - expected_effect
+        additionalProperties: false
+      minItems: 0
+    do_not_touch:
+      type: array
+      items:
+        type: object
+        properties:
+          rule_name:
+            type: string
+            minLength: 1
+          reason:
+            type: string
+            minLength: 1
+        required:
+        - rule_name
+        - reason
+        additionalProperties: false
+      minItems: 0
+    limitations:
+      type: string
+      minLength: 1
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - executive_summary
+  - estimated_volume_reduction_pct
+  - recommendations
+  - do_not_touch
+  - limitations
+  additionalProperties: false

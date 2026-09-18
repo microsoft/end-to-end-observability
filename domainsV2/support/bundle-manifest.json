@@ -1,0 +1,1125 @@
+{
+  "format_version": 1,
+  "source_repository": "shumwilkintestlab/iot-data-generation/iot-data-generation-repo",
+  "source_base_revision": "68c7b21e66e15fea47551fbe10480c2bc69bd24b",
+  "source_description": "Local snapshot including domain presentation and inventory changes, not a clean release. File hashes identify the actual bundled bytes.",
+  "data_description": "Fictional reviewed inventory inputs used for the accepted September 14, 2026 producer demo. Only the explicit inventory dataset directories are included; no live observations or session state.",
+  "operational_use": "prohibited",
+  "files": [
+    {
+      "path": "dashboard/static/domains.html",
+      "bytes": 6885,
+      "sha256": "64b1ce86f8216a2b051d5d9ebfc07a307e80f10a46318ca1058f7e2c8023d6bc"
+    },
+    {
+      "path": "dashboard/static/inventory-studio.js",
+      "bytes": 8394,
+      "sha256": "d7f03c4129df210048414c680c8b58b6de227c3ebe94c970688bb076e72f4dfb"
+    },
+    {
+      "path": "domains/downstream/configs/downstream-abnormal-smoke.json",
+      "bytes": 464,
+      "sha256": "3095d3035f3c9d3e9a5dfb38158e6e48c2d29299a8dc4b223973df39de2c5980"
+    },
+    {
+      "path": "domains/downstream/configs/downstream-one-hour.json",
+      "bytes": 426,
+      "sha256": "c8a6476dd840b87aa58f097c8ab7fe886def9a879fb1f7b69ab3f363a30dbf3c"
+    },
+    {
+      "path": "domains/downstream/configs/downstream-smoke.json",
+      "bytes": 425,
+      "sha256": "bf7a2c9df9b001fa9fc06d9161d5e719c7b5aaa0e97607c6a6cd49aba6811aaf"
+    },
+    {
+      "path": "domains/downstream/configs/fictional-compact-portfolio-benchmark-6h.json",
+      "bytes": 594,
+      "sha256": "5d88c012211c768bca07c3b67a9eeacda69f9b10bbb3dd9a6ec38d54d1a367ea"
+    },
+    {
+      "path": "domains/downstream/configs/fictional-compact-portfolio-small.json",
+      "bytes": 592,
+      "sha256": "a66b0fb8e7a3ef00e3fb8e97b675020ac0e5b7f45b686add2f257702d2b40eca"
+    },
+    {
+      "path": "domains/downstream/configs/fictional-compact-portfolio-smoke.json",
+      "bytes": 593,
+      "sha256": "c2dbada9bed23b06cb2d1843039fd95f11d2e5bb33867a69e547faf9a0bd9864"
+    },
+    {
+      "path": "domains/downstream/generated/review/alarm_journal.jsonl",
+      "bytes": 2292,
+      "sha256": "e87f9fe2ad6a4393fddda8e333194ccb698a84034ae5dab01cb3359abd9f99fa"
+    },
+    {
+      "path": "domains/downstream/generated/review/analyzer_results.jsonl",
+      "bytes": 2055,
+      "sha256": "ddd81956e348bd3a452d9a245d8e448c31d2372dd76eb494461e9407bbd5f8c5"
+    },
+    {
+      "path": "domains/downstream/generated/review/assets.jsonl",
+      "bytes": 11714,
+      "sha256": "1eabddf174352db97c3cb5ece7586ed5a40233cffe8bb1bada378942387a6e05"
+    },
+    {
+      "path": "domains/downstream/generated/review/audit_logs.jsonl",
+      "bytes": 1040,
+      "sha256": "028db510e3815a9cea30a8d13c2fd8b865104c228dce8217f142dd1a768d3d3a"
+    },
+    {
+      "path": "domains/downstream/generated/review/condition_monitoring.jsonl",
+      "bytes": 4708,
+      "sha256": "b5959edfd05124db28f1ca5fd23a3ce1765f6f5264652112eadb2ad844364e43"
+    },
+    {
+      "path": "domains/downstream/generated/review/delivery_logs.jsonl",
+      "bytes": 8412,
+      "sha256": "f6bf40a6edc199c62f14047d1ea4dfe39d2dad81a1b4dcdee103506c470561e0"
+    },
+    {
+      "path": "domains/downstream/generated/review/device_logs.jsonl",
+      "bytes": 8259,
+      "sha256": "dc2035bc07dadcf8a198c1283cc22e19714ae8da4ea1ddc2e732ff4c7166ead0"
+    },
+    {
+      "path": "domains/downstream/generated/review/devices.jsonl",
+      "bytes": 10332,
+      "sha256": "03690033c3f314de7c3a1d3fc57384007b0b088ab1540bb5c7fdb13f2978fdc1"
+    },
+    {
+      "path": "domains/downstream/generated/review/electrical_monitoring.jsonl",
+      "bytes": 2402,
+      "sha256": "8b71c62dd7fce2df5ccf5558e9af196169de3d7f0d1eaecf74e0fcf5b11738fe"
+    },
+    {
+      "path": "domains/downstream/generated/review/environmental_observations.jsonl",
+      "bytes": 1985,
+      "sha256": "adcff07a3728e3635b96085c38e188107e5edaae058933912d09e1041622e241"
+    },
+    {
+      "path": "domains/downstream/generated/review/equipment_register.jsonl",
+      "bytes": 245876,
+      "sha256": "f45f9ec6fb17d3c2cf33c958896a6e05d45dffdfdc77da09f57a01b1c3822297"
+    },
+    {
+      "path": "domains/downstream/generated/review/events.jsonl",
+      "bytes": 8787,
+      "sha256": "b9c895a3ec1f6b3f2cd2b2cb56c43c1b76af54ede66d03fe2ec34f9b9a982199"
+    },
+    {
+      "path": "domains/downstream/generated/review/ground_truth.jsonl",
+      "bytes": 3287,
+      "sha256": "2b74c0745715f19219c8ba5510bca7820bd974b63bcffd7d474d26e56611393e"
+    },
+    {
+      "path": "domains/downstream/generated/review/lab_results.jsonl",
+      "bytes": 1175,
+      "sha256": "635eaa02475921f997f7c0e33a988cc00daafb4921531bcf3fd40b9e919547f9"
+    },
+    {
+      "path": "domains/downstream/generated/review/local_only_manifest.json",
+      "bytes": 1627,
+      "sha256": "4b9be9a3f28637db42167a7cc1aebf586ddfff7af9300f1366e84358890b4d6e"
+    },
+    {
+      "path": "domains/downstream/generated/review/logs-manifest.json",
+      "bytes": 3105,
+      "sha256": "2f76fd29eaee7a7ec46fbc2dc5bfc580fae1c1b6c2ae345921c5bfc1db1c7cec"
+    },
+    {
+      "path": "domains/downstream/generated/review/maintenance_context.jsonl",
+      "bytes": 1623,
+      "sha256": "ee0f391d9e3849ac10f62ad2e2e4f3e6c00063a60ce03cf1f83032a28f54f331"
+    },
+    {
+      "path": "domains/downstream/generated/review/manifest.json",
+      "bytes": 5770,
+      "sha256": "edcffd235eccd4f0518af4599d375447206464b587756a23125a15a1c57873de"
+    },
+    {
+      "path": "domains/downstream/generated/review/operator_actions.jsonl",
+      "bytes": 1030,
+      "sha256": "0029aaef6eae1fa9be0b052c8e721718b65fdddcb5e6faac38f337f2c42f9abc"
+    },
+    {
+      "path": "domains/downstream/generated/review/part_applicability.jsonl",
+      "bytes": 65349,
+      "sha256": "a4e23dec35cf547450ed0ccf8fe95496154ae8d7cec19808f794b465c24709d1"
+    },
+    {
+      "path": "domains/downstream/generated/review/part_master.jsonl",
+      "bytes": 51149,
+      "sha256": "a937ee6e1cfddddc3ce904eeabf3a6abaaa322e88202fc65eab0f293dd0b0540"
+    },
+    {
+      "path": "domains/downstream/generated/review/part_stock_txn.jsonl",
+      "bytes": 196681,
+      "sha256": "0012122289db39c11dc7d11fc7a27d226f459427847f50340dca48f609f67b35"
+    },
+    {
+      "path": "domains/downstream/generated/review/shipment_context.jsonl",
+      "bytes": 1214,
+      "sha256": "7605fa450d43f9b24c47d42915d43f4b7723161edf9b83fc7c57b5054cff001c"
+    },
+    {
+      "path": "domains/downstream/generated/review/storeroom_location.jsonl",
+      "bytes": 19020,
+      "sha256": "95f27af478e93182f3ed755eb56dda308d15ecbb85aadb76fb8f9ee136938991"
+    },
+    {
+      "path": "domains/downstream/generated/review/tags.jsonl",
+      "bytes": 52260,
+      "sha256": "92d09c7ce05b1f994b8524697eedc861d03ee479d96d720ec8ea1f89b5238046"
+    },
+    {
+      "path": "domains/downstream/generated/review/telemetry.jsonl",
+      "bytes": 2799156,
+      "sha256": "c33e93e36e0e16f0370c3d19382b6b78e61b02c3546f31dac44dea4dca413296"
+    },
+    {
+      "path": "domains/downstream/generated/review/topology.jsonl",
+      "bytes": 19127,
+      "sha256": "d5c807064b15ed427d950d95562e3457918be51d6501264883e7221081fcf279"
+    },
+    {
+      "path": "domains/downstream/generated/review/travel_matrix.jsonl",
+      "bytes": 150864,
+      "sha256": "89efa632a8d15956592bd16180f4f882a8da6c6a7a42f9f6d48f28f97e8e2a84"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/__init__.py",
+      "bytes": 487,
+      "sha256": "15e59fda176cba0438f1a01785f56032659c86f22b4625c17bfb0759dea95ebc"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/__main__.py",
+      "bytes": 51,
+      "sha256": "482b8693e2fe6dbd732e3d7961e03827d3efa187bad11d29da188be580ebbeea"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/catalog.py",
+      "bytes": 27748,
+      "sha256": "4da14fa0ba6f8e0e8d6d08c02c10e043470ac7f7d8565da76c2ccc5d32b7e1fd"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/cli.py",
+      "bytes": 1201,
+      "sha256": "0d648971ace594ef83cdfedc6cf9877a55ff83c4f54cf3bf35b7c64d7c676dd7"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/config.py",
+      "bytes": 6040,
+      "sha256": "289b20f6e24e79cbd2a85fa422e8d443bcc1ed385ebfd115163f006e1b5daeec"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/dashboard/__init__.py",
+      "bytes": 213,
+      "sha256": "ab57fe5abd35c244a93e60ec0e637c5ab7fb603ff9f929b8305f87c446d23c1e"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/dashboard/data.py",
+      "bytes": 21064,
+      "sha256": "6a13297feae49a0f62288fb76df2371db6119f0a6d615f2ae4b5bee5d48614e2"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/dashboard/static/portfolio.html",
+      "bytes": 39181,
+      "sha256": "0e6ab266f068a85a683d71c00b2f979240fa6a616e35e6e73cf0292eafa1245a"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/io.py",
+      "bytes": 344,
+      "sha256": "5f012c8c7a5fd69756e042d9bb32b65a498e9f381754581db46e7b6ea35ca48a"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/schemas/config.schema.json",
+      "bytes": 2361,
+      "sha256": "bd2f6e868581b5f55b56ad6141ac7e1a817c1a00ba423ae9967a30d25a9cac17"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/schemas/records.schema.json",
+      "bytes": 8351,
+      "sha256": "35c1d28ccab282f22d3fdd8e0672892b954626994920473bf78cafbb0aa1b706"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/simulation.py",
+      "bytes": 39573,
+      "sha256": "ff2efdd67c31928d2a6ca30f355fcca3184140adea401ff5a7a72988b861f813"
+    },
+    {
+      "path": "domains/downstream/src/iot_compact_portfolio_simulator/simulator.py",
+      "bytes": 8549,
+      "sha256": "bc3e1fea6135df0f17d572da3de3a53ffd0771a6e68fdff7dfb11f4f4d3a9fab"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/__init__.py",
+      "bytes": 167,
+      "sha256": "00456b0fd45cadc236e0108b0bb21fa2e33a1f0d07530da2fba6c12317538ed4"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/__main__.py",
+      "bytes": 80,
+      "sha256": "3d2438ae92f4746e9ffaa1f837b1fe803f6281091d1f31f8c95643716f257d9a"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/adls.py",
+      "bytes": 5323,
+      "sha256": "618a406528185c2b65cd75f47b3f8412856a88bb4d456440fd8e1e6b8887c6b0"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/catalog.py",
+      "bytes": 10015,
+      "sha256": "02962c43f836705652307394a22d0c01ac9bab84b3a1a6c2782a56a828687dd4"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/cli.py",
+      "bytes": 3647,
+      "sha256": "170e9e99f1d1e3eb1f8585a994c785b4657f53563c760f64764c89e3c356b0a3"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/common.py",
+      "bytes": 2426,
+      "sha256": "7d52e175149025728721f13234e3b4884485629fe64dbf02dd7462efe558f6c9"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/config.py",
+      "bytes": 4763,
+      "sha256": "225c17e625827fb42c61e10f36a571e5be2e266455c210c3969d11ba3b509a40"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/dashboard/__init__.py",
+      "bytes": 804,
+      "sha256": "8ac355b5ed5242281c8c226be77d47527f9a07b604057c30c9bd8ac3d44ebad8"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/dashboard/live.py",
+      "bytes": 23946,
+      "sha256": "9618cd3cfcbd283eff972389f008662e7f8e8cc0247c899d9e5a7ab79a1e66c8"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/dashboard/review.py",
+      "bytes": 25769,
+      "sha256": "a59cc9f56ddd378e17eedff3ee6e52c2cd3b44f010e042b01bd01d5f2db61069"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/dashboard/service.py",
+      "bytes": 20636,
+      "sha256": "eb7cee2a9d5f1edf3bfee09ed35dbfae37762c2e62a1f7321aa4535c3d992509"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/dashboard/static/downstream.html",
+      "bytes": 34271,
+      "sha256": "99a50fbb7278bd2bfb07c18541501c7ef5ee2930b310e7a5cf43edcc8df69398"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/dashboard/static/inventory.html",
+      "bytes": 86415,
+      "sha256": "d911401424784a78c5cbf0ebea273b09035ec7e482ac81abd8453546a29487f5"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/io.py",
+      "bytes": 218,
+      "sha256": "b503bdf54afd3e065c087ad98d5deb309b268034b0f5f763062091d8299a678b"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/parts.py",
+      "bytes": 61949,
+      "sha256": "05c2e8e93b180cbaf1deefecaa6fe10b2bc537438f353a07dd535e265cdbd292"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/schemas/config.schema.json",
+      "bytes": 1663,
+      "sha256": "a56bf64c7389a043ae986b33f71ef56a5bfe7535fb16f44fa9dfd7d78c6de596"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/schemas/manifest.schema.json",
+      "bytes": 11648,
+      "sha256": "48d036b2c850a4da77a3592eb7f4749aa89937771593b156bf2bbe2d6b077c4a"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/schemas/records.schema.json",
+      "bytes": 20658,
+      "sha256": "5cf92fa7d8a69e1d15a5c1682181171747a7954b979f39e17c9f1c482a6b73e7"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/simulation.py",
+      "bytes": 28081,
+      "sha256": "6cbb05fd34811cd60003ed4be5e39040d0afd25d572beac84d675c58612187a1"
+    },
+    {
+      "path": "domains/downstream/src/iot_downstream_refinery_simulator/simulator.py",
+      "bytes": 9458,
+      "sha256": "e48674daf036227b1ecd035502a0e22a567e9317f632ee0f74bc808e5f6a6e32"
+    },
+    {
+      "path": "domains/midstream/configs/fictional-liquid-midstream-small.json",
+      "bytes": 1401,
+      "sha256": "5c4006b31085042e86447e7a900af5476c77d3b97107a086efec78e374a418f0"
+    },
+    {
+      "path": "domains/midstream/generated/review/assets.csv",
+      "bytes": 4274,
+      "sha256": "5a7ef0d0800fc4c05f92529c7b1583388c059cdddc145dd71f46b9bfbb8eb44e"
+    },
+    {
+      "path": "domains/midstream/generated/review/assets.jsonl",
+      "bytes": 7628,
+      "sha256": "d146cc652da49adda72574cf411110c75b5fbf2956dbbb2ae646ed43e099059a"
+    },
+    {
+      "path": "domains/midstream/generated/review/detector_outputs.csv",
+      "bytes": 2198,
+      "sha256": "36ae86a2c4c93b4c7c760d5f206f77a4724ee9daf780fa8fbc8ebea8373d47c0"
+    },
+    {
+      "path": "domains/midstream/generated/review/detector_outputs.jsonl",
+      "bytes": 2116,
+      "sha256": "7414967249b53f54feee0cc0752bf53966b0229f929687d9c612eef606797eff"
+    },
+    {
+      "path": "domains/midstream/generated/review/device_logs.csv",
+      "bytes": 4984,
+      "sha256": "3fd6023a5f29e339dd11384fe12e5b7b5485344439fa6e4bc727ace13a8a99ee"
+    },
+    {
+      "path": "domains/midstream/generated/review/device_logs.jsonl",
+      "bytes": 7530,
+      "sha256": "3a35972dbbcbc14f9e342a83599fc0be160b121f079248fbbe7c1cbaecb92c64"
+    },
+    {
+      "path": "domains/midstream/generated/review/events.csv",
+      "bytes": 782,
+      "sha256": "4530130917bed099e73de1481bdc0495f31315ce87d2be4a2016df1d743daa43"
+    },
+    {
+      "path": "domains/midstream/generated/review/events.jsonl",
+      "bytes": 898,
+      "sha256": "0a9a8fefef7db53d85841a567de60d3f1c9cbe4c6b99682632f7b741d63c912f"
+    },
+    {
+      "path": "domains/midstream/generated/review/ground_truth.csv",
+      "bytes": 1291,
+      "sha256": "5b968337b8a69dad74ac46e7be874b8d1855e6fbe0c62b7e59b390fdb3c9920b"
+    },
+    {
+      "path": "domains/midstream/generated/review/ground_truth.jsonl",
+      "bytes": 1243,
+      "sha256": "edac911df669a37a69cdcaee13ac6b0441c657985f134e13800e9b8e5def3714"
+    },
+    {
+      "path": "domains/midstream/generated/review/local_only_manifest.json",
+      "bytes": 2204,
+      "sha256": "95aecc137327e08aa5705eeae49a05cd57c701168b1d71de2663582d6e9a308f"
+    },
+    {
+      "path": "domains/midstream/generated/review/manifest.json",
+      "bytes": 5259,
+      "sha256": "aa70ca1ffe095c65599c6a23fd5c2ccc530872cde7ee139dad98166c5a39cef1"
+    },
+    {
+      "path": "domains/midstream/generated/review/part_applicability.csv",
+      "bytes": 41982,
+      "sha256": "fc772d8a9efb484d2719d60f5a6b74a6ffffcfa64be744df4976813d264594c0"
+    },
+    {
+      "path": "domains/midstream/generated/review/part_applicability.jsonl",
+      "bytes": 62425,
+      "sha256": "8a6c410d21429067a6d2852fe8daa05bfc1b8960c9c0535d32e4b01f06f6e93f"
+    },
+    {
+      "path": "domains/midstream/generated/review/part_master.csv",
+      "bytes": 19646,
+      "sha256": "88ab3ef8a5717c8c9788fc91309b5d35d9298add955a7f90155f00f14a08074e"
+    },
+    {
+      "path": "domains/midstream/generated/review/part_master.jsonl",
+      "bytes": 31216,
+      "sha256": "2b2b01126eba2f4ee84ef93b9c7880534563af038611bf0eeddb2420efb2a9e9"
+    },
+    {
+      "path": "domains/midstream/generated/review/part_stock_txn.csv",
+      "bytes": 99656,
+      "sha256": "7d2b4a57adc88aba089ba3557963c9cbb5958701b8a15eadb03b607e33db1354"
+    },
+    {
+      "path": "domains/midstream/generated/review/part_stock_txn.jsonl",
+      "bytes": 148889,
+      "sha256": "b58028883b1cb058d7ddf35cdcf5ffdd48bc3c9dfe1e3b6445c793662e5875d8"
+    },
+    {
+      "path": "domains/midstream/generated/review/physical_confirmation_events.csv",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "domains/midstream/generated/review/physical_confirmation_events.jsonl",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "domains/midstream/generated/review/storeroom_location.csv",
+      "bytes": 7656,
+      "sha256": "ace189400bd639657a84ee6eccb3c607ff387f85813dd322ac639b16bbd8530f"
+    },
+    {
+      "path": "domains/midstream/generated/review/storeroom_location.jsonl",
+      "bytes": 12416,
+      "sha256": "7f9e7b69218d81a2c31317aa1e5ffe6b13ba426f3c6ca0dc9c047823d6751256"
+    },
+    {
+      "path": "domains/midstream/generated/review/telemetry.csv",
+      "bytes": 891015,
+      "sha256": "211a9627568588bb7625c1c59bebb9e7b62b46c430bcd28024ac0feedcdab03e"
+    },
+    {
+      "path": "domains/midstream/generated/review/telemetry.jsonl",
+      "bytes": 1592050,
+      "sha256": "c0b92413b6b81a573b15a54e718d129ee5840cba781fe1c3a60e8e4d3e65a6a1"
+    },
+    {
+      "path": "domains/midstream/generated/review/topology.csv",
+      "bytes": 5431,
+      "sha256": "29642ea549fc4d13859dee753df1473fb9d1112931b65df3f2f448bffe1e02cc"
+    },
+    {
+      "path": "domains/midstream/generated/review/topology.jsonl",
+      "bytes": 8360,
+      "sha256": "9aaa90b858a90bf3dc1ba961e806b1a23eaaea821e7f92d49d99e96ff99627e8"
+    },
+    {
+      "path": "domains/midstream/generated/review/travel_matrix.csv",
+      "bytes": 94819,
+      "sha256": "49036ac8e8b004d5746aed9e5fca2089fe651976b477196ae575119dfed77e51"
+    },
+    {
+      "path": "domains/midstream/generated/review/travel_matrix.jsonl",
+      "bytes": 163362,
+      "sha256": "a268cf6efe523bc868f8d91674667d77d02db6519a18e77f2fa43cc16f706e5f"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/__init__.py",
+      "bytes": 163,
+      "sha256": "b7423d8dc73b3df5356c21f741331462f73ec81b5a930e0d2215928312051202"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/__main__.py",
+      "bytes": 51,
+      "sha256": "482b8693e2fe6dbd732e3d7961e03827d3efa187bad11d29da188be580ebbeea"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/adls.py",
+      "bytes": 1805,
+      "sha256": "b380722b73f568171b524a37adf169d8c5f8ac2f8cc0f2e7c5b6927a297b2fa7"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/catalog.py",
+      "bytes": 5805,
+      "sha256": "4c93e98537f520bfdf66f397739046bd9822922706595da0c7b923a7c27b058e"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/cli.py",
+      "bytes": 3433,
+      "sha256": "5809576b45ab761add5dba389d02fbe18ed3cd3b8f2ed46ce443a23049f3abea"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/common.py",
+      "bytes": 1801,
+      "sha256": "2825a8280e53c49e5bc4d43543e14c9bb2336f43910fc32ea371c0725946d304"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/config.py",
+      "bytes": 8318,
+      "sha256": "339cc43cf3808165ef8430ebbc67804f4fab463cd3abd638c302cee6720b5911"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/__init__.py",
+      "bytes": 852,
+      "sha256": "1417811807b4dfef9ece14d3a89b1fcaa3c5eae1129ad7aee1238468ba3fdf95"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/data.py",
+      "bytes": 15832,
+      "sha256": "1a5d95065a351bd6c69e46c442640c36eba67eee3c618390d9d41545c653c2fe"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/live.py",
+      "bytes": 22348,
+      "sha256": "1144fb8717f1fae30e659a9f632b42780a5893ec644717b1b4290cb80840b13a"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/movement.py",
+      "bytes": 642,
+      "sha256": "23f337a9b5553c45390c99af55e0c66aafc24c7bd8254610af447d8a2a293c06"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/review.py",
+      "bytes": 16638,
+      "sha256": "b382183490e6b9576425a4810518bb6d03a2bba070e9dd2fe2e14be511e084a2"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/service.py",
+      "bytes": 24988,
+      "sha256": "e80e4323998034f61e06cbf540d0087fcd787bea766116cf533720b962581935"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/static/basemap.json",
+      "bytes": 722623,
+      "sha256": "46fec914eaec6c300b66869698a73fe79db85cbfe1b21309e173958597438e80"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/static/inventory.html",
+      "bytes": 102299,
+      "sha256": "227795928a62dd2e10edb8b2f597e808475b938eae632d5bb5bbed7ba9593579"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/dashboard/static/refinery.html",
+      "bytes": 76672,
+      "sha256": "f62f693d116d45bf7f08e8ac7f3da60078db47ee0b0cb7a9717e20d6fde1df31"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/io.py",
+      "bytes": 328,
+      "sha256": "57be843eae51516867e37870a37c3ec16dbfbb6ad0a2d6672df98b0c977cddff"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/localization.py",
+      "bytes": 14594,
+      "sha256": "feb4803e2925b38f2c9d17f095417f347edf80df960deb637e9a6e3330c33f29"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/parts.py",
+      "bytes": 47648,
+      "sha256": "500d575c69cefd9133539f1b697c83b2b3d1fe2bbf744311c3f4149c075f028d"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/schemas/records.schema.json",
+      "bytes": 4464,
+      "sha256": "808c41530c3439d573ca907d1a0da4dd8b3486f816fda642f98f4aa943ecb52e"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/simulation.py",
+      "bytes": 25484,
+      "sha256": "c04ebe592ccbd815eaf9be58d40f4f6b2dd2e6b12b4baf6f754916aced70db16"
+    },
+    {
+      "path": "domains/midstream/src/iot_midstream_simulator/simulator.py",
+      "bytes": 7539,
+      "sha256": "96b937ede4b532a93c074656ec972313552891abcd8e6e55aac22bbb25b939e8"
+    },
+    {
+      "path": "domains/power-grid/configs/austin-small.json",
+      "bytes": 784,
+      "sha256": "f3e8c78122fb584594a9c5395df3093e4f42ed1a98a11859ca0df994832b3c2c"
+    },
+    {
+      "path": "domains/power-grid/configs/austin-temperature-sensor-fault.json",
+      "bytes": 1169,
+      "sha256": "6e5603037f8de62087f8e012b3c1edd00eaa71f27a5b6fc462326e5a3ae4f74b"
+    },
+    {
+      "path": "domains/power-grid/configs/nyc-five-boroughs-10-day.json",
+      "bytes": 915,
+      "sha256": "e3d49af2bc046a389907f24ab85165025c55b947396e6aaeec0e4110f0fe66c4"
+    },
+    {
+      "path": "domains/power-grid/configs/synthetic-nyc-post-storm-incident.json",
+      "bytes": 1056,
+      "sha256": "56229126499a774abca2009a830781522dd2f5ae5e483a27ec34ae79619700c8"
+    },
+    {
+      "path": "domains/power-grid/configs/synthetic-nyc-storm-route.json",
+      "bytes": 1439,
+      "sha256": "d2bb65d252d04447e0a6ea035fd7ffd4563fb7e0f6b700de389c14c00a73516c"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/inventory.schema.json",
+      "bytes": 4444,
+      "sha256": "a0d0b79c7febec17e3d8fd1e9ee2d480f59e8a29e9ce20225bbffdee9f3e9844"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/manifest.json",
+      "bytes": 1511,
+      "sha256": "7494df2760b58d2e653233d2c7ae5bc33c88534781e1815d8935121d991b2852"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/part_applicability.csv",
+      "bytes": 7510,
+      "sha256": "0c2775bc533a50c4b620fa1ce5e2988075c2f5752b5caebf9f90dfa02b1b5a80"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/part_applicability.jsonl",
+      "bytes": 11040,
+      "sha256": "5b2bd62b28e8e3b91174df00df9b7b0c66e916ad944a704ac2cbee70ebe8baf8"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/part_master.csv",
+      "bytes": 9608,
+      "sha256": "3fa15015bf9eb30d7c441a4ccd54618866389aaae884f3b4f727878624811234"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/part_master.jsonl",
+      "bytes": 13107,
+      "sha256": "16cb9405ec59450314a6b40be2db94b84627d3c81bb0ce2223815c0c9d7c64bd"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/part_stock_txn.csv",
+      "bytes": 15584,
+      "sha256": "897470c8573fe4dde4fccc678252ff52c2fa93b332655eaf12a9d869892f62d0"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/part_stock_txn.jsonl",
+      "bytes": 23114,
+      "sha256": "446aed4235e55ddb46e73dcca74ecdd5892ddb4db52dfb678068b4b38ed6c213"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/reference_catalog.json",
+      "bytes": 1646,
+      "sha256": "f3a3300e9a915d35cc293bd1c51bda061ba32a2c4f78966a52f04d9e92e9502a"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/storeroom_location.csv",
+      "bytes": 2443,
+      "sha256": "33d6cdc01548abd8c4b13d54b1fb8c939ac5f540906d7c02ecea3dd4ca08659e"
+    },
+    {
+      "path": "domains/power-grid/sample_data/inventory-austin/storeroom_location.jsonl",
+      "bytes": 3464,
+      "sha256": "4110fe6e09ba4f6c08ca601e18dbb158015b6fa6664d9252e6707d9ce7450112"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/__init__.py",
+      "bytes": 286,
+      "sha256": "618230d1ed529b26b4a0155704e6d1f8916ee1009b825ac2706788aa2aa41897"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/__main__.py",
+      "bytes": 83,
+      "sha256": "d220d88dd9a25cd0629c5176dd6532a2db1da40eb014a8e80796b0ddeb134918"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/adls.py",
+      "bytes": 11262,
+      "sha256": "a247d590de052c2f4d4222a40ae2fdd666943f47adbd6fc2fcb0637e32eca33d"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/catalog.py",
+      "bytes": 13570,
+      "sha256": "cafa7b341d79fca4776265678ae336a118303c33f66efb894232f8e63ba1317d"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/cli.py",
+      "bytes": 15420,
+      "sha256": "d7954b66633e63eab9cbd303c2a9fa99d15a764e5e55b278a824cfd1ebc3cfbd"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/config.py",
+      "bytes": 22022,
+      "sha256": "2a8646b86f85427aa3a40f244bfdb35ea0f109ec6d3e87a800a6691244d7cc15"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/continuous.py",
+      "bytes": 52055,
+      "sha256": "3e369d14c9ecb095763d4b03122019bf824c5edad6915e4ee60aa418f61da922"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/dashboard/__init__.py",
+      "bytes": 447,
+      "sha256": "1b0060732f4bba20dc204ec2d9bf8c8ca10dbd90eb8c790914daeb4ae3af7213"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/dashboard/control.py",
+      "bytes": 3767,
+      "sha256": "ff01ccd34bf8994f8801de96d6badf2ec379335f5b8d1d3f624474d557d25a5d"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/dashboard/data.py",
+      "bytes": 38141,
+      "sha256": "c0c5a19510a83a52bcab58beabc183ff5e88c2e8ab39e7f367b21b9634a9bb4d"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/dashboard/review_static/inventory.html",
+      "bytes": 35777,
+      "sha256": "116ea765c415ec9096c756d241f787b5c4888d622573d9badece5dbf23df3e15"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/dashboard/review.py",
+      "bytes": 5501,
+      "sha256": "4b055016b2f06f1139260980bc3a2c9163df9cd944e0294bd12d282db2137d78"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/dashboard/static/index.html",
+      "bytes": 299150,
+      "sha256": "f06ee0a855d2c777f4953d5761f478ed6fdd6edd99eb7a6f36e94707719ed656"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/data/inventory/reference_catalog.json",
+      "bytes": 1899,
+      "sha256": "e773ab54d2bfeffd6c01b3e71edeab1c36c0ba0ebbd4aeb363eadd92221221c8"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/data/reference_catalog.json",
+      "bytes": 5354,
+      "sha256": "998b55fd054781a6634e4987071bcb3a443d816288f0ba0f7d763da0bf7f4cdb"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/incident.py",
+      "bytes": 8059,
+      "sha256": "901dca59912064d10d909abbbd2cde9ac6960ea2a7d15d5b7b5ae60b7febd586"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/inventory.py",
+      "bytes": 15748,
+      "sha256": "bf3de300e54196dc694aa01ea4feed93a0fe37537acdd09b5505bd346aa660c7"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/io.py",
+      "bytes": 1810,
+      "sha256": "f7fb2b602bc7cc2a86a7203a5c42a4347d22c41ab376a3792a3bd9bb11d99565"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/model_state.py",
+      "bytes": 2678,
+      "sha256": "24905ae225f27b1d9d51055c6aa19663f6e63111699cb1a66e3dc6862cd1185b"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/monitor.py",
+      "bytes": 7607,
+      "sha256": "62be6e061103e86727ecf5c8f6363d82e9ebaba1506ef6921038967d41bb2411"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/schemas/config.schema.json",
+      "bytes": 11577,
+      "sha256": "5bc9eee66c382a8933777840d7f41ecd84a178d61f0ce45ba50fc2cc0153660c"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/schemas/inventory.schema.json",
+      "bytes": 5455,
+      "sha256": "e8fac4bcd38e475146ce5c93fa26820b017b816ca71ec6d20d0b9a5ca40b62fd"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/schemas/records.schema.json",
+      "bytes": 12360,
+      "sha256": "7a0c184eb96de046d3a053748c94caf4b998242f43f1822858bd0781989428f0"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/simulation.py",
+      "bytes": 76707,
+      "sha256": "4028c357da319682b90e963ce11eef25ffb136121f110786b7328fe75d0c6591"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/simulator.py",
+      "bytes": 9778,
+      "sha256": "233bdd83cb1a2167975897e7472def14627a03c7bb0e080c77b827b737a59fb6"
+    },
+    {
+      "path": "domains/power-grid/src/iot_grid_simulator/sinks.py",
+      "bytes": 752,
+      "sha256": "6f89d8249f171f9cd0c0b068c8adda905b10b88b03f3b6b1f43727a486b0fac4"
+    },
+    {
+      "path": "domains/upstream/configs/fictional-onshore-upstream-small.json",
+      "bytes": 876,
+      "sha256": "b0f609bec0ccae13242deb180eb6790aa77d4d1090d3c564c43eb8bdf5f47b32"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/alarm_journal.jsonl",
+      "bytes": 1123,
+      "sha256": "7212b663b79c105246494ef918da1d74946c8984003c05a847481c9383592e84"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/analyses.jsonl",
+      "bytes": 7882,
+      "sha256": "d2f521d75ceae07fd86b49bd844567cbc1ec25e5584478fa074d6c078be8fa86"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/areas.jsonl",
+      "bytes": 5006,
+      "sha256": "afe5c81cfeaffee6fa667adc48722a4e7e18495b0ad53e7f40c1f658dbbb7981"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/assets.jsonl",
+      "bytes": 27775,
+      "sha256": "b71dc1118346d1140da75091b06a9917a2095a089d0068fcf5e655d4d1c4397a"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/audit_logs.jsonl",
+      "bytes": 18740,
+      "sha256": "8a03105248bb734318d332a169f32da271a003d1e2c589e56857577853e74a54"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/condition_monitoring.jsonl",
+      "bytes": 25824,
+      "sha256": "2b6144c630baca2a32392e0d2f892ae0982ec5864e2a590a87892c9ae2975415"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/delivery_logs.jsonl",
+      "bytes": 4844,
+      "sha256": "ab159157e15b763915808c51a122897c60d0303052e6e7d6766dcee51dd1651b"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/device_logs.jsonl",
+      "bytes": 105548,
+      "sha256": "a31d3c9b52ef74633d85aeae550df147aafd95b2678a670874cfd879af193722"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/devices.jsonl",
+      "bytes": 26686,
+      "sha256": "27d94aadb53fecd96c3d0959d1ef2adc496eaff4dddfb41fd4af7cfe05758cef"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/dispatch_context.jsonl",
+      "bytes": 15551,
+      "sha256": "05995eee6acb437c0aadbccb0ac799c7f53290853f6144347263e1c582ebd319"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/environmental_observations.jsonl",
+      "bytes": 4300,
+      "sha256": "1f2fc68e13261a4fd1d265e19eb456f81b0069011b941a144813d7240f2a272a"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/events.jsonl",
+      "bytes": 6460,
+      "sha256": "cecb640f142d9ad4e686e5fd1208600bffb9610b4f61a9717c3d02b77ac77353"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/ground_truth.jsonl",
+      "bytes": 2127,
+      "sha256": "8e212afad1374e4ce80a68ce6a8bfe00f2948364bc28cbf3bd8758713761af6e"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/handoff_context.jsonl",
+      "bytes": 12659,
+      "sha256": "4d325d22b4ea5f34892be1a49deff26cbe080f027bdf26a789cae4e7b6b08d6a"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/inspection_context.jsonl",
+      "bytes": 3750,
+      "sha256": "e1a1ee01c5d8e2f1e5d692e803b60679f8cd2cc70d2b35ef1ae77d74de8d8ae4"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/logs-manifest.json",
+      "bytes": 3698,
+      "sha256": "d72cd382619d577651185251a48afbe3732724b1df30eec7e2dcc9eabba261e3"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/maintenance_context.jsonl",
+      "bytes": 3972,
+      "sha256": "0eb0a07fc3f4a1db733470f5852ca00153c92ca62f6e2b898420427976196387"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/manifest.json",
+      "bytes": 10105,
+      "sha256": "4bef67a078692ea7dc655a38f9c9690fd53f57df33fee2de2d097175d4d4575f"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/operator_actions.jsonl",
+      "bytes": 1135,
+      "sha256": "f8e8f3f60ca28ec468a0ca190d8eb5c18669a5e6305d7e49c079ff071dd74838"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/part_applicability.jsonl",
+      "bytes": 40257,
+      "sha256": "4b1d358710d5631a9f5cef1bd03328191ee6efa6446db0c5b38d453dd055fd53"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/part_candidate.jsonl",
+      "bytes": 24501,
+      "sha256": "858a3c3db64c7271955af1f57b3c00d5ee530736a7da3bf6b539666aa4f2ae96"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/part_demand.jsonl",
+      "bytes": 21963,
+      "sha256": "d329dccf2b836302d6ca6f92598ca914aad98ea46025158964de773fa172a82e"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/part_master.jsonl",
+      "bytes": 26387,
+      "sha256": "481edbe8b609533cdf5975f36c944279ea1be2b62e2db54079699fcabed0af4a"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/part_stock_txn.jsonl",
+      "bytes": 136079,
+      "sha256": "1435feb9735cb546d47fb2ea373643ecf7b8f8b6397f1091cc6359351579aada"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/production_summaries.jsonl",
+      "bytes": 14946,
+      "sha256": "4e7914fb7cf7e31ff531d4a8cfc7035ce6c9ccceb81e0cb17b62efcc79082cc2"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/sample_acquisitions.jsonl",
+      "bytes": 3386,
+      "sha256": "9035cbc83d02f718a19804d976e30a34cfb38a39a0c81216ebd752b0439dca0c"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/samples.jsonl",
+      "bytes": 3389,
+      "sha256": "86d79b45d368499ef0762bb891f42b77c475c89af38ef26cbc09d372f8896c51"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/signals.jsonl",
+      "bytes": 72621,
+      "sha256": "d6d1ff6df8af24b5d511ec391b0a25383e6514b8503c5adcf725ccf9ff49e070"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/sites.jsonl",
+      "bytes": 849,
+      "sha256": "fd682490980d3018a48547bc1a951c76d4b0b9e3beaa1bc3162374c57ef0ed2a"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/storeroom_location.jsonl",
+      "bytes": 16735,
+      "sha256": "e25c655ebf9f21f400a70389383dbc4b0704e07ade30752fde5065bdd6c5de3b"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/telemetry.jsonl",
+      "bytes": 461076,
+      "sha256": "7baa78d0183b3401562791bbbdfa5c80fca10f2d1eb073cf2ea7d902e8e96944"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/topology.jsonl",
+      "bytes": 48130,
+      "sha256": "64377b2648790fb580fcd6046b86e007efc7bff5386fd7754322491a98b148f0"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/travel_matrix.jsonl",
+      "bytes": 143423,
+      "sha256": "cc75a986857e6eb935a018ab550f25c414bb46e97ec9825a23a750c3ad6b9500"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/well_tests.jsonl",
+      "bytes": 13314,
+      "sha256": "fb1e64af45a3d7aa64a04f02a4753e50446cc5c6b73f41baeef88b26ff0307cb"
+    },
+    {
+      "path": "domains/upstream/generated/review/normal_production/wells.jsonl",
+      "bytes": 4093,
+      "sha256": "4b25bc10e2ef24a882d4f92cb8555973a0453998a3603b20c2fd58b17745f922"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/__init__.py",
+      "bytes": 178,
+      "sha256": "0edbbc1cae1e7457a72fbc9233fc17d2c280a0f864a759bc7fa138965b13d726"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/__main__.py",
+      "bytes": 85,
+      "sha256": "b2557ccf866c981fd65bc19b07e7280cc6963a4ee9558bbc1a08fa3cbe5e6158"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/adls.py",
+      "bytes": 11217,
+      "sha256": "2de1058147e5d7f7a2350144ccc0202c42419f81aa0405be818bfb404b21eb0c"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/catalog.py",
+      "bytes": 38400,
+      "sha256": "a24f5d75d74f5eb872e31cd96d818512fa8b5b1e17f49856d5d23c6adbf9ce97"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/cli.py",
+      "bytes": 6778,
+      "sha256": "0885cd8796827d044b15cb8e7a9644c8418db78cca75be1f258535d6a8985b72"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/common.py",
+      "bytes": 4368,
+      "sha256": "ef420420d6321e426ad7c0fc18751cee3a865658797e259adb20f3efc3fc5960"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/config.py",
+      "bytes": 9798,
+      "sha256": "57f46873881e66bff90b1a6a4c80e1eff5f4a37a8778deb83b572803ec3a30a3"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/__init__.py",
+      "bytes": 712,
+      "sha256": "bc333a1717453bcd7d0a0056440ed6aa3ed4ec66cd3c7d1c2324cd8b2202931f"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/data.py",
+      "bytes": 30224,
+      "sha256": "8498970f2880fb9ea63d7e22348c963d01017e4309af54b0ee6974825883ba06"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/live.py",
+      "bytes": 27510,
+      "sha256": "9ddc7abbba8d899e2577108198853377a70d2b3e272193495b0c6af82343552b"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/review.py",
+      "bytes": 36763,
+      "sha256": "0945ab24b07b1b54506a61acddc920f4b4de513541a25dfa411509959559787b"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/service.py",
+      "bytes": 26509,
+      "sha256": "550d3d1c30fc6e9734f205e896bbf7cd1053dbb76ded845a4ef85bb7ee217628"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/static/basemap.json",
+      "bytes": 34817,
+      "sha256": "148401deb51018fe82a5491d10d5e69bdb6cdda7d67b6a5e9ce592681e84042b"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/static/inventory.html",
+      "bytes": 100283,
+      "sha256": "f5ca478071c2419f4f5d2125fe9a9796184797c8d83eb08d52d135d0515b8ec0"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/static/parts-review.html",
+      "bytes": 56417,
+      "sha256": "87ff19d374c1b71e92f61a47d2b32523e810a23ec5e1fc0a844fe47e9884e052"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/dashboard/static/wellpad.html",
+      "bytes": 50075,
+      "sha256": "dd964d73fe107a6f8c81624de3faab5995871143ea0f930994c33cdee87b4738"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/io.py",
+      "bytes": 236,
+      "sha256": "b82b510fe5aaba8c49eb134839b8544e6f81b8af0da71149f82cc94d170c75e1"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/parts.py",
+      "bytes": 88886,
+      "sha256": "7c92a537f9b4f98a7701aea832d1a4394e777af7463c32bf52618909601f86c5"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/schemas/records.schema.json",
+      "bytes": 73941,
+      "sha256": "f086a776ef821890e14aabed0de19fab270495cd03bec38312e64a653d1434d9"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/simulation.py",
+      "bytes": 34270,
+      "sha256": "e9b734030bd267fbfc15905a715a65f14874ab4c9cd0017750e332f1c17114b4"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/simulator.py",
+      "bytes": 10132,
+      "sha256": "cf1b61a15380a383dcd1e005b9ba729765e342e754850340a828c5b62690ed08"
+    },
+    {
+      "path": "domains/upstream/src/iot_upstream_simulator/workflows.py",
+      "bytes": 62870,
+      "sha256": "ac0cd504cd78ee3918bdc17809ef0e444687f01e46d2d006cb982806624bdab1"
+    },
+    {
+      "path": "inventory_movement.py",
+      "bytes": 10714,
+      "sha256": "eeb715ea3fb9b47305131497ee772258600fd3c4f0e69d5a887f0a7e89f466bf"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 1908,
+      "sha256": "abbed3913fa36132854df27a1661ce68ac21ead4d195dcb25ca0234625f9adf6"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1970,
+      "sha256": "4d15235802034fdfa9117d624d7a97a8f74792612d318779972145661ad35068"
+    }
+  ]
+}

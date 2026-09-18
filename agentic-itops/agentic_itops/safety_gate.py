@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, time, timezone
@@ -54,6 +55,8 @@ class ChangeRequest:
     justification: str = ""
     dry_run: bool = False
     at: datetime | None = None       # evaluation time; defaults to now
+    is_synthetic: bool = False
+    operational_use: str = "unspecified"
 
     def audit_key(self) -> str:
         payload = "|".join(
@@ -135,6 +138,7 @@ class ChangeSafetyGate:
         # never configured. Distinguish "not supplied" from "empty", and
         # let an empty policy deny everything.
         self.policy = load_policy() if policy is None else policy
+        _validate_policy(self.policy)
         self.version = str(self.policy.get("version", "unversioned"))
         if not self.policy.get("allowed_actions"):
             # Not an error: an empty policy is a valid, maximally safe
@@ -145,17 +149,43 @@ class ChangeSafetyGate:
     # -- public API ---------------------------------------------------
 
     def evaluate(self, request: ChangeRequest) -> Decision:
+        _validate_policy(self.policy)
         now = request.at or datetime.now(timezone.utc)
+        if not isinstance(now, datetime) or now.tzinfo is None or now.utcoffset() is None:
+            raise ValueError("gate evaluation time must include a timezone")
+        now = now.astimezone(timezone.utc)
         reasons: list[str] = []
         matched: list[str] = []
         decision = Decision(
             effect=Effect.DENY,
-            audit_id=request.audit_key(),
+            audit_id=hashlib.sha256(json.dumps({
+                "request": vars(request),
+                "policy": self.policy,
+                "evaluated_at": now.isoformat(),
+            }, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16],
             evaluated_at=now.isoformat(),
             policy_version=self.version,
         )
 
-        action = (request.action or "").strip().lower()
+        if request.is_synthetic is True or request.operational_use == "prohibited":
+            decision.reasons = ["synthetic evidence prohibits operational execution, including dry runs"]
+            decision.matched_rules = ["synthetic_non_operation"]
+            return decision
+        if (
+            not isinstance(request.action, str) or not request.action.strip()
+            or not isinstance(request.resource_id, str) or not request.resource_id.strip()
+            or not isinstance(request.environment, str)
+            or not isinstance(request.service, str)
+            or not isinstance(request.blast_radius_scope, str) or not request.blast_radius_scope.strip()
+            or type(request.estimated_affected) is not int or request.estimated_affected < 1
+            or type(request.dry_run) is not bool or type(request.is_synthetic) is not bool
+            or request.operational_use not in ("unspecified", "prohibited")
+        ):
+            decision.reasons = ["invalid change request: explicit action, target, scope and positive integer affected count required"]
+            decision.matched_rules = ["invalid_request"]
+            return decision
+
+        action = request.action.strip().lower()
         environment = (request.environment or "unknown").strip().lower()
 
         # 1. read-only mode -- the posture before AIWSA #2 has passed
@@ -204,7 +234,7 @@ class ChangeSafetyGate:
                 decision.matched_rules = ["resource_scopes.deny"]
                 return decision
 
-        if allow_patterns and not any(_glob(resource_id, p) for p in allow_patterns):
+        if not allow_patterns or not any(_glob(resource_id, p) for p in allow_patterns):
             decision.reasons = [
                 "resource is outside every allowed scope pattern",
                 f"resource: {resource_id or '(empty)'}",
@@ -301,11 +331,7 @@ class ChangeSafetyGate:
             return False
         if "min_affected" in rule and request.estimated_affected < int(rule["min_affected"]):
             return False
-        # A rule with no predicates matches nothing, rather than everything.
-        return any(
-            key in rule
-            for key in ("action", "environment", "resource_pattern", "service_pattern", "min_affected")
-        )
+        return True
 
     def _active_freeze(self, now: datetime, environment: str) -> str | None:
         for window in self.policy.get("change_freezes", []) or []:
@@ -377,4 +403,88 @@ def _parse_time(value: Any) -> time | None:
 
 def load_policy(path: str | Path | None = None) -> dict[str, Any]:
     policy_path = Path(path) if path else DEFAULT_POLICY_PATH
-    return yaml.safe_load(policy_path.read_text(encoding="utf-8")) or {}
+    policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+    policy = {} if policy is None else policy
+    _validate_policy(policy)
+    return policy
+
+
+def _validate_policy(policy: Any) -> None:
+    if not isinstance(policy, dict):
+        raise ValueError("policy must be a YAML object")
+    unknown = set(policy) - {
+        "version", "read_only", "allowed_actions", "resource_scopes", "deny",
+        "approval_tiers", "blast_radius", "change_freezes", "freeze_approval_tier",
+    }
+    if unknown:
+        raise ValueError(f"unrecognized policy keys: {unknown}")
+    if "read_only" in policy and type(policy["read_only"]) is not bool:
+        raise ValueError("policy read_only must be boolean")
+    for key in ("allowed_actions",):
+        if key in policy and (
+            not isinstance(policy[key], list)
+            or any(not isinstance(item, str) or not item.strip() for item in policy[key])
+        ):
+            raise ValueError(f"policy {key} must be a list of nonempty strings")
+    for key in ("resource_scopes", "blast_radius", "approval_tiers"):
+        if key in policy and not isinstance(policy[key], dict):
+            raise ValueError(f"policy {key} must be an object")
+    scopes = policy.get("resource_scopes", {})
+    for key, patterns in scopes.items():
+        if key not in ("allow", "deny") or not isinstance(patterns, list) or any(
+            not isinstance(pattern, str) or not pattern.strip() for pattern in patterns
+        ):
+            raise ValueError("resource_scopes requires allow/deny lists of nonempty strings")
+    radius = policy.get("blast_radius", {})
+    for key, value in radius.items():
+        if key not in ("max_affected_auto", "hard_deny_above") or type(value) is not int or value < 0:
+            raise ValueError("blast_radius limits must be nonnegative integers")
+    if (radius.get("max_affected_auto") is not None and radius.get("hard_deny_above") is not None
+            and radius["max_affected_auto"] > radius["hard_deny_above"]):
+        raise ValueError("auto-approval radius cannot exceed hard deny limit")
+    for tiers in policy.get("approval_tiers", {}).values():
+        if not isinstance(tiers, dict) or any(
+            not isinstance(action, str) or not isinstance(tier, str) or not tier
+            for action, tier in tiers.items()
+        ):
+            raise ValueError("approval_tiers must map environments to action/tier strings")
+    for key in ("deny", "change_freezes"):
+        if key in policy and (
+            not isinstance(policy[key], list)
+            or any(not isinstance(item, dict) for item in policy[key])
+        ):
+            raise ValueError(f"policy {key} must be a list of objects")
+    for rule in policy.get("deny", []):
+        predicates = {"action", "environment", "resource_pattern", "service_pattern", "min_affected"}
+        if set(rule) - predicates - {"id", "reason"}:
+            raise ValueError("deny rule contains unrecognized keys")
+        if not predicates.intersection(rule):
+            raise ValueError("deny rule requires a recognized predicate")
+        for key in ("action", "environment", "resource_pattern", "service_pattern"):
+            if key in rule and (
+                not isinstance(rule[key], str) or not rule[key].strip()
+                or rule[key] != rule[key].strip()
+            ):
+                raise ValueError(f"deny rule {key} must be a nonempty string without surrounding whitespace")
+        if "min_affected" in rule and (type(rule["min_affected"]) is not int or rule["min_affected"] < 0):
+            raise ValueError("deny min_affected must be a nonnegative integer")
+    for window in policy.get("change_freezes", []):
+        for key in ("days", "environments"):
+            if key in window and (
+                not isinstance(window[key], list) or not window[key]
+                or any(not isinstance(value, str) or not value for value in window[key])
+            ):
+                raise ValueError(f"change freeze {key} must be a nonempty string list")
+        if any(day.lower() not in _DAYS for day in window.get("days", [])):
+            raise ValueError("change freeze contains an invalid weekday")
+        if "start" in window or "end" in window:
+            if not window.get("start") or not window.get("end"):
+                raise ValueError("fixed change freeze requires both start and end")
+            start, end = (datetime.fromisoformat(str(window[key])) for key in ("start", "end"))
+            if start.tzinfo is None or end.tzinfo is None or start > end:
+                raise ValueError("fixed change freeze requires ordered timezone-aware bounds")
+        elif "start_time" in window or "end_time" in window:
+            if not _parse_time(window.get("start_time")) or not _parse_time(window.get("end_time")):
+                raise ValueError("recurring change freeze requires valid start_time and end_time")
+        elif not window.get("days"):
+            raise ValueError("change freeze requires a date range, time range or weekdays")

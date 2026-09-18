@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iot-downstream-refinery/config.schema.json",
+  "title": "Fictional downstream refinery simulator config",
+  "type": "object",
+  "required": ["schema_version", "seed", "scenario", "site", "simulation"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "seed": {"type": "integer"},
+    "scenario": {
+      "enum": ["normal_run", "receipt_distillation_shift", "conversion_treating_degradation", "blending_loading_shift", "utility_sag", "environmental_workflow", "analyzer_delay", "communications_degradation"]
+    },
+    "site": {
+      "type": "object",
+      "required": ["site_id", "display_name", "time_zone"],
+      "additionalProperties": false,
+      "properties": {
+        "site_id": {"type": "string", "pattern": "^fictional-[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "display_name": {"type": "string", "minLength": 1},
+        "time_zone": {"type": "string", "minLength": 1}
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "required": ["start_utc", "end_utc"],
+      "additionalProperties": false,
+      "properties": {
+        "start_utc": {"type": "string", "pattern": "Z$"},
+        "end_utc": {"type": "string", "pattern": "Z$"}
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "required": ["max_records_per_type", "max_total_records"],
+      "additionalProperties": false,
+      "properties": {
+        "max_records_per_type": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "max_total_records": {"type": "integer", "minimum": 1, "maximum": 10000}
+      }
+    }
+  }
+}

@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .env
+.env.*
+!.env.example
 .venv/
 venv/
 *.egg-info/
@@ -10,3 +12,9 @@ results.json
 # Deployment state written by scripts/deploy_to_foundry.py.
 # Environment-specific: endpoint and agent names for one project.
 .foundry-agents.json
+
+# Keep the execution plan, not tenant-bound azd state or deployment packages.
+.azure/*
+!.azure/deployment-plan.md
+.build/
+.consumer-runtime.json

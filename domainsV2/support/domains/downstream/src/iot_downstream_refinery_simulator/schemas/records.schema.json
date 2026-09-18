@@ -1,0 +1,515 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/iot-downstream-refinery/records.schema.json",
+  "title": "Fictional downstream refinery record",
+  "oneOf": [
+    {"$ref": "#/$defs/asset"},
+    {"$ref": "#/$defs/device"},
+    {"$ref": "#/$defs/tag"},
+    {"$ref": "#/$defs/topology"},
+    {"$ref": "#/$defs/telemetry"},
+    {"$ref": "#/$defs/event"},
+    {"$ref": "#/$defs/alarm_journal"},
+    {"$ref": "#/$defs/operator_action"},
+    {"$ref": "#/$defs/device_log"},
+    {"$ref": "#/$defs/audit_log"},
+    {"$ref": "#/$defs/delivery_log"},
+    {"$ref": "#/$defs/analyzer_result"},
+    {"$ref": "#/$defs/condition_monitoring"},
+    {"$ref": "#/$defs/electrical_monitoring"},
+    {"$ref": "#/$defs/environmental_observation"},
+    {"$ref": "#/$defs/lab_result"},
+    {"$ref": "#/$defs/maintenance_context"},
+    {"$ref": "#/$defs/shipment_context"},
+    {"$ref": "#/$defs/ground_truth"}
+  ],
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "utc": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "id_list": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "common": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "run_id",
+        "scenario_id",
+        "site_id",
+        "area_id",
+        "fidelity",
+        "is_synthetic",
+        "operational_use"
+      ],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "run_id": {"$ref": "#/$defs/id"},
+        "scenario_id": {"$ref": "#/$defs/id"},
+        "site_id": {"$ref": "#/$defs/id"},
+        "area_id": {"$ref": "#/$defs/id"},
+        "fidelity": {"enum": ["F0", "F1", "F2", "F3", "FH"]},
+        "is_synthetic": {"const": true},
+        "operational_use": {"const": "prohibited"}
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "^(actual_|latent_|hidden_|pre_delivery_|ground_truth)"
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "required": ["validity", "source", "reasons"],
+      "properties": {
+        "validity": {"$ref": "#/$defs/id"},
+        "source": {"$ref": "#/$defs/id"},
+        "reasons": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "state_transition": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"$ref": "#/$defs/id"},
+        "to": {"$ref": "#/$defs/id"}
+      },
+      "additionalProperties": false
+    },
+    "asset": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["asset_id", "asset_index", "asset_type", "generic_model", "display_name", "area_name"],
+          "properties": {
+            "asset_id": {"$ref": "#/$defs/id"},
+            "asset_index": {"type": "integer", "minimum": 0},
+            "asset_type": {"$ref": "#/$defs/id"},
+            "generic_model": {"$ref": "#/$defs/id"},
+            "display_name": {"$ref": "#/$defs/id"},
+            "area_name": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "device": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["asset_id", "device_id", "device_index", "device_role", "transport_class", "display_name"],
+          "properties": {
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "device_index": {"type": "integer", "minimum": 0},
+            "device_role": {"$ref": "#/$defs/id"},
+            "transport_class": {"$ref": "#/$defs/id"},
+            "display_name": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "tag": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["asset_id", "device_id", "tag_id", "tag_index", "measurement", "unit", "cadence_class", "cadence_seconds"],
+          "properties": {
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "tag_id": {"$ref": "#/$defs/id"},
+            "tag_index": {"type": "integer", "minimum": 0},
+            "measurement": {"$ref": "#/$defs/id"},
+            "unit": {"$ref": "#/$defs/id"},
+            "cadence_class": {"enum": ["5s", "30s", "60s"]},
+            "cadence_seconds": {"enum": [5, 30, 60]}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "topology": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["edge_id", "source_kind", "source_id", "target_kind", "target_id", "relationship"],
+          "properties": {
+            "edge_id": {"$ref": "#/$defs/id"},
+            "source_kind": {"$ref": "#/$defs/id"},
+            "source_id": {"$ref": "#/$defs/id"},
+            "target_kind": {"$ref": "#/$defs/id"},
+            "target_id": {"$ref": "#/$defs/id"},
+            "relationship": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "telemetry": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["telemetry_id", "asset_id", "device_id", "tag_id", "event_time_utc", "source_time_utc", "ingest_time_utc", "measurement", "value", "unit", "cadence_class", "cadence_seconds", "delivery_class", "quality", "clock_state", "clock_offset_ms", "clock_uncertainty_ms", "sequence"],
+          "properties": {
+            "telemetry_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "tag_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "source_time_utc": {"$ref": "#/$defs/utc"},
+            "ingest_time_utc": {"$ref": "#/$defs/utc"},
+            "measurement": {"$ref": "#/$defs/id"},
+            "value": {"type": ["number", "null"]},
+            "unit": {"$ref": "#/$defs/id"},
+            "cadence_class": {"enum": ["5s", "30s", "60s"]},
+            "cadence_seconds": {"enum": [5, 30, 60]},
+            "delivery_class": {"$ref": "#/$defs/id"},
+            "quality": {"$ref": "#/$defs/quality"},
+            "clock_state": {"$ref": "#/$defs/id"},
+            "clock_offset_ms": {"type": "number"},
+            "clock_uncertainty_ms": {"type": "number", "minimum": 0},
+            "sequence": {"type": "integer", "minimum": 1}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "event": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["event_id", "asset_id", "event_time_utc", "source_time_utc", "ingest_time_utc", "event_type", "severity", "state_transition", "summary", "evidence_telemetry_ids"],
+          "properties": {
+            "event_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "source_time_utc": {"$ref": "#/$defs/utc"},
+            "ingest_time_utc": {"$ref": "#/$defs/utc"},
+            "event_type": {"$ref": "#/$defs/id"},
+            "severity": {"$ref": "#/$defs/id"},
+            "state_transition": {"$ref": "#/$defs/state_transition"},
+            "summary": {"type": "string"},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "alarm_journal": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["alarm_id", "event_id", "asset_id", "event_time_utc", "source_time_utc", "ingest_time_utc", "alarm_state", "priority_class", "message"],
+          "properties": {
+            "alarm_id": {"$ref": "#/$defs/id"},
+            "event_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "source_time_utc": {"$ref": "#/$defs/utc"},
+            "ingest_time_utc": {"$ref": "#/$defs/utc"},
+            "alarm_state": {"$ref": "#/$defs/id"},
+            "priority_class": {"$ref": "#/$defs/id"},
+            "message": {"type": "string"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "operator_action": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["action_id", "event_id", "asset_id", "action_time_utc", "action_type", "actor_role", "note"],
+          "properties": {
+            "action_id": {"$ref": "#/$defs/id"},
+            "event_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "action_time_utc": {"$ref": "#/$defs/utc"},
+            "action_type": {"$ref": "#/$defs/id"},
+            "actor_role": {"$ref": "#/$defs/id"},
+            "note": {"type": "string"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "device_log": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["log_id", "asset_id", "device_id", "event_time_utc", "source_time_utc", "ingest_time_utc", "level", "category", "code", "message", "quality"],
+          "properties": {
+            "log_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "source_time_utc": {"$ref": "#/$defs/utc"},
+            "ingest_time_utc": {"$ref": "#/$defs/utc"},
+            "level": {"$ref": "#/$defs/id"},
+            "category": {"$ref": "#/$defs/id"},
+            "code": {"$ref": "#/$defs/id"},
+            "message": {"type": "string"},
+            "quality": {"$ref": "#/$defs/quality"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "audit_log": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["audit_id", "asset_id", "revision_time_utc", "action", "actor_role", "summary", "related_event_id"],
+          "properties": {
+            "audit_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "revision_time_utc": {"$ref": "#/$defs/utc"},
+            "action": {"$ref": "#/$defs/id"},
+            "actor_role": {"$ref": "#/$defs/id"},
+            "summary": {"type": "string"},
+            "related_event_id": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "delivery_log": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["delivery_id", "asset_id", "device_id", "event_time_utc", "source_time_utc", "ingest_time_utc", "source_domain", "destination_domain", "delivery_state", "queue_depth", "latency_ms", "evidence_telemetry_ids"],
+          "properties": {
+            "delivery_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "source_time_utc": {"$ref": "#/$defs/utc"},
+            "ingest_time_utc": {"$ref": "#/$defs/utc"},
+            "source_domain": {"$ref": "#/$defs/id"},
+            "destination_domain": {"$ref": "#/$defs/id"},
+            "delivery_state": {"$ref": "#/$defs/id"},
+            "queue_depth": {"type": "integer", "minimum": 0},
+            "latency_ms": {"type": "number", "minimum": 0},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "analyzer_result": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["result_id", "asset_id", "device_id", "sample_id", "sample_time_utc", "analysis_complete_utc", "stream_measurement", "result_value", "unit", "result_state", "evidence_telemetry_ids"],
+          "properties": {
+            "result_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "sample_id": {"$ref": "#/$defs/id"},
+            "sample_time_utc": {"$ref": "#/$defs/utc"},
+            "analysis_complete_utc": {"$ref": "#/$defs/utc"},
+            "stream_measurement": {"$ref": "#/$defs/id"},
+            "result_value": {"type": "number"},
+            "unit": {"$ref": "#/$defs/id"},
+            "result_state": {"$ref": "#/$defs/id"},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "condition_monitoring": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["condition_id", "asset_id", "device_id", "window_start_utc", "window_end_utc", "health_index", "vibration_index", "evidence_telemetry_ids"],
+          "properties": {
+            "condition_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "window_start_utc": {"$ref": "#/$defs/utc"},
+            "window_end_utc": {"$ref": "#/$defs/utc"},
+            "health_index": {"type": "number"},
+            "vibration_index": {"type": "number"},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "electrical_monitoring": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["electrical_id", "asset_id", "device_id", "window_start_utc", "window_end_utc", "voltage_kv", "current_a", "power_kw", "evidence_telemetry_ids"],
+          "properties": {
+            "electrical_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "device_id": {"$ref": "#/$defs/id"},
+            "window_start_utc": {"$ref": "#/$defs/utc"},
+            "window_end_utc": {"$ref": "#/$defs/utc"},
+            "voltage_kv": {"type": "number"},
+            "current_a": {"type": "number"},
+            "power_kw": {"type": "number"},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "environmental_observation": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["observation_id", "asset_id", "sample_id", "event_time_utc", "analysis_complete_utc", "observation_kind", "observation_value", "observation_state", "evidence_telemetry_ids"],
+          "properties": {
+            "observation_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "sample_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "analysis_complete_utc": {"$ref": "#/$defs/utc"},
+            "observation_kind": {"$ref": "#/$defs/id"},
+            "observation_value": {"type": "number"},
+            "observation_state": {"$ref": "#/$defs/id"},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "lab_result": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["lab_result_id", "asset_id", "sample_id", "product_stream", "sample_time_utc", "analysis_complete_utc", "approved_utc", "result_index", "result_state"],
+          "properties": {
+            "lab_result_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "sample_id": {"$ref": "#/$defs/id"},
+            "product_stream": {"$ref": "#/$defs/id"},
+            "sample_time_utc": {"$ref": "#/$defs/utc"},
+            "analysis_complete_utc": {"$ref": "#/$defs/utc"},
+            "approved_utc": {"$ref": "#/$defs/utc"},
+            "result_index": {"type": "number"},
+            "result_state": {"$ref": "#/$defs/id"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "maintenance_context": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["maintenance_id", "asset_id", "work_order_id", "event_time_utc", "maintenance_state", "inspection_class", "summary"],
+          "properties": {
+            "maintenance_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "work_order_id": {"$ref": "#/$defs/id"},
+            "event_time_utc": {"$ref": "#/$defs/utc"},
+            "maintenance_state": {"$ref": "#/$defs/id"},
+            "inspection_class": {"$ref": "#/$defs/id"},
+            "summary": {"type": "string"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "shipment_context": {
+      "allOf": [
+        {"$ref": "#/$defs/common"},
+        {
+          "type": "object",
+          "required": ["shipment_id", "asset_id", "transfer_id", "window_start_utc", "window_end_utc", "transfer_state", "batch_volume_index", "evidence_telemetry_ids"],
+          "properties": {
+            "shipment_id": {"$ref": "#/$defs/id"},
+            "asset_id": {"$ref": "#/$defs/id"},
+            "transfer_id": {"$ref": "#/$defs/id"},
+            "window_start_utc": {"$ref": "#/$defs/utc"},
+            "window_end_utc": {"$ref": "#/$defs/utc"},
+            "transfer_state": {"$ref": "#/$defs/id"},
+            "batch_volume_index": {"type": "number"},
+            "evidence_telemetry_ids": {"$ref": "#/$defs/id_list"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "latent_area_state": {
+      "type": "object",
+      "required": ["area_id", "throughput_bias", "pressure_bias", "temperature_bias", "power_bias", "inventory_bias", "quality_bias", "condition_bias", "utility_bias", "availability_bias", "observation_bias"],
+      "properties": {
+        "area_id": {"$ref": "#/$defs/id"},
+        "throughput_bias": {"type": "number"},
+        "pressure_bias": {"type": "number"},
+        "temperature_bias": {"type": "number"},
+        "power_bias": {"type": "number"},
+        "inventory_bias": {"type": "number"},
+        "quality_bias": {"type": "number"},
+        "condition_bias": {"type": "number"},
+        "utility_bias": {"type": "number"},
+        "availability_bias": {"type": "number"},
+        "observation_bias": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "ground_truth": {
+      "type": "object",
+      "required": ["schema_version", "ground_truth_id", "run_id", "scenario_id", "site_id", "scenario", "onset_utc", "end_utc", "causal_area_id", "affected_area_ids", "delivery_scenario_only", "actual_process_state_signature", "latent_area_states", "is_synthetic", "operational_use", "fidelity"],
+      "properties": {
+        "schema_version": {"const": "1.0"},
+        "ground_truth_id": {"$ref": "#/$defs/id"},
+        "run_id": {"$ref": "#/$defs/id"},
+        "scenario_id": {"$ref": "#/$defs/id"},
+        "site_id": {"$ref": "#/$defs/id"},
+        "scenario": {"$ref": "#/$defs/id"},
+        "onset_utc": {"$ref": "#/$defs/utc"},
+        "end_utc": {"$ref": "#/$defs/utc"},
+        "causal_area_id": {"$ref": "#/$defs/id"},
+        "affected_area_ids": {"$ref": "#/$defs/id_list"},
+        "delivery_scenario_only": {"type": "boolean"},
+        "actual_process_state_signature": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "latent_area_states": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/latent_area_state"},
+          "minItems": 12,
+          "maxItems": 12
+        },
+        "is_synthetic": {"const": true},
+        "operational_use": {"const": "prohibited"},
+        "fidelity": {"enum": ["F0", "F1", "F2", "F3", "FH"]}
+      },
+      "additionalProperties": false
+    }
+  }
+}

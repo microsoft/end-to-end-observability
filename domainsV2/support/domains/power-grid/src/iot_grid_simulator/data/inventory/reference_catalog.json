@@ -1,0 +1,36 @@
+{
+  "reference_only": true,
+  "retrieved_on": "2026-09-08",
+  "caveat": "Taxonomy evidence only, not endorsement, compatibility, stock policy, ratings calibration or real utility data.",
+  "unsupported_claims": [
+    "All quantities, storage classes, layouts and levels are synthetic choices.",
+    "No sourced lead times, universal serialization rules or reorder limits.",
+    "Other generic categories are illustrative design coverage, not independently verified by these sources."
+  ],
+  "sources": [
+    {
+      "source_id": "E01",
+      "manufacturer": "S&C Electric Company",
+      "product_family": "Type XS Fuse Cutout",
+      "url": "https://www.sandc.com/en/products--services/products/type-xs-fuse-cutout/",
+      "supported_claim": "Catalog distinguishes overhead fuse cutouts and disconnect styles; only generic cutout taxonomy is used.",
+      "part_keys": ["cutout-assembly"]
+    },
+    {
+      "source_id": "E02",
+      "manufacturer": "S&C Electric Company",
+      "product_family": "TripSaver II Cutout-Mounted Recloser",
+      "url": "https://www.sandc.com/en/products--services/products/tripsaver-ii-cutout-mounted-recloser/",
+      "supported_claim": "Catalog presents cutout-mounted reclosers with porcelain and polymer insulator variants; only generic recloser taxonomy is used.",
+      "part_keys": ["recloser-overhead"]
+    },
+    {
+      "source_id": "E03",
+      "manufacturer": "S&C Electric Company",
+      "product_family": "Alduti-Rupter Switches - Outdoor Distribution",
+      "url": "https://www.sandc.com/en/products--services/products/alduti-rupter-switches-outdoor-distribution/",
+      "supported_claim": "Catalog describes distribution switches and electromechanical operator/control assemblies; only generic switch and operator taxonomy is used.",
+      "part_keys": ["switch-air-disconnect", "switch-operator"]
+    }
+  ]
+}

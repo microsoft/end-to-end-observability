@@ -1,0 +1,50 @@
+{
+  "verification_date": "2026-09-15",
+  "status": "source_contract_verified",
+  "identity": "explicit_operator_not_consumer_managed_identity",
+  "table": "EnergyObservations_CL",
+  "table_plan": "Analytics",
+  "table_retention_days": 30,
+  "schema_column_count": 16,
+  "service_window": {
+    "start_utc": "2026-09-14T23:00:00Z",
+    "end_utc": "2026-09-15T01:05:00Z"
+  },
+  "observation_window": {
+    "start_utc": "2026-09-14T23:03:56.904262Z",
+    "end_utc": "2026-09-15T01:03:20.840671Z"
+  },
+  "query_count": 9,
+  "received_rows": 10530,
+  "unique_events": 10530,
+  "duplicate_events": 0,
+  "signal_identities": 90,
+  "surface_counts": {
+    "power-grid": 1170,
+    "upstream": 1170,
+    "midstream": 1170,
+    "downstream": 1170,
+    "downstream-portfolio": 1170,
+    "power-grid-inventory": 1170,
+    "upstream-inventory": 1170,
+    "midstream-inventory": 1170,
+    "downstream-inventory": 1170
+  },
+  "record_types": {
+    "telemetry": 5850,
+    "inventory_position": 4680
+  },
+  "profiles": {
+    "domain-details-v1": 10530
+  },
+  "consumer_decoder_used": true,
+  "complete_result_projection_checked": true,
+  "cross_window_source_hash_conflicts": 0,
+  "raw_records_persisted": false,
+  "cloud_writes": 0,
+  "model_calls": 0,
+  "production_detectors_enabled": false,
+  "consumer_managed_identity_isolation_verified": false,
+  "physical_accuracy_verified": false,
+  "deployment_acceptance_complete": false
+}

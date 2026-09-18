@@ -1,0 +1,2 @@
+# Package agentic_itops plus this entrypoint as documented in execution/search-service.md.
+-r ../../requirements-publisher.txt

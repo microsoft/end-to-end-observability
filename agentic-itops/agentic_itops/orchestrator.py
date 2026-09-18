@@ -27,7 +27,7 @@ from typing import Any, Protocol, Sequence
 
 from .envelope import utcnow_iso
 from .normalizer import Incident, normalize_and_correlate
-from .safety_gate import ChangeRequest, ChangeSafetyGate, Decision
+from .safety_gate import ChangeRequest, ChangeSafetyGate
 from .tools import get_recent_changes, get_resource_context, run_kql, search_knowledge
 
 AGENTS_DIR = Path(__file__).resolve().parents[1] / "agents"
@@ -127,12 +127,22 @@ class StubReasoner:
         what the current documented procedure is.
         """
         knowledge = payload.get("knowledge", {}).get("results", [])
+        target = payload["target"]
+        target_fields = {
+            "target_resource_id": target["resource_id"],
+            "classification": "mitigation",
+            "blast_radius": {
+                "scope": target["scope"],
+                "estimated_affected": target["estimated_affected"],
+            },
+        }
         for result in knowledge:
             if result.get("kind") != "runbook":
                 continue
             actions = result.get("documented_actions") or []
             if actions:
                 return {
+                    **target_fields,
                     "agent": "remediation-planner",
                     "reasoner": self.name,
                     "proposed_action": actions[0],
@@ -144,6 +154,7 @@ class StubReasoner:
                     "rollback": "see the rollback section of the source runbook",
                 }
         return {
+            **target_fields,
             "agent": "remediation-planner",
             "reasoner": self.name,
             "proposed_action": "annotate_incident",
@@ -154,8 +165,8 @@ class StubReasoner:
 
     def _incident_comms(self, context: str, payload: dict[str, Any]) -> dict[str, Any]:
         incident = payload.get("incident", {})
-        decision: Decision | None = payload.get("decision")
-        status = decision.effect.value if decision else "pending"
+        decision = payload.get("decision")
+        status = decision["effect"] if decision else "pending"
         return {
             "agent": "incident-comms",
             "reasoner": self.name,
@@ -237,33 +248,37 @@ class FoundryReasoner:
         agent_name = self.agents.get(agent, agent)
         client = self._get_client()
 
+        serialized = json.dumps(payload, default=str)
+        if len(serialized.encode("utf-8")) > 60_000:
+            raise ValueError("Foundry evidence exceeds the 60000-byte limit; reduce the evidence window")
         message = (
             f"{context}\n\nStructured payload (JSON):\n"
-            f"{json.dumps(payload, default=str)[:6000]}"
+            f"{serialized}"
         )
-        try:
-            response = client.responses.create(
-                input=message,
-                extra_body={"agent_reference": {"type": "agent_reference", "name": agent_name}},
-            )
-        except Exception as exc:
-            return {"agent": agent, "reasoner": self.name, "error": str(exc)[:400]}
+        response = client.responses.create(
+            input=message,
+            extra_body={"agent_reference": {"type": "agent_reference", "name": agent_name}},
+        )
+        if getattr(response, "status", None) != "completed":
+            raise RuntimeError(f"Foundry agent {agent} returned an incomplete response")
 
         text = response.output_text or ""
-        return {"agent": agent, "reasoner": self.name, "output": text, **_try_json(text)}
+        return {**_try_json(text), "agent": agent, "reasoner": self.name, "output": text}
 
 
 def _try_json(text: str) -> dict[str, Any]:
-    """Agents are instructed to emit JSON; tolerate it when they do not."""
+    """Reject invalid model output instead of manufacturing an empty result."""
     stripped = (text or "").strip()
     if stripped.startswith("```"):
         stripped = stripped.strip("`")
         stripped = stripped.split("\n", 1)[-1] if "\n" in stripped else stripped
     try:
         parsed = json.loads(stripped)
-        return parsed if isinstance(parsed, dict) else {}
-    except (ValueError, AttributeError):
-        return {}
+    except json.JSONDecodeError as exc:
+        raise ValueError("Foundry output must be a complete JSON object") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("Foundry output must be a JSON object")
+    return parsed
 
 
 # --- the loop ---------------------------------------------------------
@@ -297,6 +312,87 @@ class LoopResult:
         }
 
 
+def _source_constraints(incident: Incident) -> tuple[bool, str]:
+    """Source markers can only restrict authority; model output is never consulted."""
+    synthetic = False
+    prohibited = False
+    pending: list[Any] = [
+        value for envelope in incident.envelopes for value in (envelope.raw, envelope.labels)
+    ]
+    while pending:
+        value = pending.pop()
+        if isinstance(value, list):
+            pending.extend(value)
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                marker = str(key).replace("_", "").casefold()
+                if marker == "issynthetic":
+                    if type(item) is bool:
+                        synthetic = synthetic or item
+                    elif isinstance(item, str) and item.casefold() in ("true", "false"):
+                        synthetic = synthetic or item.casefold() == "true"
+                    else:
+                        raise ValueError("invalid source synthetic provenance")
+                elif marker == "operationaluse":
+                    if not isinstance(item, str) or item.casefold() not in ("prohibited", "unspecified"):
+                        raise ValueError("invalid source operational-use provenance")
+                    prohibited = prohibited or item.casefold() == "prohibited"
+                else:
+                    pending.append(item)
+    return synthetic, "prohibited" if synthetic or prohibited else "unspecified"
+
+
+def _required_text(result: dict[str, Any], key: str, stage: str) -> None:
+    if not isinstance(result.get(key), str) or not result[key].strip():
+        raise ValueError(f"{stage} requires nonempty {key}")
+
+
+def _validate_rca(result: Any) -> None:
+    if not isinstance(result, dict) or "error" in result:
+        raise RuntimeError("RCA failed; planning is blocked")
+    hypotheses = result.get("hypotheses")
+    if not isinstance(hypotheses, list):
+        raise ValueError("RCA requires a hypotheses array")
+    if not hypotheses:
+        _required_text(result, "notable_absence", "insufficient-evidence RCA")
+    for hypothesis in hypotheses:
+        if not isinstance(hypothesis, dict):
+            raise ValueError("RCA hypothesis must be an object")
+        for key in ("hypothesis", "next_check"):
+            _required_text(hypothesis, key, "RCA hypothesis")
+        if hypothesis.get("confidence") not in ("high", "medium", "low", "none"):
+            raise ValueError("RCA hypothesis confidence is invalid")
+        evidence = hypothesis.get("evidence")
+        if not isinstance(evidence, list) or any(
+            not isinstance(citation, str) or not citation.strip() for citation in evidence
+        ) or (hypothesis["confidence"] != "none" and not evidence):
+            raise ValueError("RCA hypothesis requires explicit evidence citations")
+    if "notable_absence" in result and not isinstance(result["notable_absence"], str):
+        raise ValueError("RCA notable_absence must be a string")
+    if "timeline" in result:
+        if not isinstance(result["timeline"], list):
+            raise ValueError("RCA timeline must be an array")
+        for item in result["timeline"]:
+            if not isinstance(item, dict):
+                raise ValueError("RCA timeline entry must be an object")
+            for key in ("at", "observation"):
+                _required_text(item, key, "RCA timeline entry")
+
+
+def _validate_comms(result: Any) -> None:
+    if not isinstance(result, dict) or "error" in result:
+        raise RuntimeError("communications generation failed")
+    for key in ("engineer_update", "executive_update"):
+        _required_text(result, key, "communications")
+    if "customer_update" in result:
+        _required_text(result, "customer_update", "communications")
+    if "withheld" in result and (
+        not isinstance(result["withheld"], list)
+        or any(not isinstance(item, str) for item in result["withheld"])
+    ):
+        raise ValueError("communications withheld must be a string array")
+
+
 class OpsOrchestrator:
     """Agent #0. Delegates to specialists and enforces the human gate."""
 
@@ -316,6 +412,7 @@ class OpsOrchestrator:
 
     def handle(self, incident: Incident) -> LoopResult:
         primary = incident.primary
+        synthetic, operational_use = _source_constraints(incident)
         context = incident.agent_context()
         result = LoopResult(incident=incident.to_dict())
 
@@ -351,42 +448,52 @@ class OpsOrchestrator:
                 "knowledge": result.knowledge,
             },
         )
+        _validate_rca(result.rca)
 
         # 5. plan
         result.plan = self.reasoner.run(
             "remediation-planner",
             context,
-            {"knowledge": result.knowledge, "rca": result.rca},
+            {"knowledge": result.knowledge, "rca": result.rca, "target": {
+                "resource_id": primary.resource.id,
+                "scope": primary.blast_radius.scope,
+                "estimated_affected": primary.blast_radius.estimated_affected,
+            }},
         )
 
         # 6. THE GATE. Code, always. The planner does not get a vote.
         #
-        # Coerce a missing or null action to the lowest-impact verb. A
-        # live agent can return the key absent or explicitly null, and
-        # letting that reach the gate as the string "None" would produce
-        # a denial for the wrong reason -- which reads as the gate
-        # working when actually the planner failed.
-        proposed = result.plan.get("proposed_action") or "annotate_incident"
-        if result.plan.get("proposed_action") != proposed:
-            # Record the coercion so the console, the gate and the audit
-            # record all agree on what was actually submitted. Leaving
-            # the plan showing null while the gate evaluated something
-            # else is exactly the kind of divergence that makes an
-            # incident record untrustworthy after the fact.
-            result.plan["proposed_action"] = proposed
-            result.plan["coerced"] = (
-                "planner returned no action; defaulted to the lowest-impact verb"
-            )
+        if not isinstance(result.plan, dict) or "error" in result.plan:
+            raise RuntimeError("planner failed; gate and communications are blocked")
+        _required_text(result.plan, "rollback", "planner")
+        if result.plan.get("classification") not in ("mitigation", "fix"):
+            raise ValueError("planner requires a valid classification")
+        proposed = result.plan.get("proposed_action")
+        target = result.plan.get("target_resource_id")
+        radius = result.plan.get("blast_radius")
+        if (
+            not isinstance(proposed, str) or not proposed.strip()
+            or not isinstance(target, str) or not target.strip()
+            or not isinstance(radius, dict)
+            or not isinstance(radius.get("scope"), str) or not radius["scope"].strip()
+            or type(radius.get("estimated_affected")) is not int
+            or radius["estimated_affected"] < 1
+        ):
+            raise ValueError("planner must supply an explicit action, target and valid blast radius")
+        if target.lower() != (primary.resource.id or "").lower():
+            raise ValueError("planner target differs from the incident's authorized target")
         request = ChangeRequest(
-            action=str(proposed),
-            resource_id=primary.resource.id,
+            action=proposed,
+            resource_id=target,
             environment=primary.environment,
             service=primary.service,
-            blast_radius_scope=primary.blast_radius.scope,
-            estimated_affected=primary.blast_radius.estimated_affected,
+            blast_radius_scope=radius["scope"],
+            estimated_affected=radius["estimated_affected"],
             incident_fingerprint=incident.fingerprint,
             justification=str(result.plan.get("rationale", "")),
             at=self.evaluate_at,
+            is_synthetic=synthetic,
+            operational_use=operational_use,
         )
         decision = self.gate.evaluate(request)
         result.decision = decision.to_dict()
@@ -395,8 +502,9 @@ class OpsOrchestrator:
         result.comms = self.reasoner.run(
             "incident-comms",
             context,
-            {"incident": result.incident, "decision": decision},
+            {"incident": result.incident, "decision": result.decision},
         )
+        _validate_comms(result.comms)
 
         # Execution is never automatic in this harness. Even an ALLOW
         # decision only marks the action as ready to hand to Azure SRE
@@ -449,6 +557,12 @@ def run_demo(
     evaluate_at: datetime | None = None,
 ) -> list[LoopResult]:
     """Normalize a batch and run the loop over the top incidents."""
-    incidents, _failures = normalize_and_correlate(payloads)
+    if type(limit) is not int or limit < 1:
+        raise ValueError("demo limit must be a positive integer")
+    incidents, failures = normalize_and_correlate(payloads)
+    if failures:
+        raise ValueError(f"{len(failures)} input payload(s) failed normalization")
+    if not incidents:
+        raise ValueError("no incidents available to analyze")
     orchestrator = OpsOrchestrator(reasoner=reasoner, gate=gate, evaluate_at=evaluate_at)
     return [orchestrator.handle(incident) for incident in incidents[:limit]]

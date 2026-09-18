@@ -1,0 +1,4 @@
+-r requirements-consumer.txt
+-r requirements-search.txt
+azure-functions==2.3.0
+mcp==2.2.0

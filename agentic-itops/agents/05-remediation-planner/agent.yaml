@@ -16,39 +16,174 @@ tools:
   name: resource_graph
   spec: ../../tools/openapi/resource-graph.yaml
   auth: managed_identity
-output_schema:
-  type: object
-  required:
-  - proposed_action
-  - target_resource_id
-  - classification
-  - rollback
-  properties:
-    proposed_action:
-      type: string
-    target_resource_id:
-      type: string
-    source_runbook:
-      type: string
-    classification:
-      type: string
-      enum:
-      - mitigation
-      - fix
-    blast_radius:
-      type: object
-    preconditions:
-      type: array
-    rollback:
-      type: string
-    expected_outcome:
-      type: string
-    follow_up:
-      type: string
-    rationale:
-      type: string
 identity:
   type: user_assigned_managed_identity
   required_roles:
   - Monitoring Reader
   - Reader
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps: &id001
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
+    plan:
+      anyOf:
+      - type: object
+        properties:
+          proposed_action:
+            type: string
+            minLength: 1
+            pattern: ^([^n\n]|n($|[^o])|no($|[^n])|non($|[^e])|none([^\n]|\n[\s\S]))
+          target_resource_id:
+            type: string
+            minLength: 1
+          source_runbook:
+            type:
+            - string
+            - 'null'
+          classification:
+            type: string
+            enum:
+            - mitigation
+            - fix
+          blast_radius:
+            type: object
+            properties:
+              scope:
+                type: string
+                minLength: 1
+              estimated_affected:
+                type: integer
+                minimum: 1
+              degradation:
+                type: string
+                minLength: 1
+            required:
+            - scope
+            - estimated_affected
+            - degradation
+            additionalProperties: false
+          preconditions: *id001
+          rollback:
+            type: string
+            minLength: 1
+          expected_outcome:
+            type: string
+            minLength: 1
+          follow_up:
+            type: string
+          rationale:
+            type: string
+            minLength: 1
+        required:
+        - proposed_action
+        - target_resource_id
+        - source_runbook
+        - classification
+        - blast_radius
+        - preconditions
+        - rollback
+        - expected_outcome
+        - follow_up
+        - rationale
+        additionalProperties: false
+      - type: object
+        properties:
+          proposed_action:
+            type: string
+            enum:
+            - none
+          target_resource_id:
+            type: 'null'
+          source_runbook:
+            type: 'null'
+          classification:
+            type: string
+            enum:
+            - none
+          blast_radius:
+            type: object
+            properties:
+              scope:
+                type: string
+                enum:
+                - none
+              estimated_affected:
+                type: integer
+                enum:
+                - 0
+              degradation:
+                type: string
+                enum:
+                - none
+            required:
+            - scope
+            - estimated_affected
+            - degradation
+            additionalProperties: false
+          preconditions:
+            type: array
+            items:
+              type: string
+            maxItems: 0
+          rollback:
+            type: string
+            enum:
+            - not_applicable
+          expected_outcome:
+            type: string
+            minLength: 1
+          follow_up:
+            type: string
+          rationale:
+            type: string
+            minLength: 1
+        required:
+        - proposed_action
+        - target_resource_id
+        - source_runbook
+        - classification
+        - blast_radius
+        - preconditions
+        - rollback
+        - expected_outcome
+        - follow_up
+        - rationale
+        additionalProperties: false
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - plan
+  additionalProperties: false

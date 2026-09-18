@@ -1,0 +1,6 @@
+# Isolated real Search/embedding/publisher-host profile; no legacy live profile.
+-r requirements-consumer.txt
+azure-search-documents==12.0.0
+azure-core==1.41.0
+azure-functions==2.3.0
+httpx2==2.12.0

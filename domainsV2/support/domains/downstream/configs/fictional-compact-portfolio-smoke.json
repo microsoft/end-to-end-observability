@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "seed": 20260803,
+  "scenario": "normal_portfolio",
+  "enterprise": {
+    "enterprise_id": "fictional-compact-portfolio-001",
+    "display_name": "Fictional Compact Portfolio",
+    "time_zone": "America/Chicago"
+  },
+  "simulation": {
+    "start_utc": "2026-08-03T12:00:00Z",
+    "end_utc": "2026-08-03T12:00:05Z"
+  },
+  "localization": {
+    "enabled": true,
+    "hidden_withdrawal_route_fraction": 0.58,
+    "confirmation_delay_seconds": 900
+  },
+  "output": {
+    "include_csv": false,
+    "telemetry_shard_target_records": 10000
+  }
+}

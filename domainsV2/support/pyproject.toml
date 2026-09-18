@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iot-grid-simulator"
+version = "0.6.0"
+description = "Deterministic synthetic US electric-distribution IoT data simulator"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "IoT Grid Simulator contributors"}]
+dependencies = [
+  "tzdata>=2025.2; platform_system == 'Windows'",
+]
+
+[project.optional-dependencies]
+azure = [
+  "azure-identity>=1.17,<2",
+  "azure-monitor-ingestion>=1.0,<2",
+  "azure-storage-file-datalake>=12.16,<13",
+  "azure-storage-queue>=12.14,<13",
+]
+dashboard = [
+  "Flask>=3.1,<4",
+  "azure-identity>=1.25,<2",
+  "azure-storage-file-datalake>=12.22,<13",
+  "azure-storage-queue>=12.14,<13",
+  "azure-monitor-opentelemetry>=1.8,<2",
+]
+
+[project.scripts]
+iot-grid-simulator = "iot_grid_simulator.cli:main"
+iot-midstream-simulator = "iot_midstream_simulator.cli:main"
+iot-compact-portfolio-simulator = "iot_compact_portfolio_simulator.cli:main"
+iot-downstream-refinery-simulator = "iot_downstream_refinery_simulator.cli:main"
+iot-upstream-simulator = "iot_upstream_simulator.cli:main"
+
+[tool.setuptools]
+py-modules = ["inventory_movement"]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = [
+  "domains/power-grid/src",
+  "domains/midstream/src",
+  "domains/downstream/src",
+  "domains/upstream/src",
+]
+
+[tool.setuptools.package-data]
+iot_grid_simulator = [
+  "schemas/*.json",
+  "data/*.json",
+  "data/inventory/*.json",
+  "dashboard/static/*.html",
+  "dashboard/review_static/*.html",
+]
+iot_midstream_simulator = ["schemas/*.json", "dashboard/static/*.html"]
+iot_compact_portfolio_simulator = ["schemas/*.json", "dashboard/static/*.html"]
+iot_downstream_refinery_simulator = ["schemas/*.json", "dashboard/static/*.html"]
+iot_upstream_simulator = ["schemas/*.json", "dashboard/static/*.html"]

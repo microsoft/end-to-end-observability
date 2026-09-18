@@ -1,0 +1,123 @@
+{
+  "scope": "Artifact structure and explicit contract coverage, not runtime behavior or rendered diagram inspection",
+  "passed": 24,
+  "total": 24,
+  "source_agent_names": [
+    "00-ops-orchestrator",
+    "02-triage-dedup",
+    "03-rca-investigator",
+    "04-runbook-memory",
+    "05-remediation-planner",
+    "07-incident-comms",
+    "08-postmortem-drafter",
+    "09-alert-hygiene",
+    "10-industry-signal-pack"
+  ],
+  "checks": [
+    {
+      "check": "seven architecture deliverables",
+      "passed": true
+    },
+    {
+      "check": "all nine source agent names mapped",
+      "passed": true
+    },
+    {
+      "check": "deterministic components preserved",
+      "passed": true
+    },
+    {
+      "check": "five outcomes in approved goal",
+      "passed": true
+    },
+    {
+      "check": "separate review interface",
+      "passed": true
+    },
+    {
+      "check": "immutable safety overlay",
+      "passed": true
+    },
+    {
+      "check": "independent ingestion and processing progress",
+      "passed": true
+    },
+    {
+      "check": "rich and legacy semantics addressed",
+      "passed": true
+    },
+    {
+      "check": "separate lifecycle status axes",
+      "passed": true
+    },
+    {
+      "check": "review API conflict and idempotency",
+      "passed": true
+    },
+    {
+      "check": "knowledge context invalidation",
+      "passed": true
+    },
+    {
+      "check": "fifteen outcome acceptance rows",
+      "passed": true
+    },
+    {
+      "check": "case-count arithmetic",
+      "passed": true
+    },
+    {
+      "check": "person-day arithmetic",
+      "passed": true
+    },
+    {
+      "check": "no cloud readiness claim",
+      "passed": true
+    },
+    {
+      "check": "drawio topology references",
+      "passed": true
+    },
+    {
+      "check": "all branch outputs pass through validation and review",
+      "passed": true
+    },
+    {
+      "check": "late corrections propagate to learning",
+      "passed": true
+    },
+    {
+      "check": "retention bounds knowledge eligibility",
+      "passed": true
+    },
+    {
+      "check": "defined episode scoring and abstention",
+      "passed": true
+    },
+    {
+      "check": "excalidraw document structure",
+      "passed": true
+    },
+    {
+      "check": "excalidraw visible black text",
+      "passed": true
+    },
+    {
+      "check": "unique diagram IDs",
+      "passed": true
+    },
+    {
+      "check": "ASCII documentation",
+      "passed": true
+    }
+  ],
+  "artifacts_sha256": {
+    "architecture-diagram.drawio": "6feb20a24fa8f596cc58812713538f4405a6f88cf428c94e539d800d02efc948",
+    "cost-estimation.md": "b0e117bc9fdb8dd76a7ed3bdd59e703234e1d279b40d6aa0ac9b1ebf9b847d28",
+    "data-assessment.md": "4121d8a673488e8b269f60a9104911804fe3794a8469048c5df28b211a7c2a12",
+    "delivery-plan.md": "2b70382a8af2fb315f26b33884f76e7ff77f63c60b3540cfb039a19b8e4ed49a",
+    "executive-brief.md": "a35e9c9ee3211482dc27b70aabb36f3e45b6597f24d6cd513627e350eb8ab26c",
+    "responsible-ai.md": "f66a84c3cf14f73a9aa607257538336da4b7ffe12044b74de5dd03c5afce942b",
+    "solution-design.md": "a30eff9da470712ca3e1d324ea52acdc9892f4221637b0d09270544fb477137d"
+  }
+}

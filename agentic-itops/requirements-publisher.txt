@@ -1,0 +1,2 @@
+# Publisher Function profile; SDK and host versions are pinned by the Search profile.
+-r requirements-search.txt

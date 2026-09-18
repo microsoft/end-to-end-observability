@@ -23,25 +23,69 @@ parameters:
     - retail_supply_chain
     - public_sector
     default: energy_utilities
-output_schema:
-  type: object
-  required:
-  - industry
-  - criticality_adjustment
-  - control_frameworks
-  properties:
-    industry:
-      type: string
-    criticality_adjustment:
-      type: string
-    control_frameworks:
-      type: array
-    safety_critical_asset_classes:
-      type: array
-    additional_prohibitions:
-      type: array
 identity:
   type: user_assigned_managed_identity
   required_roles:
   - Monitoring Reader
   - Reader
+output_schema:
+  type: object
+  properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps: &id001
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
+    industry:
+      type: string
+      enum:
+      - energy_utilities
+      - manufacturing
+      - financial_services
+      - healthcare
+      - retail_supply_chain
+      - public_sector
+    criticality_adjustment:
+      type: string
+      minLength: 1
+    control_frameworks: *id001
+    safety_critical_asset_classes: *id001
+    additional_prohibitions: *id001
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - industry
+  - criticality_adjustment
+  - control_frameworks
+  - safety_critical_asset_classes
+  - additional_prohibitions
+  additionalProperties: false

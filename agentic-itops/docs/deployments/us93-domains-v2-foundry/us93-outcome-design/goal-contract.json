@@ -1,0 +1,32 @@
+{
+  "mode": "full-review-and-design",
+  "tier": "T2",
+  "goal": "Improve the Story 93 deployment plan into an end-to-end Domains V2 -> all-nine Foundry agents -> validated persisted results -> separate operator review -> governed learning design.",
+  "userConfirmedOutcomes": ["Detect anomalies and correlate findings into incidents", "Explain likely causes with source evidence", "Propose responses with safety-gate decisions", "Draft incident updates and postmortems", "Learn from reviewed results and analyze alert noise"],
+  "userConfirmedDestination": "Separate agentic-itops review interface; keep Domains V2 producer-only",
+  "workItem": 93,
+  "successCriteria": [
+    "Explain how the approved producer feed reaches Foundry and which work is deterministic versus model-based.",
+    "Preserve all nine agents with explicit triggers, tools, inputs, outputs and evidence of their contribution.",
+    "Define result post-processing, persistence, identities, versioning, retries, late arrivals and recovery without exactly-once service claims.",
+    "Define operator review screens/actions and distinguish accepting analysis from executing remediation.",
+    "Design governed postmortem learning and hygiene without synthetic/audit-label contamination.",
+    "Map relevant Foundry capabilities to user value, supported evidence and explicit unverified dependencies.",
+    "Produce actionable architecture, data/RAI/cost/delivery documents and diagrams with measurable acceptance and independent review."
+  ],
+  "nonGoals": ["Implementing application code", "Deploying or modifying Azure resources", "Model calls or uploads", "Producer starts/stops", "Story updates or commits", "Dependency installation"],
+  "artifacts": "Session-only outputs\\agentic-itops-outcomes\\docs (seven architecture files), plus review/QA/evidence and Excalidraw source under us93-outcome-design.",
+  "budget": {"maxMinutes": 45, "maxParentToolCalls": 80, "maxDelegates": 3, "maxDelegateToolCalls": 15, "maxCorrectionCycles": 3},
+  "approvalGates": ["Implementation", "UI/hosting/network/identity provisioning and spend", "Model/embedding calls or knowledge publication", "Producer generation", "External writes"],
+  "evidence": "Reuse fresh 102-file source review and current producer contract. No repeated file audit. Label architecture decisions and acceptance targets as proposed rather than deployed.",
+  "riskBoundary": "Synthetic OperationalUse prohibited is immutable. Human review acceptance never permits real-resource execution. Research completeness can pass with explicit deployment gates.",
+  "phase": "complete",
+  "completion": {
+    "verdict": "APPROVE for proposed design completeness, not implementation or deployment",
+    "independentConfidence": 0.90,
+    "verification": "verification.md, including original REVISE, correction closure and final capability-delta review",
+    "artifactChecks": "24/24; architecture QA has zero findings; seven deliverable hashes in design-checks.json",
+    "runLog": "run-log.md",
+    "remainingGates": ["Implementation authorization", "A2A intermediate control and nested budgets", "Exact API/version/schema bindings", "Search scope/revocation/identity", "Domain quality/retention thresholds", "Regional costs and deployment approval"]
+  }
+}

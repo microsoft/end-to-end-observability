@@ -11,16 +11,50 @@ tools:
   name: resource_graph
   spec: ../../tools/openapi/resource-graph.yaml
   auth: managed_identity
+identity:
+  type: user_assigned_managed_identity
+  required_roles:
+  - Monitoring Reader
+  - Reader
 output_schema:
   type: object
-  required:
-  - incident_fingerprint
-  - adjusted_severity
-  - suppress
-  - reasoning
   properties:
+    status:
+      type: string
+      enum:
+      - completed
+      - insufficient_evidence
+    citations:
+      type: array
+      items:
+        type: object
+        properties:
+          source_id:
+            type: string
+            minLength: 1
+          revision:
+            type:
+            - string
+            - 'null'
+          locator:
+            type:
+            - string
+            - 'null'
+        required:
+        - source_id
+        - revision
+        - locator
+        additionalProperties: false
+      minItems: 0
+    evidence_gaps:
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 0
     incident_fingerprint:
       type: string
+      minLength: 1
     adjusted_severity:
       type: string
       enum:
@@ -31,12 +65,19 @@ output_schema:
       - info
     severity_changed_because:
       type: string
+      minLength: 1
     suppress:
       type: boolean
     reasoning:
       type: string
-identity:
-  type: user_assigned_managed_identity
-  required_roles:
-  - Monitoring Reader
-  - Reader
+      minLength: 1
+  required:
+  - status
+  - citations
+  - evidence_gaps
+  - incident_fingerprint
+  - adjusted_severity
+  - severity_changed_because
+  - suppress
+  - reasoning
+  additionalProperties: false

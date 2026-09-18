@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "seed": 20260804,
+  "scenario": "conversion_treating_degradation",
+  "site": {
+    "site_id": "fictional-downstream-refinery-001",
+    "display_name": "Fictional Downstream Refinery",
+    "time_zone": "America/Chicago"
+  },
+  "simulation": {
+    "start_utc": "2026-08-04T12:00:00Z",
+    "end_utc": "2026-08-04T12:05:00Z"
+  },
+  "monitoring": {
+    "max_records_per_type": 1000,
+    "max_total_records": 10000
+  }
+}

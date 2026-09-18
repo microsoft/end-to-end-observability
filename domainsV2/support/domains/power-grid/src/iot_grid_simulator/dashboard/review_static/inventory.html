@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Power Grid · Distribution Spares Studio</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 15px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+    .wrap { max-width: 1440px; margin: auto; padding: 20px 28px 48px; }
+    a { color: var(--cp-link); }
+    nav, .row, .controls, .filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+    nav { font-size: 13px; margin-bottom: 24px; }
+    h1 { font-size: clamp(26px, 3vw, 40px); line-height: 1.15; letter-spacing: -.035em; margin: 4px 0 12px; }
+    h2 { font-size: 20px; letter-spacing: -.02em; margin: 0; }
+    h3 { font-size: 16px; margin: 0 0 8px; }
+    p { margin: 8px 0; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .13em; color: var(--cp-accent); font-size: 11px; font-weight: 700; }
+    .muted, .note { color: var(--cp-text-muted); }
+    .note { font-size: 12px; }
+    .mono { font-family: Consolas, "Courier New", Courier, monospace; font-size: 12px; overflow-wrap: anywhere; }
+    .banner { padding: 12px 16px; border: 1px solid var(--cp-border); border-left: 4px solid var(--cp-accent); border-radius: .625rem; background: var(--cp-surface); margin: 20px 0; font-size: 13px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+    .stat { border-bottom: 2px solid var(--cp-border); padding: 8px 0; }
+    .stat strong { font-size: 28px; font-weight: 600; margin-right: 8px; }
+    .panel { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; box-shadow: 0 1px 2px var(--cp-highlight); min-width: 0; overflow: hidden; }
+    .padded { padding: 20px; }
+    .section-head { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .studio { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(340px, 1fr); gap: 20px; align-items: start; }
+    .map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 8px; }
+    #map { min-width: 0; }
+    #map svg { display: block; width: 100%; min-height: 320px; }
+    .grid-line { stroke: var(--cp-border); stroke-width: 1; }
+    .map-label { fill: var(--cp-text-muted); font-size: 11px; }
+    .site circle { fill: var(--cp-surface); stroke: var(--cp-text-muted); stroke-width: 2; }
+    .site text { fill: var(--cp-text); font-size: 12px; font-weight: 600; }
+    .site[aria-pressed="true"] circle { fill: var(--cp-accent); stroke: var(--cp-accent); }
+    .site[aria-pressed="true"] .marker-number { fill: var(--cp-accent-fg); }
+    .site { cursor: pointer; }
+    .site:hover circle { stroke: var(--cp-accent); stroke-width: 4; }
+    .location-rail { max-height: 360px; overflow: auto; display: grid; gap: 6px; align-content: start; }
+    .location-rail button { width: 100%; text-align: left; font-size: 12px; padding: 8px; }
+    .location-rail small { display: block; color: var(--cp-text-muted); }
+    .location-rail button[aria-pressed="true"] { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+    button, select, input { font: inherit; color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border-strong); border-radius: .625rem; padding: 8px 12px; min-height: 40px; max-width: 100%; }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--cp-accent); }
+    button:disabled, select:disabled { cursor: not-allowed; opacity: .55; }
+    .primary { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+    .text-button { padding: 0; min-height: 32px; border: none; color: var(--cp-link); background: var(--cp-surface); text-align: left; }
+    :focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 3px; }
+    label { display: grid; gap: 4px; font-size: 12px; color: var(--cp-text-muted); }
+    #focus-part { width: 100%; margin: 4px 0 12px; }
+    .focus-number { font-size: clamp(46px, 5vw, 68px); line-height: 1.1; letter-spacing: -.05em; font-weight: 650; margin: 12px 0; font-variant-numeric: tabular-nums; }
+    .focus-number small { font-size: 20px; letter-spacing: 0; color: var(--cp-text-muted); }
+    .badge { display: inline-block; font-size: 11px; border: 1px solid var(--cp-border); padding: 3px 8px; border-radius: .625rem; color: var(--cp-text-muted); background: var(--cp-surface-soft); }
+    .badge.low, .badge.out_of_stock { border-color: var(--cp-danger); color: var(--cp-danger); }
+    .badge.healthy { border-color: var(--cp-border-strong); color: var(--cp-text); }
+    #timeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin: 20px 0; padding: 0; list-style: none; }
+    #timeline li { border-top: 4px solid var(--cp-border); padding-top: 8px; font-size: 11px; }
+    #timeline li.current { border-color: var(--cp-accent); font-weight: 700; }
+    #timeline strong { display: block; font-size: 14px; }
+    .controls { gap: 8px; }
+    .controls label { margin-left: auto; }
+    .workbench { margin-top: 24px; }
+    .filters { align-items: end; margin: 16px 0; }
+    .filters label:first-child { flex: 1; min-width: 180px; }
+    .stock-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+    .table-wrap { max-height: 540px; overflow: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th { text-align: left; position: sticky; top: 0; background: var(--cp-surface-soft); color: var(--cp-text-muted); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; z-index: 1; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--cp-border); vertical-align: top; }
+    td small { display: block; color: var(--cp-text-muted); }
+    tr.selected td { background: var(--cp-accent-soft); }
+    tr.selected .text-button { background: var(--cp-accent-soft); }
+    .quantity { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    dl { display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; font-size: 13px; }
+    dt { color: var(--cp-text-muted); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    .event-list { padding: 0; list-style: none; max-height: 340px; overflow: auto; }
+    .event-list li { padding: 12px 0; border-bottom: 1px solid var(--cp-border); font-size: 13px; }
+    .event-list small { display: block; color: var(--cp-text-muted); }
+    summary { cursor: pointer; font-weight: 600; padding: 12px 0; }
+    .hidden { display: none !important; }
+    .empty { padding: 16px 0; color: var(--cp-text-muted); }
+    #error { color: var(--cp-danger); }
+    footer { margin-top: 32px; border-top: 1px solid var(--cp-border); padding-top: 16px; font-size: 12px; color: var(--cp-text-muted); }
+    @media (max-width: 1100px) { .studio { grid-template-columns: 1fr; } .map-layout { grid-template-columns: minmax(0, 1fr) 230px; } }
+    @media (max-width: 700px) {
+      .wrap { padding: 16px 12px 32px; }
+      .stock-layout, .previews, .map-layout { grid-template-columns: minmax(0, 1fr); }
+      .location-rail { grid-template-columns: 1fr 1fr; max-height: 220px; }
+      .stats { gap: 8px; } .stat strong { display: block; }
+      .padded { padding: 16px; }
+      .filters label { width: 100%; }
+      .table-wrap { max-height: 420px; }
+      th, td { padding: 10px; } table { min-width: 510px; }
+      .controls label { margin-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <nav aria-label="Inventory navigation"><a href="/">All domains</a><a href="/power-grid">NYC Grid Pulse</a><a href="/power-grid/review/inventory" aria-current="page">Distribution spares</a><a href="#workbench">Stock workbench</a></nav>
+  <header><div class="eyebrow">Power Grid / Equipment &amp; spares</div><h1>Power Grid Spares Studio</h1><p class="muted">A fictional Austin-area service territory. Find a store, inspect a stock position, follow its story.</p></header>
+  <div class="banner"><strong>Synthetic · Nonoperational · Local alerts only.</strong> This separate sample is not NYC Grid Pulse stock. Read-only opening records; browser-only movement. A threshold of 10 in each part’s UOM is a demonstration rule, not utility policy. No Azure Monitor publication, real facilities, or physical inter-store transfers.</div>
+  <p id="loading" role="status">Loading the synthetic inventory…</p><p id="error" role="alert"></p>
+  <main id="main" class="hidden">
+    <div id="stats" class="stats"></div>
+    <div class="studio">
+      <section class="panel padded" aria-labelledby="territory-title">
+        <div class="section-head"><div><div class="eyebrow">01 / Find your position</div><h2 id="territory-title">Fictional service territory</h2></div><button id="all-locations">All locations</button></div>
+        <div class="map-layout"><div id="map"></div><div id="locations" class="location-rail" aria-label="Fictional location selection"></div></div>
+        <p id="map-note" class="note"></p>
+        <p class="note">Numbered markers identify fictional stores, not hierarchy or delivery routes. Equal local-km scale on both axes; no real-world geolocation or basemap.</p>
+        <div id="location-detail"></div>
+      </section>
+      <section class="panel padded" aria-labelledby="movement-title">
+        <div class="eyebrow">02 / Follow one stock position</div><h2 id="movement-title">Depletion &amp; replenishment</h2>
+        <label for="focus-part">Demonstration focus</label><select id="focus-part" disabled><option>Loading…</option></select>
+        <div id="focus-story"></div><ol id="timeline" aria-label="Six synthetic movement frames"></ol>
+        <div class="controls" role="group" aria-label="Local movement playback"><button id="play" class="primary" disabled>Play</button><button id="step" disabled>Step</button><button id="reset" disabled>Reset</button><label>Playback speed<select id="speed" disabled><option value="2000">0.5×</option><option value="1000" selected>1×</option><option value="500">2×</option><option value="4000">0.25×</option></select></label></div>
+        <p id="playback-status" class="note" role="status" aria-live="polite"></p>
+        <p class="note">Starts paused. Frames advance in synthetic five-minute increments, not travel time. Reset restores the actual opening stock.</p>
+      </section>
+    </div>
+    <section id="workbench" class="workbench" aria-labelledby="workbench-title">
+      <div class="eyebrow">03 / Inspect the current frame</div><h2 id="workbench-title">Stock workbench</h2>
+      <div class="filters">
+        <label>Search parts &amp; locations<input id="q" type="search" placeholder="Stock code, transformer, store…" /></label>
+        <label>Stock status<select id="stock-status"><option value="">All statuses</option><option value="attention">Below demo threshold / empty</option><option value="healthy">At / above demo threshold</option><option value="unknown">Unknown</option><option value="focus">Movement focus</option></select></label>
+        <label>Part class<select id="part-class"><option value="">All classes</option></select></label>
+        <button id="clear-filters">Clear filters</button>
+      </div>
+      <p id="stock-count" class="note" role="status"></p>
+      <div class="stock-layout"><div class="panel table-wrap" tabindex="0" aria-label="Scrollable stock positions"><table><thead><tr><th>Part / stock code</th><th>Store</th><th>Current stock</th><th>Demo status</th></tr></thead><tbody id="stock-body"></tbody></table></div><aside id="stock-detail" class="panel padded" aria-label="Selected stock details"></aside></div>
+    </section>
+    <div class="previews">
+      <section class="panel padded" aria-labelledby="alerts-title"><div class="eyebrow">Local preview / Not published</div><h2 id="alerts-title">Attention, with context</h2><p id="attention-summary" class="note"></p><h3>Selected focus · active alerts</h3><ul id="focus-alerts" class="event-list"></ul><details><summary id="other-alerts-label">Other stock alerts</summary><p class="note">Other positions include pre-existing opening alerts; they are not caused by the selected focus.</p><ul id="other-alerts" class="event-list"></ul></details></section>
+      <section class="panel padded" aria-labelledby="activity-title"><div class="eyebrow">Local preview / Synthetic history</div><h2 id="activity-title">Movement &amp; alert activity</h2><p class="note">Issues and receipts are independent demonstration adjustments, not transfers between stores.</p><ul id="activity" class="event-list"></ul></section>
+    </div>
+    <details class="panel padded" style="margin-top:24px"><summary>Catalog coverage &amp; unrecorded positions</summary><p class="note">An absent part/location row is not zero. Select a catalog item to inspect its recorded positions. Serialized means a tracking policy only; no individual serial tracing is provided.</p><div id="catalog"></div></details>
+    <footer><p id="source-note"></p><p>Illustrative generic equipment only. Fitment and storage classes are synthetic catalog metadata, not engineering approval, purchasing guidance, or a validated stocking policy. Operational use prohibited.</p></footer>
+  </main>
+</div>
+<script src="/power-grid/review/inventory/studio.js"></script>
+<script>
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value ?? "Not provided").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const human = value => esc(typeof value === "string" ? value.replace(/_/g, " ") : value);
+  const number = value => typeof value === "number" && Number.isFinite(value) ? value : null;
+  const list = value => Array.isArray(value) ? value : [];
+  function fitmentItem(value) {
+    if (typeof value === "string") return `<li>${esc(value)}<small>Synthetic applicability only</small></li>`;
+    if (!value || typeof value !== "object") return "";
+    return `<li>${human(value.asset_type || value.asset_family || value.asset_config_code || "Generic configuration")}<small>${esc(value.asset_config_code || "Generic configuration")}</small><small>${esc(value.fitment_claim || "Synthetic applicability only")}</small></li>`;
+  }
+  const state = {snapshot: null, focus: "", selected: "", part: "", location: "", query: "", status: "", partClass: ""};
+  let studio = null;
+  let departed = false;
+  let disposed = false;
+  const key = row => InventoryStudio.stockKey(row);
+  const partFor = row => state.snapshot.inventory.parts.find(p => p.part_master_id === row.part_master_id) || {};
+  const locationFor = row => state.snapshot.inventory.locations.find(l => l.location_id === row.location_id) || {};
+  const quantity = (value, uom, known = state.snapshot.inventory.stock_is_known) =>
+    `${known && Number.isSafeInteger(value) && value >= 0 ? esc(value.toLocaleString("en-US")) : "Unknown"} ${esc(uom)}`;
+  const statusFor = row => InventoryStudio.quantityStatus(row.quantity, state.snapshot.inventory.stock_is_known);
+  const badge = row => {
+    const status = statusFor(row);
+    return `<span class="badge ${status}">${({healthy:"At / above demo threshold",low:"Below demo threshold",out_of_stock:"Known empty",unknown:"Unknown"})[status]}</span>`;
+  };
+  function restoreFocus(render) {
+    const id = document.activeElement?.id;
+    render();
+    if (id && document.activeElement?.id !== id) $(id)?.focus({preventScroll: true});
+  }
+  function selectLocation(id) {
+    state.location = id;
+    restoreFocus(() => { renderMap(); renderStock(); });
+  }
+  function renderMap() {
+    const {inventory, frame} = state.snapshot;
+    const locations = inventory.locations;
+    const placed = locations.filter(l => number(l.grid_east_km) !== null && number(l.grid_north_km) !== null);
+    const unplaced = locations.filter(l => !placed.includes(l));
+    $("map-note").textContent = `${placed.length} of ${locations.length} locations plotted.${unplaced.length ? " Coordinates unavailable: " + unplaced.map(l => l.location_code).join(", ") + "." : ""}`;
+    if (!placed.length) $("map").innerHTML = '<p class="empty">No local coordinates published. Use the location list; no positions have been invented.</p>';
+    else {
+      const minE = Math.min(...placed.map(l => l.grid_east_km)), maxE = Math.max(...placed.map(l => l.grid_east_km));
+      const minN = Math.min(...placed.map(l => l.grid_north_km)), maxN = Math.max(...placed.map(l => l.grid_north_km));
+      const scale = Math.min(350 / Math.max(maxE - minE, 1), 270 / Math.max(maxN - minN, 1));
+      const east = (minE + maxE) / 2, north = (minN + maxN) / 2;
+      const x = n => 250 + (n - east) * scale, y = n => 190 - (n - north) * scale;
+      const raw = Math.max(maxE - minE, maxN - minN, 1) / 4;
+      const power = 10 ** Math.floor(Math.log10(raw));
+      const tick = [1, 2, 5, 10].find(n => n * power >= raw) * power;
+      const lines = [];
+      for (let e = Math.ceil((east - 195 / scale) / tick) * tick; e <= east + 195 / scale; e += tick)
+        lines.push(`<line class="grid-line" x1="${x(e)}" y1="40" x2="${x(e)}" y2="345"/><text class="map-label" x="${x(e)}" y="366" text-anchor="middle">${esc(Number(e.toFixed(3)))}</text>`);
+      for (let n = Math.ceil((north - 145 / scale) / tick) * tick; n <= north + 145 / scale; n += tick)
+        lines.push(`<line class="grid-line" x1="50" y1="${y(n)}" x2="455" y2="${y(n)}"/><text class="map-label" x="43" y="${y(n) + 4}" text-anchor="end">${esc(Number(n.toFixed(3)))}</text>`);
+      $("map").innerHTML = `<svg viewBox="0 0 500 400" role="group" aria-label="Fictional stores on an equal-scale local kilometre plane"><text x="50" y="20" class="map-label">LOCAL NORTH (km) ↑</text>${lines.join("")}${placed.map(l => {
+        const i = locations.indexOf(l);
+        return `<g class="site" id="map-site-${i}" data-location="${esc(l.location_id)}" role="button" tabindex="0" aria-pressed="${state.location === l.location_id}" aria-label="${esc(l.location_code + " · " + (l.location_name || "Fictional store"))}"><title>${esc(l.location_code)} · ${esc(l.grid_east_km)} km east, ${esc(l.grid_north_km)} km north</title><circle cx="${x(l.grid_east_km)}" cy="${y(l.grid_north_km)}" r="16"/><text class="marker-number" x="${x(l.grid_east_km)}" y="${y(l.grid_north_km) + 4}" text-anchor="middle">${i + 1}</text></g>`;
+      }).join("")}<text x="455" y="392" text-anchor="end" class="map-label">LOCAL EAST (km) →</text></svg>`;
+    }
+    $("locations").innerHTML = locations.map((l, i) => {
+      const rows = frame.stock.filter(r => r.location_id === l.location_id);
+      return `<button id="location-${i}" data-location="${esc(l.location_id)}" aria-pressed="${state.location === l.location_id}">${i + 1} · ${esc(l.location_code)}<small>${esc(l.location_name || human(l.location_type))}</small><small>${rows.length} recorded positions · ${new Set(rows.map(r => r.part_master_id)).size} SKUs</small></button>`;
+    }).join("");
+    const loc = locations.find(l => l.location_id === state.location);
+    $("location-detail").innerHTML = loc ? `<h3>${esc(loc.location_name || loc.location_code)}</h3><dl><dt>Store type</dt><dd>${human(loc.location_type)}</dd><dt>Local frame</dt><dd>${esc(loc.grid_frame)}</dd><dt>Coordinates</dt><dd>${number(loc.grid_east_km) === null || number(loc.grid_north_km) === null ? "Not published" : `${esc(loc.grid_east_km)} km east · ${esc(loc.grid_north_km)} km north`}</dd><dt>Storage</dt><dd>${list(loc.storage_classes_supported).map(human).join(", ") || "Not published"}</dd></dl><p class="note">Workbench filtered to this location. These are recorded positions, not an aggregate quantity.</p>` : '<p class="note">Select a numbered store or location card to filter the workbench and inspect its storage context.</p>';
+  }
+  function renderStory() {
+    const {movement, frame, index, playing} = state.snapshot;
+    const row = frame.stock.find(r => key(r) === state.focus);
+    const part = row && partFor(row);
+    $("focus-story").innerHTML = row ? `<div class="mono">${esc(part.stock_code)} · ${esc(locationFor(row).location_code)}</div><h3>${esc(part.part_name)}</h3><div class="focus-number" id="focus-quantity">${quantity(row.quantity, part.uom).replace(/ ([^ ]+)$/, " <small>$1</small>")}</div>${badge(row)}<p class="note">Demo threshold ${quantity(movement.threshold, part.uom)} · fires strictly below ${quantity(movement.threshold, part.uom)}.</p>` : `<p class="empty">${esc(movement.unavailable_reason || "No focus position is available.")}</p><p class="note">Unknown stock is never zero or a shortage claim.</p>`;
+    const stageNames = ["Opening", "Issue", "At threshold", "Below", "Empty", "Restored"];
+    $("timeline").innerHTML = row ? movement.frames.map((f, i) => {
+      const current = f.stock.find(r => key(r) === state.focus);
+      return `<li class="${i === index ? "current" : ""}" ${i === index ? 'aria-current="step"' : ""}>${stageNames[i]}<strong>${quantity(current?.quantity, part.uom)}</strong>T+${f.elapsed_minutes} min</li>`;
+    }).join("") : "";
+    $("play").textContent = playing ? "Pause" : "Play";
+    $("play").disabled = !movement.available || index === movement.frames.length - 1;
+    $("step").disabled = !movement.available || index === movement.frames.length - 1;
+    $("reset").disabled = !movement.available;
+    $("speed").disabled = !movement.available;
+    $("playback-status").textContent = movement.available
+      ? `${playing ? "Playing" : "Paused"} · frame ${index + 1} of ${movement.frames.length} · T+${frame.elapsed_minutes} synthetic min · ${stageNames[index]}. Opening ledger unchanged.`
+      : "Playback unavailable. " + movement.unavailable_reason;
+  }
+  function renderStock() {
+    const {inventory, frame, movement} = state.snapshot;
+    const focus = new Set(movement.focus.map(key));
+    const ranks = {out_of_stock: 0, low: 1, unknown: 2, healthy: 3};
+    const rows = frame.stock.filter(row => {
+      const p = partFor(row), l = locationFor(row), status = statusFor(row);
+      const matches = !state.status || (state.status === "attention" ? ["low", "out_of_stock"].includes(status) : state.status === "focus" ? focus.has(key(row)) : status === state.status);
+      return (!state.location || row.location_id === state.location) && matches && (!state.partClass || p.part_class === state.partClass)
+        && [p.part_name, p.part_key, p.stock_code, l.location_name, l.location_code].join(" ").toLowerCase().includes(state.query);
+    }).sort((a, b) => ranks[statusFor(a)] - ranks[statusFor(b)] || key(a).localeCompare(key(b)));
+    $("stock-count").textContent = `${rows.length} of ${frame.stock.length} recorded positions · ${inventory.stock_is_known ? "Current synthetic frame" : "Stock unknown; no shortage inference"}. Quantities are never summed across parts.`;
+    $("stock-body").innerHTML = rows.map(row => {
+      const p = partFor(row), l = locationFor(row);
+      return `<tr class="${key(row) === state.selected ? "selected" : ""}"><td><button class="text-button" id="stock-${encodeURIComponent(key(row))}" data-stock="${esc(key(row))}">${esc(p.part_name)}</button><small class="mono">${esc(p.stock_code)}</small><small>${human(p.part_class)}</small></td><td>${esc(l.location_code)}<small>${esc(l.location_name || "")}</small></td><td class="quantity">${quantity(row.quantity, p.uom)}</td><td>${badge(row)}${focus.has(key(row)) ? '<small>Movement focus</small>' : ""}</td></tr>`;
+    }).join("") || '<tr><td colspan="4">No recorded positions match. An absent row is not zero. Browse catalog coverage below.</td></tr>';
+    renderDetail();
+  }
+  function renderDetail() {
+    const {inventory, frame} = state.snapshot;
+    const row = frame.stock.find(r => key(r) === state.selected);
+    const p = row ? partFor(row) : inventory.parts.find(p => p.part_master_id === state.part);
+    if (!p) { $("stock-detail").innerHTML = '<h3>Part &amp; location details</h3><p class="empty">Select a stock position or a catalog part.</p>'; return; }
+    const l = row && locationFor(row);
+    const others = frame.stock.filter(r => r.part_master_id === p.part_master_id);
+    const specification = p.specification || p.illustrative_specification || "Not published";
+    $("stock-detail").innerHTML = `<div class="eyebrow">Selected ${row ? "position" : "catalog part"}</div><h3>${esc(p.part_name)}</h3><p class="mono">${esc(p.stock_code)}</p>${row ? `<p class="quantity">${quantity(row.quantity, p.uom)} · ${esc(l.location_code)}</p>${badge(row)}` : '<p class="note">No position selected; an absent position is not zero.</p>'}<dl><dt>Part class</dt><dd>${human(p.part_class)}</dd><dt>Tracking policy</dt><dd>${human(p.tracking_mode)}</dd><dt>Storage required</dt><dd>${human(p.required_storage_class)}</dd><dt>Illustrative spec</dt><dd>${esc(specification)}</dd>${l ? `<dt>Location</dt><dd>${esc(l.location_name || l.location_code)}</dd><dt>Storage offered</dt><dd>${list(l.storage_classes_supported).map(human).join(", ") || "Not published"}</dd><dt>Aisle / rack / shelf / bin</dt><dd>${[l.aisle, l.rack, l.shelf, l.bin_code].map(v => esc(v || "—")).join(" / ")}</dd>` : ""}</dl><p class="note">Serialized is policy metadata, not individual serial tracing.</p><h3>Recorded positions · current frame</h3><ul class="event-list">${others.map(r => `<li><button class="text-button" data-stock="${esc(key(r))}">${esc(locationFor(r).location_code)} · ${quantity(r.quantity, p.uom)}</button></li>`).join("") || "<li>No recorded positions. Stock unknown, not zero.</li>"}</ul><h3>Illustrative fitment</h3><ul class="event-list">${list(p.fits).map(fitmentItem).join("") || "<li>No fitment metadata published.</li>"}</ul>`;
+  }
+  function eventContext(row, frame) {
+    const p = partFor(row), l = locationFor(row);
+    return `<strong>${esc(p.stock_code)} · ${esc(p.part_name)}</strong><small>${esc(l.location_code)} · ${esc(l.location_name || "")} · frame ${frame.index + 1} · T+${frame.elapsed_minutes} synthetic min</small>`;
+  }
+  function alertItem(alert, frame) {
+    const p = partFor(alert);
+    return `<li>${eventContext(alert, frame)}<span>${alert.state === "resolved" ? "Resolved" : "Active"} · ${quantity(alert.quantity, p.uom)} · demo threshold ${quantity(alert.threshold, p.uom)}</span><small>${human(alert.reason)} · local alert preview</small><small class="mono">Episode ${esc(alert.alert_id)}</small></li>`;
+  }
+  function renderPreviews() {
+    const {inventory, frame, movement, index} = state.snapshot;
+    const active = inventory.stock_is_known ? frame.active_alerts : [];
+    const focused = active.filter(a => key(a) === state.focus);
+    const other = active.filter(a => key(a) !== state.focus);
+    $("attention-summary").textContent = inventory.stock_is_known ? `${active.length} positions currently below their demo threshold. Alerts are local previews, never operational notifications.` : "Stock is unknown. No shortages or alerts can be inferred.";
+    $("focus-alerts").innerHTML = focused.map(a => alertItem(a, frame)).join("") || `<li>${inventory.stock_is_known && state.focus ? "No active alert for the selected focus in this frame." : "No known focus stock; no shortage inference."}</li>`;
+    $("other-alerts-label").textContent = `${other.length} other active alerts · separate from selected focus`;
+    $("other-alerts").innerHTML = other.map(a => alertItem(a, frame)).join("") || "<li>No other active alerts.</li>";
+    const activity = movement.frames.slice(0, index + 1).flatMap(f => [
+      ...f.movements.map(m => `<li>${eventContext(m, f)}${human(m.kind)} · ${quantity(m.quantity_before, partFor(m).uom)} → ${quantity(m.quantity_after, partFor(m).uom)}<small>Change ${m.delta > 0 ? "+" : ""}${quantity(m.delta < 0 ? -m.delta : m.delta, partFor(m).uom)} ${m.delta < 0 ? "issued" : "received"} · demo threshold ${quantity(movement.threshold, partFor(m).uom)}</small><small>${esc(m.reason)} · no inter-store transfer</small></li>`),
+      ...f.alerts.map(a => alertItem(a, f))
+    ]);
+    $("activity").innerHTML = activity.reverse().join("") || "<li>No movement yet. Opening records are unchanged.</li>";
+  }
+  function render() {
+    restoreFocus(() => { renderMap(); renderStory(); renderStock(); renderPreviews(); });
+  }
+  function activate(event) {
+    const location = event.target.closest("[data-location]");
+    const stock = event.target.closest("[data-stock]");
+    const part = event.target.closest("[data-part]");
+    if (location) selectLocation(location.dataset.location);
+    else if (stock) { state.selected = stock.dataset.stock; restoreFocus(renderStock); }
+    else if (part) { state.part = part.dataset.part; state.selected = ""; renderDetail(); $("stock-detail").scrollIntoView({block: "nearest"}); }
+  }
+  $("main").addEventListener("click", activate);
+  $("map").addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(event); }
+  });
+  $("all-locations").addEventListener("click", () => selectLocation(""));
+  $("q").addEventListener("input", event => { state.query = event.target.value.trim().toLowerCase(); renderStock(); });
+  $("stock-status").addEventListener("change", event => { state.status = event.target.value; renderStock(); });
+  $("part-class").addEventListener("change", event => { state.partClass = event.target.value; renderStock(); });
+  $("clear-filters").addEventListener("click", () => {
+    state.query = state.status = state.partClass = state.location = "";
+    $("q").value = $("stock-status").value = $("part-class").value = "";
+    renderMap(); renderStock();
+  });
+  $("focus-part").addEventListener("change", event => {
+    state.focus = event.target.value; state.selected = state.focus; render();
+  });
+  $("play").addEventListener("click", () => { if (studio) studio.snapshot().playing ? studio.pause() : studio.play(); });
+  $("step").addEventListener("click", () => studio?.step());
+  $("reset").addEventListener("click", () => studio?.reset());
+  $("speed").addEventListener("change", event => studio?.setSpeed(Number(event.target.value)));
+  window.addEventListener("pagehide", event => {
+    departed = true;
+    if (event.persisted) studio?.pause();
+    else { disposed = true; studio?.dispose(); }
+  });
+  window.addEventListener("pageshow", () => { departed = false; });
+  async function load() {
+    try {
+      const response = await fetch("/api/power-grid/review/inventory/movement", {headers: {Accept: "application/json"}, cache: "no-store"});
+      if (!response.ok) throw new Error(`Inventory endpoint returned HTTP ${response.status}.`);
+      const payload = await response.json();
+      if (disposed) return;
+      studio = InventoryStudio.create(payload);
+      state.snapshot = studio.snapshot();
+      state.focus = payload.movement.focus.length ? key(payload.movement.focus[0]) : "";
+      state.selected = state.focus || (payload.inventory.stock.length ? key(payload.inventory.stock[0]) : "");
+      $("focus-part").innerHTML = payload.movement.focus.map(row => `<option value="${esc(key(row))}">${esc(partFor(row).stock_code)} · ${esc(partFor(row).part_name)} · ${esc(locationFor(row).location_code)}</option>`).join("") || '<option value="">No playable position</option>';
+      $("focus-part").value = state.focus;
+      $("focus-part").disabled = !payload.movement.available;
+      const {inventory} = payload;
+      $("stats").innerHTML = [[inventory.parts.length, "generic SKUs"], [inventory.locations.length, "fictional stores"], [inventory.stock.length, "recorded positions"]].map(([n, label]) => `<div class="stat"><strong>${n}</strong><span class="muted">${label}</span></div>`).join("");
+      $("part-class").innerHTML += [...new Set(inventory.parts.map(p => p.part_class).filter(Boolean))].sort().map(c => `<option value="${esc(c)}">${human(c)}</option>`).join("");
+      $("catalog").innerHTML = inventory.parts.map(p => `<p><button class="text-button" data-part="${esc(p.part_master_id)}">${esc(p.stock_code)} · ${esc(p.part_name)}</button> <span class="badge">${esc(p.uom)} · ${human(p.tracking_mode)}</span></p>`).join("");
+      $("source-note").textContent = `Source: ${inventory.source_dataset}. ${inventory.stock_note || ""} Stock basis: ${inventory.stock_basis || "Not published"}. ${inventory.hosted ? "Hosted review; movement remains in this browser only." : "Local review."}`;
+      studio.subscribe(snapshot => { state.snapshot = snapshot; render(); });
+      if (departed) studio.pause();
+      $("main").classList.remove("hidden");
+      $("loading").textContent = "";
+    } catch (error) {
+      studio?.dispose();
+      $("main").classList.add("hidden");
+      $("loading").textContent = "";
+      $("error").textContent = `Could not load the inventory. ${error.message || "Invalid response."} No stock quantities have been substituted.`;
+    }
+  }
+  load();
+</script>
+</body>
+</html>

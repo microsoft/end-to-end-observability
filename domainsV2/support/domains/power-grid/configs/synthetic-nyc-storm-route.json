@@ -1,0 +1,59 @@
+{
+  "storm_id": "synthetic-nyc-coastal-storm-001",
+  "revision": 1,
+  "status": "Exercise",
+  "is_synthetic": true,
+  "public_safety": false,
+  "route": [
+    {
+      "sequence": 1,
+      "area": "Staten Island",
+      "arrival_offset_minutes": 0,
+      "duration_minutes": 45,
+      "wind_speed_mps": 18,
+      "precipitation_mm": 10,
+      "flood_state": "watch",
+      "certainty": "Likely"
+    },
+    {
+      "sequence": 2,
+      "area": "Brooklyn",
+      "arrival_offset_minutes": 30,
+      "duration_minutes": 60,
+      "wind_speed_mps": 22,
+      "precipitation_mm": 15,
+      "flood_state": "warning",
+      "certainty": "Likely"
+    },
+    {
+      "sequence": 3,
+      "area": "Manhattan",
+      "arrival_offset_minutes": 60,
+      "duration_minutes": 60,
+      "wind_speed_mps": 20,
+      "precipitation_mm": 13,
+      "flood_state": "warning",
+      "certainty": "Likely"
+    },
+    {
+      "sequence": 4,
+      "area": "Queens",
+      "arrival_offset_minutes": 90,
+      "duration_minutes": 60,
+      "wind_speed_mps": 19,
+      "precipitation_mm": 12,
+      "flood_state": "warning",
+      "certainty": "Possible"
+    },
+    {
+      "sequence": 5,
+      "area": "Bronx",
+      "arrival_offset_minutes": 120,
+      "duration_minutes": 45,
+      "wind_speed_mps": 16,
+      "precipitation_mm": 8,
+      "flood_state": "watch",
+      "certainty": "Possible"
+    }
+  ]
+}

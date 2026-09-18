@@ -1,0 +1,1953 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        const theme =
+          param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      name="description"
+      content="Synthetic upstream field inventory studio: current stock, movement previews, spatial logistics and asset fitment"
+    />
+    <title>Upstream Field Inventory Studio</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --cp-bg: #f7f4ef;
+        --cp-bg-elevated: #fcfbf8;
+        --cp-surface: #ffffff;
+        --cp-surface-soft: #f5f5f5;
+        --cp-border: #dedede;
+        --cp-border-strong: #919191;
+        --cp-text: #242424;
+        --cp-text-muted: #5c5c5c;
+        --cp-text-soft: #6f6f6f;
+        --cp-accent: #b11f4b;
+        --cp-accent-hover: #9a1a41;
+        --cp-accent-soft: rgba(177, 31, 75, 0.08);
+        --cp-accent-fg: #ffffff;
+        --cp-success: #16a34a;
+        --cp-danger: #dc2626;
+        --cp-warning: #f59e0b;
+        --cp-link: #0078d4;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+        --cp-overlay: rgba(255, 255, 255, 0.8);
+        --cp-panel: rgba(255, 255, 255, 0.86);
+        --cp-panel-strong: rgba(255, 255, 255, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.55);
+        --cp-highlight: rgba(177, 31, 75, 0.12);
+      }
+      html[data-theme="dark"] {
+        color-scheme: dark;
+        --cp-bg: #3d3b3a;
+        --cp-bg-elevated: #343231;
+        --cp-surface: #292929;
+        --cp-surface-soft: #2e2e2e;
+        --cp-border: #474747;
+        --cp-border-strong: #5f5f5f;
+        --cp-text: #dedede;
+        --cp-text-muted: #919191;
+        --cp-text-soft: #b0b0b0;
+        --cp-accent: #fd8ea1;
+        --cp-accent-hover: #fb7b91;
+        --cp-accent-soft: rgba(253, 142, 161, 0.14);
+        --cp-accent-fg: #1a1a1a;
+        --cp-success: #4ade80;
+        --cp-danger: #f87171;
+        --cp-warning: #fbbf24;
+        --cp-link: #4da6ff;
+        --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+        --cp-overlay: rgba(41, 41, 41, 0.88);
+        --cp-panel: rgba(41, 41, 41, 0.72);
+        --cp-panel-strong: rgba(41, 41, 41, 0.96);
+        --cp-sheen: rgba(255, 255, 255, 0.04);
+        --cp-highlight: rgba(253, 142, 161, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--cp-bg);
+        color: var(--cp-text);
+        font: 15px/1.55 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 64px; }
+
+      header { padding-top: 24px; }
+      .title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+      h1 { font-size: 21px; margin: 0; letter-spacing: -0.01em; }
+      .sub { color: var(--cp-text-muted); font-size: 13px; margin: 2px 0 0; }
+
+      .banner {
+        background: var(--cp-accent-soft);
+        border: 1px solid var(--cp-warning);
+        border-radius: 9px;
+        padding: 9px 13px;
+        font-size: 12.5px;
+        line-height: 1.5;
+        margin: 14px 0 0;
+      }
+      .banner summary { cursor: pointer; font-weight: 600; }
+      .banner p { margin: 8px 0 0; }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: var(--cp-bg);
+        border-bottom: 1px solid var(--cp-border);
+        margin-top: 16px;
+      }
+      .toolbar-inner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 10px 0;
+      }
+      .jump { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+      .jump a { color: var(--cp-text-muted); text-decoration: none; }
+      .jump a:hover { color: var(--cp-accent); text-decoration: underline; }
+
+      input[type="search"] {
+        font: inherit;
+        font-size: 13.5px;
+        padding: 6px 10px;
+        min-width: 230px;
+        border-radius: 7px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface);
+        color: var(--cp-text);
+      }
+
+      section { margin-top: 34px; scroll-margin-top: 62px; }
+      .section-head { border-bottom: 1px solid var(--cp-border); padding-bottom: 6px; margin-bottom: 14px; }
+      h2 { font-size: 16px; margin: 0; }
+      .note { color: var(--cp-text-muted); font-size: 12.5px; margin: 4px 0 0; }
+      .err { color: var(--cp-warning); font-size: 13px; margin: 12px 0 0; }
+      .hidden { display: none; }
+
+      .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 12px; }
+      .card {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 10px;
+        padding: 13px 15px;
+        box-shadow: 0 1px 2px var(--cp-highlight);
+      }
+      .card .k { font-size: 12px; color: var(--cp-text-muted); }
+      .card .v { font-size: 25px; font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; }
+      .card .u { font-size: 11.5px; color: var(--cp-text-muted); }
+
+      .panel {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: 10px;
+        box-shadow: 0 1px 2px var(--cp-highlight);
+        overflow: hidden;
+      }
+      .scroller { max-height: 460px; overflow: auto; }
+      table { border-collapse: collapse; width: 100%; font-size: 13px; }
+      thead th {
+        position: sticky;
+        top: 0;
+        background: var(--cp-surface-soft);
+        text-align: left;
+        font-weight: 600;
+        font-size: 11.5px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--cp-text-muted);
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--cp-border);
+        white-space: nowrap;
+      }
+      tbody td { padding: 8px 12px; border-bottom: 1px solid var(--cp-border); vertical-align: top; }
+      tbody tr:last-child td { border-bottom: 0; }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      tbody tr.pick { cursor: pointer; }
+      tbody tr.pick:hover { background: var(--cp-accent-soft); }
+      tbody tr.on { background: var(--cp-accent-soft); }
+      .mono { font-family: Consolas, "Courier New", Courier, monospace; font-size: 12px; }
+      .unknown { color: var(--cp-text-muted); }
+
+      .split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+      @media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+      .detail { padding: 15px 17px; }
+      .detail h3 { margin: 0; font-size: 15px; }
+      .kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: 12.5px; margin-top: 12px; }
+      .kv dt { color: var(--cp-text-muted); }
+      .kv dd { margin: 0; }
+      .detail h4 { margin: 16px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--cp-text-muted); }
+      .detail ul { margin: 0; padding-left: 17px; font-size: 12.5px; }
+      .detail li { margin-bottom: 3px; }
+
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        padding: 1px 7px;
+        border-radius: 999px;
+        border: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+        color: var(--cp-text-muted);
+        white-space: nowrap;
+      }
+      /* Tier palette. Defined as variables so the map, legend, chips and bars
+         cannot drift apart, and so dark mode is a single override. */
+      :root {
+        --t-central_warehouse: var(--cp-text);
+        --t-regional_warehouse: var(--cp-text);
+        --t-site_storeroom: var(--cp-text-muted);
+        --t-field_van_stock: var(--cp-text-soft);
+        --t-consignment: var(--cp-text-muted);
+        --t-supplier_held: var(--cp-text-soft);
+        /* Basemap. Muted on purpose: the geography is context, and the markers
+           are the subject. Kept as variables so both themes stay legible. */
+        --map-water: var(--cp-surface-soft);
+        --map-water-hi: var(--cp-bg);
+        --map-land: var(--cp-bg-elevated);
+        --map-land-hi: var(--cp-surface);
+        --map-land-far: var(--cp-bg);
+        --map-line: var(--cp-border);
+        --map-edge: var(--cp-border-strong);
+      }
+
+      .map-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
+      @media (max-width: 900px) { .map-wrap { grid-template-columns: minmax(0, 1fr); } }
+      .map-panel { padding: 0; overflow: hidden; }
+      .map-bar {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        padding: 10px 14px; border-bottom: 1px solid var(--cp-border);
+        background: var(--cp-surface-soft);
+      }
+      .zoom { display: flex; gap: 4px; }
+      .zoom button {
+        font: inherit; font-size: 12px; padding: 4px 11px; cursor: pointer;
+        border: 1px solid var(--cp-border); background: var(--cp-surface);
+        color: var(--cp-text-muted); border-radius: 999px;
+      }
+      .zoom button:hover { color: var(--cp-text); }
+      .zoom button[aria-pressed="true"] {
+        background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); font-weight: 600;
+      }
+      .zoom button:focus-visible, .legend li:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 2px; }
+      svg.map { display: block; width: 100%; height: auto; background: var(--map-water); }
+      svg.map .ring { fill: none; stroke: var(--cp-border); stroke-dasharray: 3 4; }
+      svg.map .axis { stroke: var(--cp-border); stroke-dasharray: 2 5; }
+      svg.map .ring-label { fill: var(--cp-text-muted); font-size: 9.5px; font-family: Consolas, "Courier New", Courier, monospace; }
+      /* Boundary geometry is scaled by a transform, so every stroke has to opt
+         out of that scale or the hairlines thicken as the reader zooms in. */
+      svg.map .geo path { vector-effect: non-scaling-stroke; }
+      svg.map .geo .far { fill: var(--map-land-far); stroke: var(--map-edge); stroke-width: 0.7; opacity: 0.8; }
+      svg.map .geo .land { fill: url(#terra); stroke: none; }
+      svg.map .geo .county { fill: none; stroke: var(--map-line); stroke-width: 0.6; opacity: 0.85; }
+      svg.map .geo .edge { fill: none; stroke: var(--map-edge); stroke-width: 1.5; }
+      /* A soft blurred copy of the landmass, drawn underneath it, reads as the
+         shallow water that cartographers put around a coast. It is what makes
+         the state sit on the sea rather than next to it. */
+      svg.map .geo .shelf { fill: var(--map-edge); opacity: 0.45; }
+      svg.map .sea-0 { stop-color: var(--map-water-hi); }
+      svg.map .sea-1 { stop-color: var(--map-water); }
+      svg.map .terra-0 { stop-color: var(--map-land-hi); }
+      svg.map .terra-1 { stop-color: var(--map-land); }
+
+      /* Straight-line links from the field to each location. They carry the one
+         spatial fact this dataset states — distance — and nothing else. */
+      svg.map .spoke { fill: none; stroke-width: 1.2; opacity: 0.5; }
+      svg.map .spoke-flow {
+        fill: none; stroke-width: 2.2; stroke-linecap: round;
+        stroke-dasharray: 1 13; opacity: 1; animation: none;
+      }
+      @keyframes flow { to { stroke-dashoffset: -14; } }
+      svg.map .pulse {
+        fill: none; stroke-width: 1.6; transform-box: fill-box; transform-origin: center;
+        animation: none;
+      }
+      @keyframes pulse {
+        0% { transform: scale(0.7); opacity: 0.85; }
+        100% { transform: scale(2.1); opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        svg.map .spoke-flow, svg.map .pulse { animation: none; }
+        svg.map .pulse { opacity: 0.5; }
+      }
+
+      svg.map .compass-ring { fill: var(--cp-surface); fill-opacity: 0.72; stroke: var(--map-edge); stroke-width: 1; }
+      svg.map .compass-needle { fill: var(--cp-text); }
+      svg.map .compass-tail { fill: var(--cp-text-muted); opacity: 0.55; }
+      svg.map .compass-label { fill: var(--cp-text); font-size: 9px; font-weight: 700; letter-spacing: 0.06em; }
+      svg.map .scale-frame { fill: none; stroke: var(--cp-text); stroke-width: 1; opacity: 0.85; }
+      svg.map .scale-fill { fill: var(--cp-text); opacity: 0.85; }
+      svg.map .scale-label, svg.map .geo-label {
+        fill: var(--cp-text-muted); font-size: 10px;
+      }
+      svg.map .geo-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; }
+      svg.map .marker { cursor: pointer; }
+      svg.map .marker circle { stroke: var(--map-land-hi); stroke-width: 1.8; transition: r 140ms ease; filter: url(#pin); }
+      svg.map .marker .pulse { filter: none; }
+      svg.map .marker text { fill: var(--cp-text); font-size: 9.5px; font-family: Consolas, "Courier New", Courier, monospace; pointer-events: none; }
+      /* Labels sit over land, water and county lines, so each one carries its
+         own backing rather than relying on whatever it happens to land on. */
+      svg.map .marker text, svg.map .scale-label, svg.map .ring-label, svg.map .origin-label {
+        paint-order: stroke; stroke: var(--map-land); stroke-width: 2.6px;
+        stroke-linejoin: round; stroke-opacity: 0.85;
+      }
+      svg.map .marker:hover circle, svg.map .marker.on circle { stroke: var(--cp-text); stroke-width: 2; }
+      svg.map .marker:focus-visible { outline: none; }
+      svg.map .marker:focus-visible circle { stroke: var(--cp-text); stroke-width: 2.4; }
+      svg.map .origin { fill: var(--cp-text); }
+      svg.map .origin-label { fill: var(--cp-text-muted); font-size: 10px; }
+      svg.map .halo { fill: none; stroke-dasharray: 4 4; opacity: 0.75; }
+      svg.map .unknown-marker { fill: var(--cp-surface); }
+
+      .legend { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
+      .legend li {
+        display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer;
+        border-bottom: 1px solid var(--cp-border);
+      }
+      .legend li:last-child { border-bottom: 0; }
+      .legend .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+      .legend .lg-name { flex: 1; }
+      .legend .lg-n { color: var(--cp-text-muted); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+      .legend li.off { opacity: 0.4; }
+
+      .bars { display: grid; gap: 10px; }
+      .bar-row { display: grid; grid-template-columns: 148px minmax(0, 1fr) 62px; gap: 10px; align-items: center; font-size: 12.5px; }
+      @media (max-width: 620px) { .bar-row { grid-template-columns: 110px minmax(0, 1fr) 54px; } }
+      .bar-track { background: var(--cp-surface-soft); border-radius: 999px; height: 9px; overflow: hidden; border: 1px solid var(--cp-border); }
+      .bar-fill { height: 100%; border-radius: 999px; }
+      .bar-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--cp-text-muted); }
+
+      .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+      .chip {
+        font-size: 11px; padding: 1px 8px; border-radius: 999px;
+        border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-muted);
+      }
+      .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: baseline; }
+
+      footer { margin-top: 40px; color: var(--cp-text-muted); font-size: 12px; }
+      .wrap { max-width: 1480px; }
+      h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 650; letter-spacing: -0.035em; }
+      .eyebrow { color: var(--cp-accent); font-weight: 650; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+      button, select { font: inherit; color: var(--cp-text); background: var(--cp-surface); border: 1px solid var(--cp-border-strong); border-radius: .625rem; padding: 8px 12px; cursor: pointer; }
+      button:disabled { opacity: .5; cursor: not-allowed; }
+      :focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 3px; }
+      a { color: var(--cp-link); }
+      .primary { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+      .studio-hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; padding: 28px; border: 1px solid var(--cp-border); border-top: 4px solid var(--cp-accent); border-radius: 16px; background: var(--cp-surface); }
+      .studio-hero > * { min-width: 0; }
+      .hero-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+      .focus-number { font-size: clamp(44px, 6vw, 72px); font-weight: 650; letter-spacing: -.04em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+      .focus-number small { font-size: 18px; letter-spacing: 0; }
+      .focus-box { background: var(--cp-accent-soft); padding: 24px; border-radius: 16px; }
+      .timeline { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 0; margin: 0; list-style: none; }
+      .timeline li { border-top: 3px solid var(--cp-border); padding-top: 10px; font-size: 12px; color: var(--cp-text-muted); }
+      .timeline li[aria-current] { border-color: var(--cp-accent); color: var(--cp-text); font-weight: 700; }
+      .timeline b { display: block; }
+      .attention { padding: 16px 20px; background: var(--cp-surface); border: 1px solid var(--cp-border); border-left: 4px solid var(--cp-accent); border-radius: 16px; }
+      .attention-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+      .badge { display: inline-block; border: 1px solid var(--cp-border-strong); border-radius: .625rem; padding: 2px 7px; font-size: 12px; }
+      .badge.low, .badge.out_of_stock { color: var(--cp-danger); border-color: var(--cp-danger); }
+      .badge.unknown { border-style: dashed; }
+      .workspace { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 20px; }
+      .workspace > aside { min-width: 0; }
+      .location-rail { display: grid; gap: 6px; max-height: 600px; overflow: auto; }
+      .location-rail button { text-align: left; font-size: 12px; border-color: var(--cp-border); }
+      .location-rail button[aria-pressed="true"] { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+      .location-rail small { display: block; color: var(--cp-text-muted); }
+      .filter-row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin: 16px 0; }
+      .filter-row label { display: grid; gap: 4px; font-size: 12px; }
+      .activity-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+      .activity-list li { padding: 10px 12px; background: var(--cp-surface-soft); border-radius: .625rem; font-size: 13px; }
+      .activity-list strong { display: block; }
+      .browse { margin-top: 24px; padding: 18px; border: 1px solid var(--cp-border); border-radius: 16px; }
+      summary { cursor: pointer; font-weight: 600; }
+      .text-button { color: var(--cp-accent); background: var(--cp-accent-soft); border-color: var(--cp-border); text-align: left; }
+      .stock-split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 16px; }
+      .stock-split > * { min-width: 0; }
+      .map-wrap { grid-template-columns: minmax(0, 1fr) 190px; }
+      .card, .panel { border-radius: 16px; }
+      .kv dd { overflow-wrap: anywhere; }
+      .toolbar { position: static; }
+      @media (max-width: 1050px) { .stock-split, .map-wrap { grid-template-columns: minmax(0, 1fr); } }
+      @media (max-width: 760px) {
+        .wrap { padding: 0 16px 32px; }
+        .studio-hero, .workspace { grid-template-columns: minmax(0, 1fr); }
+        .studio-hero { padding: 20px; gap: 20px; }
+        .timeline { grid-template-columns: repeat(3, 1fr); }
+        .location-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 240px; }
+        .filter-row label, .filter-row input { min-width: 0; width: 100%; }
+        .map-bar .zoom { flex-wrap: wrap; }
+      }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="eyebrow">Upstream / synthetic supply network</div>
+        <div class="title-row">
+          <h1>Upstream Field Inventory Studio</h1>
+          <p class="sub">From warehouse shelf to field service. Inspect stock exceptions in their spatial and asset-fitment context.</p>
+        </div>
+        <p class="note">Fictional demonstration only. Operational use prohibited. Alert previews stay in this portal; nothing is sent to Azure.</p>
+        <details class="banner">
+          <summary id="banner-summary">Restricted &mdash; synthetic data, not a publication path</summary>
+          <p id="banner-body"></p>
+          <p id="basis-note"></p>
+        </details>
+      </header>
+
+      <div class="toolbar">
+        <div class="toolbar-inner">
+          <nav class="jump">
+            <a href="/">All domains</a>
+            <a href="/upstream">Upstream</a>
+            <a href="#playback">Movement lab</a>
+            <a href="#attention">Stock exceptions</a>
+            <a href="#network">Field network</a>
+            <a href="#current-stock">Current stock</a>
+            <a href="#browse">Catalog &amp; fitment</a>
+          </nav>
+          <span style="flex: 1"></span>
+          <span id="loading" class="note">Loading&hellip;</span>
+        </div>
+      </div>
+      <p id="error" class="err hidden" role="alert"></p>
+
+      <main id="main" class="hidden">
+        <section id="playback" class="studio-hero" aria-labelledby="playback-title">
+          <div>
+            <div class="eyebrow">Repeatable movement / six stages</div>
+            <h2 id="playback-title">A stock position, under pressure.</h2>
+            <p class="sub">Inspect API-defined synthetic receipts and issues against unchanged generated opening counts. Reset restores the original opening frame; the final frame follows the API scenario.</p>
+            <p id="stage-copy" role="status" aria-live="polite"></p>
+            <div class="hero-controls">
+              <button id="play" class="primary" type="button">Play</button>
+              <button id="step" type="button">Step</button>
+              <button id="reset" type="button">Reset</button>
+              <label for="speed">Pace</label>
+              <select id="speed"><option value="2000">2 seconds</option><option value="1000" selected>1 second</option><option value="500">0.5 seconds</option><option value="4000">4 seconds</option></select>
+            </div>
+            <p class="note">Starts paused. Step for a motion-free review. Reset restores opening stock and clears movement history.</p>
+          </div>
+          <div class="focus-box">
+            <label for="focus-part">Movement focus</label>
+            <select id="focus-part" style="width:100%"></select>
+            <div id="focus-story"></div>
+            <button id="locate-focus" class="text-button" type="button">Locate in field network →</button>
+          </div>
+          <ol id="timeline" class="timeline" aria-label="Movement stages"></ol>
+        </section>
+        <section id="attention" class="attention">
+          <div class="attention-head"><div><div class="eyebrow">Exceptions first</div><h2>Current attention <span id="attention-count"></span></h2></div>
+            <button id="show-low" class="text-button" type="button">Inspect all shortages →</button></div>
+          <p id="attention-summary" class="note"></p>
+          <p class="note">The demo threshold is per part and UOM. At the threshold, no alert fires. Serialized spares may intentionally hold low counts: this is not a stocking policy.</p>
+          <ul id="focus-alerts" class="activity-list"></ul>
+          <details id="remaining-alerts"><summary id="remaining-alerts-label">Other active previews</summary><ul id="other-alerts" class="activity-list"></ul></details>
+        </section>
+        <details class="browse">
+          <summary>Dataset scope &amp; catalog counts</summary>
+        <section id="overview">
+          <div class="section-head">
+            <h2>Overview</h2>
+            <p class="note" id="overview-scope"></p>
+          </div>
+          <div class="cards" id="cards"></div>
+          <p class="note" id="invariance"></p>
+        </section>
+        </details>
+
+        <section id="network">
+          <div class="section-head">
+            <div class="eyebrow">Warehouse → area → field service</div>
+            <h2>One network. Linked stock context.</h2>
+            <p class="note" id="network-scope"></p>
+          </div>
+          <div class="workspace">
+          <aside><h3>Stocking locations</h3><p class="note">Select a location to link map and stock list.</p><div id="location-rail" class="location-rail"></div></aside>
+          <div>
+          <div class="map-wrap">
+            <div class="panel map-panel">
+              <div class="map-bar">
+                <div class="zoom" id="zoom" role="group" aria-label="Map extent"></div>
+                <span style="flex: 1"></span>
+                <span class="note" id="map-note"></span>
+              </div>
+              <svg
+                id="map"
+                class="map"
+                viewBox="0 0 760 500"
+                role="img"
+                aria-labelledby="map-title map-desc"
+              >
+                <title id="map-title">Plan view of the fictional storeroom network</title>
+                <desc id="map-desc">
+                  A schematic plan view. The centre is the field asset cluster. Each marker is a
+                  stocking location placed by its position on the simulator's fictional grid, sized
+                  by stock-position count and grouped by tier. The Locations table below carries the
+                  same figures as text.
+                </desc>
+              </svg>
+            </div>
+            <div class="panel" style="padding: 12px 14px">
+              <p class="note" style="margin: 0 0 8px">Tiers &mdash; select to show / hide</p>
+              <ul class="legend" id="legend"></ul>
+            </div>
+          </div>
+          <div id="loc-detail" class="detail" style="margin-top: 14px"></div>
+          </div></div>
+          <details class="browse"><summary>Tier storage classes &amp; network composition</summary>
+          <div class="section-head" style="margin-top: 26px">
+            <h3 style="font-size: 15px; margin: 0">Stock positions by tier</h3>
+            <p class="note">Position counts, not a sum of unlike units. Storage classes remain catalog metadata.</p>
+          </div>
+          <div class="panel" style="padding: 14px">
+            <div class="bars" id="storage-bars"></div>
+          </div>
+          <p class="note" id="storage-note"></p>
+          </details>
+        </section>
+
+        <section id="current-stock">
+          <div class="section-head"><div class="eyebrow">Current frame / shortage-first</div><h2>Field stock workbench</h2><p class="note" id="selection-note"></p></div>
+          <div class="filter-row">
+            <label>Search<input id="q" type="search" placeholder="Part, stock code or location" aria-label="Filter inventory" /></label>
+            <label>Status<select id="stock-status"><option value="">All statuses · shortage first</option><option value="attention">Shortages</option><option value="out_of_stock">Out of stock</option><option value="low">Below demo threshold</option><option value="healthy">At / above demo threshold</option><option value="unknown">Unknown</option><option value="focus">Movement focus</option></select></label>
+            <label>Criticality<select id="crit"><option value="">All criticalities</option></select></label>
+            <button id="clear-filters" type="button">Clear filters &amp; location</button>
+          </div>
+          <div class="stock-split"><div class="panel scroller"><table><thead><tr><th>Part / criticality</th><th>Location / tier</th><th>Current stock</th><th>Text status</th></tr></thead><tbody id="current-stock-body"></tbody></table></div>
+          <div id="stock-detail" class="panel detail" tabindex="-1"></div></div>
+          <p id="current-stock-count" class="note"></p>
+        </section>
+        <details class="browse"><summary>Movement &amp; alert history <span id="history-count"></span></summary><p class="note">Synthetic elapsed time, not travel time or an ETA. Portal-only events; no Azure delivery.</p><ul id="activity" class="activity-list"></ul></details>
+        <details id="browse" class="browse"><summary>Full catalog, locations, stock &amp; fitment</summary>
+        <section id="parts">
+          <div class="section-head">
+            <h2>Parts</h2>
+            <p class="note">Select a part to see where it is held and what it fits.</p>
+          </div>
+          <div class="split">
+            <div class="panel">
+              <div class="scroller">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Part</th>
+                      <th>Class</th>
+                      <th>Criticality</th>
+                      <th class="num">On hand</th>
+                      <th class="num">Locations</th>
+                    </tr>
+                  </thead>
+                  <tbody id="parts-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="panel detail" id="part-detail"></div>
+          </div>
+          <p class="note" id="parts-count"></p>
+        </section>
+
+        <section id="locations">
+          <div class="section-head">
+            <h2>Storeroom locations</h2>
+            <p class="note" id="locations-note"></p>
+          </div>
+          <div class="panel">
+            <div class="scroller">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th>Storage classes</th>
+                    <th>Velocity</th>
+                    <th class="num">To field (km)</th>
+                    <th class="num">Service radius (km)</th>
+                    <th class="num">Parts</th>
+                    <th class="num">Current stock by UOM</th>
+                  </tr>
+                </thead>
+                <tbody id="locations-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="stock">
+          <div class="section-head">
+            <h2>Stock by part and location</h2>
+            <p class="note" id="stock-note"></p>
+          </div>
+          <div class="panel">
+            <div class="scroller">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Part</th>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th class="num">Quantity</th>
+                  </tr>
+                </thead>
+                <tbody id="stock-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="fitment">
+          <div class="section-head">
+            <h2>Fitment</h2>
+            <p class="note" id="fitment-note"></p>
+          </div>
+          <div class="panel">
+            <div class="scroller">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Part</th>
+                    <th>Asset configuration</th>
+                    <th class="num">Qty per assembly</th>
+                    <th>Fitment claim</th>
+                  </tr>
+                </thead>
+                <tbody id="fitment-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        </details>
+
+        <footer>
+          <p>
+            Read-only generated baseline with a repeatable, portal-only movement overlay.
+            Opening records are unchanged. Synthetic distances and nominal dispatch metadata
+            are not validated travel estimates. No operational decisions.
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <script src="/upstream/review/inventory/studio.js"></script>
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+        );
+      }
+
+      function humanize(value) {
+        if (value === null || value === undefined || value === "") return "\u2014";
+        return escapeHtml(String(value).replace(/_/g, " "));
+      }
+
+      // An unknown quantity and a quantity of zero are different facts. A dataset
+      // without a ledger cannot say "zero", so it says nothing.
+      function qty(value) {
+        if (value === null || value === undefined) {
+          return '<span class="unknown" title="Not derivable from this dataset">\u2014</span>';
+        }
+        return escapeHtml(value.toLocaleString());
+      }
+
+      function km(value) {
+        if (value === null || value === undefined) {
+          return '<span class="unknown" title="Not published by this dataset">\u2014</span>';
+        }
+        return escapeHtml(
+          Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })
+        );
+      }
+
+      function count(value) {
+        return value === null || value === undefined ? "\u2014" : value.toLocaleString();
+      }
+
+      const state = { data: null, basemap: null, selected: null, filter: "", zoom: null, loc: null, hidden: new Set(), snapshot: null, focus: 0, stockSelection: null };
+      let studio = null;
+
+      // The basemap is real public-domain boundary geometry, projected offline
+      // about the field origin so that distance from the origin is true. The
+      // network itself is fictional, so its bearing on that map is arbitrary:
+      // this one angle was chosen only because it seats the network over land
+      // instead of open water. Rotation leaves every distance exactly as it was,
+      // changes nothing the dataset asserts.
+      const BEARING_DEG = 85;
+      const BEARING_COS = Math.cos((BEARING_DEG * Math.PI) / 180);
+      const BEARING_SIN = Math.sin((BEARING_DEG * Math.PI) / 180);
+
+      // Returns kilometres east and kilometres south of the origin, matching the
+      // basemap's own axes, so markers and boundaries share one coordinate space.
+      function place(location) {
+        const east = num(location.grid_east_km);
+        const north = num(location.grid_north_km);
+        if (east === null || north === null) return null;
+        return {
+          east: east * BEARING_COS - north * BEARING_SIN,
+          south: -(east * BEARING_SIN + north * BEARING_COS)
+        };
+      }
+
+      // Tiers are ordered by how far they sit from the field, so the legend, the
+      // bars and the map all tell the same story in the same order.
+      const TIER_ORDER = [
+        "consignment",
+        "field_van_stock",
+        "site_storeroom",
+        "regional_warehouse",
+        "central_warehouse",
+        "supplier_held"
+      ];
+
+      // The colour is written straight into an SVG attribute, so the type name is
+      // whitelisted rather than trusted.
+      function tierColor(type) {
+        return /^[a-z_]{1,40}$/.test(String(type || "")) && TIER_ORDER.includes(type)
+          ? `var(--t-${type})`
+          : "var(--cp-text-muted)";
+      }
+
+      function tierRank(type) {
+        const i = TIER_ORDER.indexOf(type);
+        return i === -1 ? TIER_ORDER.length : i;
+      }
+
+      // Number(null) and Number("") are both 0, so nullish input must be rejected
+      // before coercion or every "unknown" guard downstream silently reads zero.
+      function num(value) {
+        if (value === null || value === undefined || value === "") return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      // A location code carries its whole bin path (SS1-Z2-A01-R02-S03-B01). The
+      // map has room for the site, not the shelf; the full code stays in the
+      // accessible label, the detail panel and the table.
+      function shortCode(value) {
+        return String(value || "").split("-")[0];
+      }
+
+      // Round up to the next 1, 2 or 5 times a power of ten, so ring labels land
+      // on figures a reader can hold in their head.
+      function niceCeil(value) {
+        if (!(value > 0)) return 1;
+        const pow = Math.pow(10, Math.floor(Math.log10(value)));
+        const unit = value / pow;
+        const step = unit <= 1 ? 1 : unit <= 2 ? 2 : unit <= 5 ? 5 : 10;
+        return step * pow;
+      }
+
+      function mapped() {
+        return (state.data.locations || []).filter(
+          (l) => num(l.grid_east_km) !== null && num(l.grid_north_km) !== null
+        );
+      }
+
+      // One extent per order of magnitude present in the data. Each view is a
+      // plain linear scale: the reader changes the extent, never the geometry.
+      function zoomLevels() {
+        const ds = mapped()
+          .map((l) => num(l.grid_distance_to_field_km))
+          .filter((d) => d !== null && d >= 0)
+          .sort((a, b) => a - b);
+        if (!ds.length) return [];
+        const max = ds[ds.length - 1];
+        const pick = (cap) => {
+          const within = ds.filter((d) => d <= cap);
+          // Never propose an extent that excludes even the nearest location: the
+          // first level is the default view, and an empty default is a break.
+          return niceCeil(within.length ? within[within.length - 1] : ds[0]);
+        };
+        const levels = [
+          { name: "Field", radius: pick(max / 60) },
+          { name: "Area", radius: pick(max / 8) },
+          { name: "Network", radius: niceCeil(max) }
+        ];
+        // Collapse duplicates so a shallow network does not offer three identical views.
+        return levels.filter((l, i) => i === 0 || l.radius > levels[i - 1].radius);
+      }
+
+      // The widest extent is the default: it is the only one that shows the
+      // whole network and enough of the map to read as a map. A null zoom means
+      // the reader has not chosen yet, which is not the same as choosing the
+      // closest extent, so it is resolved here rather than defaulted at birth.
+      function resolveZoom(levels) {
+        if (state.zoom === null || state.zoom >= levels.length) {
+          state.zoom = Math.max(0, levels.length - 1);
+        }
+        return state.zoom;
+      }
+
+      function renderZoom() {
+        const levels = zoomLevels();
+        resolveZoom(levels);
+        $("zoom").innerHTML = levels
+          .map(
+            (l, i) =>
+              `<button type="button" data-zoom="${i}" aria-pressed="${i === state.zoom}">` +
+              `${escapeHtml(l.name)} &middot; ${escapeHtml(String(l.radius))} km</button>`
+          )
+          .join("");
+      }
+
+      function renderLegend() {
+        const counts = new Map();
+        mapped().forEach((l) => counts.set(l.location_type, (counts.get(l.location_type) || 0) + 1));
+        const types = [...counts.keys()].sort((a, b) => tierRank(a) - tierRank(b));
+        $("legend").innerHTML = types
+          .map(
+            (t) =>
+              `<li data-tier="${escapeHtml(t)}" class="${state.hidden.has(t) ? "off" : ""}" ` +
+              `tabindex="0" role="button" aria-pressed="${!state.hidden.has(t)}" ` +
+              `title="Show or hide this tier">` +
+              `<span class="dot" style="background: ${tierColor(t)}"></span>` +
+              `<span class="lg-name">${humanize(t)}</span>` +
+              `<span class="lg-n">${escapeHtml(String(counts.get(t)))}</span></li>`
+          )
+          .join("");
+      }
+
+      // The SVG's accessible name lives in its own markup, and every render
+      // replaces that markup wholesale. Both paths must re-emit it or the
+      // aria-labelledby reference on the <svg> dangles.
+      const MAP_LABELS =
+        '<title id="map-title">Map of the fictional storeroom network</title>' +
+        '<desc id="map-desc">Stocking locations drawn over real Texas county and state ' +
+        "boundaries. The centre is the field asset cluster, and each curve links a location " +
+        "to it to show which field it serves and how far away it is; no route or road is " +
+        "implied. Site positions are fictional; the Locations table carries the same figures " +
+        "as text.</desc>";
+
+      const MAP_SCOPE =
+        "Fictional stocking locations drawn over real public-domain US Census boundaries, " +
+        "projected azimuthal equidistant about the field origin so distance from the field " +
+        "is true. Site placement is invented and carries no real address or coordinate.";
+
+      // Gradients and filters live in the markup that every render replaces, so
+      // they are re-emitted alongside the accessible name rather than declared
+      // once and silently lost on the next draw.
+      const MAP_DEFS =
+        "<defs>" +
+        '<radialGradient id="sea" cx="50%" cy="42%" r="78%">' +
+        '<stop offset="0%" class="sea-0" /><stop offset="100%" class="sea-1" /></radialGradient>' +
+        '<linearGradient id="terra" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" class="terra-0" /><stop offset="100%" class="terra-1" /></linearGradient>' +
+        '<filter id="lift" x="-25%" y="-25%" width="150%" height="150%">' +
+        '<feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3" /></filter>' +
+        '<filter id="shelf" x="-25%" y="-25%" width="150%" height="150%">' +
+        '<feGaussianBlur stdDeviation="7" /></filter>' +
+        '<filter id="pin" x="-70%" y="-70%" width="240%" height="240%">' +
+        '<feDropShadow dx="0" dy="1.5" stdDeviation="1.7" flood-opacity="0.4" /></filter>' +
+        "</defs>";
+
+      function renderMap() {
+        const levels = zoomLevels();
+        const svg = $("map");
+        $("network-scope").textContent = MAP_SCOPE;
+        if (!levels.length) {
+          svg.innerHTML =
+            MAP_LABELS +
+            '<text x="380" y="250" text-anchor="middle" class="origin-label">' +
+            "No location in this dataset carries a grid position.</text>";
+          $("map-note").textContent = "";
+          return;
+        }
+        const radius = levels[resolveZoom(levels)].radius;
+        const cx = 380;
+        const cy = 250;
+        const px = 250 / radius;
+
+        const all = mapped();
+        const visible = all.filter(
+          (l) =>
+            !state.hidden.has(l.location_type) &&
+            (num(l.grid_distance_to_field_km) === null ||
+              num(l.grid_distance_to_field_km) <= radius + 1e-9)
+        );
+
+        // At a wide extent the near-field tiers fall inside a few pixels of each
+        // other and stack into an unreadable blob. Fold them into one puck that
+        // states how many it holds and zooms in, rather than drawing a lie.
+        const CLUSTER_PX = 28;
+        const near = visible.filter(
+          (l) =>
+            l.location_id !== state.loc &&
+            Math.hypot(num(l.grid_east_km) * px, num(l.grid_north_km) * px) < CLUSTER_PX
+        );
+        const clustered = state.zoom > 0 && near.length >= 3;
+        const clusterSet = new Set(clustered ? near.map((l) => l.location_id) : []);
+        const clusterMaxKm = clustered
+          ? Math.max(...near.map((l) => num(l.grid_distance_to_field_km) || 0))
+          : 0;
+        const drawn = visible.filter((l) => !clusterSet.has(l.location_id));
+        const maxUnits = drawn.reduce((m, l) => Math.max(m, num(l.part_count) || 0), 0);
+
+        const parts = [];
+        parts.push('<rect x="0" y="0" width="760" height="500" fill="url(#sea)" />');
+
+        // Boundary geometry, drawn under everything else. One transform carries
+        // the whole basemap, so the paths stay in kilometres and never have to
+        // be re-projected in the browser.
+        const geo = state.basemap;
+        if (geo && geo.outline) {
+          const t = `translate(${cx} ${cy}) scale(${px.toFixed(6)})`;
+          // The blur and shadow radii are in the user space of the element they
+          // are applied to. Applied inside the scaled group they would grow
+          // with the zoom and smear the coast at close extents, so each filter
+          // sits on an untransformed wrapper and only the geometry is scaled.
+          const layer = (body, filter) =>
+            `<g${filter ? ` filter="url(#${filter})"` : ""}>` +
+            `<g transform="${t}">${body}</g></g>`;
+          // At close extents the coast is far off-screen, so the shelf and lift
+          // buy nothing and would ask the browser to raster a filter region
+          // hundreds of times the size of the canvas. They are drawn only when
+          // the landmass is actually in frame.
+          const decorate = px <= 1;
+          parts.push(
+            '<g class="geo" aria-hidden="true">' +
+              (geo.context ? layer(`<path class="far" d="${geo.context}" />`, "") : "") +
+              (decorate ? layer(`<path class="shelf" d="${geo.outline}" />`, "shelf") : "") +
+              layer(`<path class="land" d="${geo.outline}" />`, decorate ? "lift" : "") +
+              layer(
+                (geo.counties ? `<path class="county" d="${geo.counties}" />` : "") +
+                  `<path class="edge" d="${geo.outline}" />`,
+                ""
+              ) +
+              "</g>"
+          );
+          if (geo.region && radius > 200) {
+            parts.push(
+              `<text class="geo-label" x="740" y="${cy + 232}" text-anchor="end">` +
+                `${escapeHtml(String(geo.region))}</text>`
+            );
+          }
+        }
+
+        // Distance rings stay, faintly: every other figure on this page is a
+        // distance from the field, and the rings are what tie those figures to
+        // the picture. They are drawn over the land so they remain readable.
+        for (let i = 1; i <= 4; i += 1) {
+          const kmR = (radius * i) / 4;
+          parts.push(
+            `<circle class="ring" cx="${cx}" cy="${cy}" r="${(kmR * px).toFixed(2)}" opacity="0.5" />`
+          );
+        }
+
+        // A link from the field to every drawn location. It says exactly what
+        // the dataset says — this location supplies that field, at this
+        // distance — and deliberately not how anything travels: no route, road
+        // or lane is claimed. The arc is drawing, not geography.
+        const spokes = drawn
+          .map((l) => {
+            const at = place(l);
+            if (!at) return "";
+            const mx = cx + at.east * px;
+            const my = cy + at.south * px;
+            const dx = mx - cx;
+            const dy = my - cy;
+            const len = Math.hypot(dx, dy);
+            if (len < 4) return "";
+            const qx = cx + dx / 2 - dy * 0.12;
+            const qy = cy + dy / 2 + dx * 0.12;
+            const d =
+              `M ${cx} ${cy} Q ${qx.toFixed(2)} ${qy.toFixed(2)} ` +
+              `${mx.toFixed(2)} ${my.toFixed(2)}`;
+            const colour = tierColor(l.location_type);
+            return (
+              `<path class="spoke" d="${d}" stroke="${colour}" />` +
+              `<path class="spoke-flow" d="${d}" stroke="${colour}" />`
+            );
+          })
+          .join("");
+        if (spokes) parts.push(`<g class="spokes" aria-hidden="true">${spokes}</g>`);
+
+        // A scale bar reads as a map; a ring label reads as a radar screen. The
+        // bar is snapped to a round number of kilometres that fits the extent.
+        const barKm = niceCeil(radius / 2.2);
+        const barPx = barKm * px;
+        if (barPx > 20 && barPx < 300) {
+          const bx = 22;
+          const by = 470;
+          const h = 7;
+          const seg = barPx / 4;
+          let blocks = "";
+          for (let i = 0; i < 4; i += 1) {
+            if (i % 2 === 0) {
+              blocks +=
+                `<rect class="scale-fill" x="${(bx + i * seg).toFixed(2)}" y="${by - h}" ` +
+                `width="${seg.toFixed(2)}" height="${h}" />`;
+            }
+          }
+          parts.push(
+            `<g class="scale" aria-hidden="true">${blocks}` +
+              `<rect class="scale-frame" x="${bx}" y="${by - h}" ` +
+              `width="${barPx.toFixed(2)}" height="${h}" />` +
+              `<text class="scale-label" x="${bx}" y="${by - h - 4}">0</text>` +
+              `<text class="scale-label" x="${(bx + barPx).toFixed(2)}" y="${by - h - 4}" ` +
+              `text-anchor="middle">${escapeHtml(barKm.toLocaleString())} km</text></g>`
+          );
+        }
+
+        // North is up for the boundary geometry, which is drawn unrotated. The
+        // markers carry a fixed display rotation, so the needle describes the
+        // map beneath them and not the fictional grid.
+        parts.push(
+          '<g class="compass" aria-hidden="true" transform="translate(710 62)">' +
+            '<circle class="compass-ring" r="18" />' +
+            '<path class="compass-needle" d="M 0 -13 L 4.8 4 L 0 0.4 Z" />' +
+            '<path class="compass-tail" d="M 0 -13 L -4.8 4 L 0 0.4 Z" />' +
+            '<text class="compass-label" y="14" text-anchor="middle">N</text></g>'
+        );
+
+        const sel = visible.find((l) => l.location_id === state.loc);
+        if (sel) {
+          const sr = num(sel.service_radius_km_synthetic);
+          const at = place(sel);
+          if (sr !== null && at && sr * px <= 262) {
+            parts.push(
+              `<circle class="halo" cx="${(cx + at.east * px).toFixed(2)}" ` +
+                `cy="${(cy + at.south * px).toFixed(2)}" ` +
+                `r="${(sr * px).toFixed(2)}" stroke="${tierColor(sel.location_type)}" />`
+            );
+          }
+        }
+
+        // Marker geometry is settled before anything is drawn, so the origin
+        // label can be placed somewhere the markers are not.
+        const pins = drawn
+          .slice()
+          .sort((a, b) => (num(b.grid_distance_to_field_km) || 0) - (num(a.grid_distance_to_field_km) || 0))
+          .map((l) => {
+            const at = place(l);
+            if (!at) return null;
+            const units = num(l.part_count);
+            return {
+              loc: l,
+              mx: cx + at.east * px,
+              my: cy + at.south * px,
+              units: units,
+              r: units === null || maxUnits <= 0 ? 5 : 4.5 + 12 * Math.sqrt(units / maxUnits)
+            };
+          })
+          .filter((p) => p !== null);
+
+        // The origin label collides with anything sitting almost on top of the
+        // field, and with the cluster puck when one is drawn. Try each side in
+        // turn rather than letting two pieces of text overprint into nonsense.
+        const clearOf = (y) =>
+          !pins.some(
+            (p) => Math.abs(p.mx - cx) < 40 + p.r && Math.abs(p.my - y) < 9 + p.r
+          );
+        const offset = clustered ? CLUSTER_PX + 16 : 22;
+        const labelY = [cy + offset, cy - offset, cy + offset + 16, cy - offset - 16].find(
+          (y) => y > 12 && y < 492 && clearOf(y)
+        );
+        parts.push(
+          `<circle class="pulse" cx="${cx}" cy="${cy}" r="11" stroke="var(--cp-accent)" />` +
+            `<path class="origin" d="M ${cx} ${cy - 8} L ${cx + 8} ${cy} L ${cx} ${cy + 8} L ${cx - 8} ${cy} Z" ` +
+            `filter="url(#pin)" />` +
+            (labelY
+              ? `<text class="origin-label" x="${cx}" y="${labelY}" text-anchor="middle">Field assets</text>`
+              : '')
+        );
+
+        if (clustered) {
+          const label =
+            `${near.length} locations within ` +
+            `${clusterMaxKm.toLocaleString(undefined, { maximumFractionDigits: 1 })} km ` +
+            "of the field \u2014 select to zoom in";
+          parts.push(
+            `<g class="marker cluster" data-cluster="1" tabindex="0" role="button" ` +
+              `aria-label="${escapeHtml(label)}">` +
+              `<circle cx="${cx}" cy="${cy}" r="${CLUSTER_PX}" fill="var(--cp-accent)" ` +
+              `fill-opacity="0.13" stroke="var(--cp-accent)" stroke-dasharray="4 4" />` +
+              `<text x="${cx + CLUSTER_PX + 5}" y="${cy - CLUSTER_PX + 2}">` +
+              `${escapeHtml(String(near.length))} more</text></g>`
+          );
+        }
+
+        // Labels are placed against everything already on the canvas rather
+        // than always to the right of their marker, because overprinted text
+        // is worse than no text. Anything that cannot be placed is dropped and
+        // counted in the note; the marker, its aria-label and the table below
+        // still carry the location.
+        const taken = [];
+        const overlaps = (a, b) =>
+          !(a.x2 < b.x1 || b.x2 < a.x1 || a.y2 < b.y1 || b.y2 < a.y1);
+        const boxAt = (x, y, w, h) => ({ x1: x, y1: y, x2: x + w, y2: y + h });
+        const free = (b) =>
+          b.x1 >= 4 && b.x2 <= 756 && b.y1 >= 4 && b.y2 <= 496 && !taken.some((p) => overlaps(p, b));
+        // Furniture the reader needs is reserved first, so a label loses to it.
+        if (labelY) taken.push(boxAt(cx - 34, labelY - 10, 68, 13));
+        taken.push(boxAt(14, 440, 300, 44));
+        taken.push(boxAt(684, 36, 56, 56));
+        if (clustered) taken.push(boxAt(cx - CLUSTER_PX, cy - CLUSTER_PX, CLUSTER_PX * 2 + 66, CLUSTER_PX * 2));
+        pins.forEach((p) => taken.push(boxAt(p.mx - p.r, p.my - p.r, p.r * 2, p.r * 2)));
+
+        let dropped = 0;
+        pins.forEach((p) => {
+          const l = p.loc;
+          const code = String(l.location_code || l.location_id || "");
+          const short = shortCode(code) || code;
+          const w = short.length * 5.9 + 3;
+          const gap = p.r + 5;
+          const candidates = [
+            { x: p.mx + gap, y: p.my + 3.4, anchor: "" },
+            { x: p.mx - gap, y: p.my + 3.4, anchor: ' text-anchor="end"' },
+            { x: p.mx, y: p.my - gap - 3, anchor: ' text-anchor="middle"' },
+            { x: p.mx, y: p.my + gap + 10, anchor: ' text-anchor="middle"' }
+          ];
+          let chosen = null;
+          for (const c of candidates) {
+            const left = c.anchor.includes("end") ? c.x - w : c.anchor ? c.x - w / 2 : c.x;
+            const b = boxAt(left, c.y - 9, w, 12);
+            if (free(b)) {
+              taken.push(b);
+              chosen = c;
+              break;
+            }
+          }
+          if (!chosen) dropped += 1;
+          const units = p.units;
+          const label =
+            `${code} \u2014 ${String(l.location_type || "").replace(/_/g, " ")}, ` +
+            `${km(l.grid_distance_to_field_km).replace(/<[^>]*>/g, "")} km from field, ` +
+            `${units === null ? "stock positions unknown" : units.toLocaleString() + " stock positions"}`;
+          const on = l.location_id === state.loc;
+          parts.push(
+            `<g class="marker ${on ? "on" : ""}" ` +
+              `data-loc="${escapeHtml(l.location_id)}" tabindex="0" role="button" ` +
+              `aria-label="${escapeHtml(label)}">` +
+              (on
+                ? `<circle class="pulse" cx="${p.mx.toFixed(2)}" cy="${p.my.toFixed(2)}" ` +
+                  `r="${(p.r + 4).toFixed(2)}" style="stroke: ${tierColor(l.location_type)}" />`
+                : "") +
+              `<circle cx="${p.mx.toFixed(2)}" cy="${p.my.toFixed(2)}" r="${p.r.toFixed(2)}" ` +
+              `fill="${state.loc === l.location_id ? "var(--cp-accent)" : tierColor(l.location_type)}"${units === null ? ' fill-opacity="0.35"' : ""} />` +
+              (chosen
+                ? `<text x="${chosen.x.toFixed(2)}" y="${chosen.y.toFixed(2)}"${chosen.anchor}>` +
+                  `${escapeHtml(short)}</text>`
+                : "") +
+              "</g>"
+          );
+        });
+
+        svg.innerHTML = MAP_DEFS + MAP_LABELS + parts.join("");
+
+        const beyond = all.filter(
+          (l) => !state.hidden.has(l.location_type) && num(l.grid_distance_to_field_km) > radius
+        ).length;
+        const unplaced = (state.data.locations || []).length - all.length;
+        const hidden = all.filter((l) => state.hidden.has(l.location_type)).length;
+        const bits = [`${visible.length} of ${all.length} shown`];
+        if (clustered) bits.push(`${near.length} folded into the field cluster`);
+        if (beyond) bits.push(`${beyond} beyond ${radius} km`);
+        if (hidden) bits.push(`${hidden} hidden by tier`);
+        if (unplaced) bits.push(`${unplaced} without a grid position`);
+        if (dropped) bits.push(`${dropped} label${dropped === 1 ? "" : "s"} hidden to avoid overlap`);
+        $("map-note").textContent = bits.join(" \u00b7 ");
+      }
+
+      function renderLocDetail() {
+        const l = (state.data.locations || []).find((x) => x.location_id === state.loc);
+        if (!l) {
+          $("loc-detail").innerHTML =
+            '<p class="note" style="margin: 0">Select a marker or a row below to inspect a location.</p>';
+          return;
+        }
+        const rows = [
+          ["Tier", humanize(l.location_type)],
+          ["Distance from field", `${km(l.grid_distance_to_field_km)} km`],
+          [
+            "Service radius",
+            num(l.service_radius_km_synthetic) === null
+              ? '<span class="unknown" title="This tier does not dispatch on a service radius">\u2014</span>'
+              : `${km(l.service_radius_km_synthetic)} km`
+          ],
+          ["Grid position", `${km(l.grid_east_km)} km E, ${km(l.grid_north_km)} km N`],
+          ["Grid frame", humanize(l.grid_frame)],
+          ["Velocity zone", humanize(l.velocity_zone)],
+          ["Dispatch latency", humanize(l.dispatch_latency_class)],
+          [
+            "Nominal dispatch (synthetic, not ETA)",
+            num(l.nominal_dispatch_minutes_synthetic) === null
+              ? "\u2014"
+              : `${escapeHtml(String(l.nominal_dispatch_minutes_synthetic))} min`
+          ],
+          ["Identification", humanize(l.id_tech)],
+          ["Distinct parts", qty(l.part_count)],
+          ["Current stock by UOM", locationStock(l.location_id)]
+        ];
+        $("loc-detail").innerHTML =
+          `<h3 style="margin: 0 0 2px; font-size: 15px">` +
+          `<span class="swatch" style="background: ${tierColor(l.location_type)}"></span>` +
+          `<span class="mono">${escapeHtml(l.location_code || l.location_id)}</span></h3>` +
+          `<div class="chips">` +
+          (l.storage_classes_supported || [])
+            .map((c) => `<span class="chip">${humanize(c)}</span>`)
+            .join("") +
+          `</div>` +
+          `<dl class="kv" style="margin-top: 10px">` +
+          rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join("") +
+          `</dl>`;
+      }
+
+      function renderStorage() {
+        const byTier = new Map();
+        (state.data.locations || []).forEach((l) => {
+          const t = l.location_type;
+          const e = byTier.get(t) || { units: 0, known: false, sites: 0, classes: new Set() };
+          e.sites += 1;
+          const u = num(l.part_count);
+          if (u !== null) {
+            e.units += u;
+            e.known = true;
+          }
+          (l.storage_classes_supported || []).forEach((c) => e.classes.add(c));
+          byTier.set(t, e);
+        });
+        const tiers = [...byTier.keys()].sort((a, b) => tierRank(a) - tierRank(b));
+        const max = tiers.reduce((m, t) => Math.max(m, byTier.get(t).units), 0);
+        $("storage-bars").innerHTML = tiers
+          .map((t) => {
+            const e = byTier.get(t);
+            const pct = max > 0 && e.known ? (e.units / max) * 100 : 0;
+            return (
+              `<div class="bar-row">` +
+              `<div><span class="swatch" style="background: ${tierColor(t)}"></span>` +
+              `${humanize(t)}<div class="lg-n">${escapeHtml(String(e.sites))} location` +
+              `${e.sites === 1 ? "" : "s"}</div></div>` +
+              `<div><div class="bar-track"><div class="bar-fill" style="width: ${pct.toFixed(1)}%; ` +
+              `background: ${tierColor(t)}"></div></div>` +
+              `<div class="chips">` +
+              [...e.classes]
+                .sort()
+                .map((c) => `<span class="chip">${humanize(c)}</span>`)
+                .join("") +
+              `</div></div>` +
+              `<div class="bar-val">${e.known ? qty(e.units) : qty(null)}</div>` +
+              `</div>`
+            );
+          })
+          .join("");
+        $("storage-note").textContent = state.data.stock_is_known
+          ? "Bar length compares stock-position counts between tiers, never mixed-UOM quantities."
+          : state.data.stock_note;
+      }
+
+      function selectLocation(id) {
+        state.loc = id;
+        const location = state.data.locations.find(l => l.location_id === id);
+        if (location) {
+          const levels = zoomLevels();
+          const distance = num(location.grid_distance_to_field_km);
+          const current = levels[resolveZoom(levels)];
+          if (current && distance !== null && distance > current.radius) {
+            const index = levels.findIndex(level => level.radius >= distance);
+            state.zoom = index < 0 ? levels.length - 1 : index;
+            renderZoom();
+          }
+          if (state.hidden.delete(location.location_type)) renderLegend();
+        }
+        renderMap();
+        renderLocDetail();
+        renderLocations();
+        renderWorkbench();
+        renderRail();
+      }
+
+      function matches(haystack) {
+        if (!state.filter) return true;
+        return haystack.toLowerCase().includes(state.filter);
+      }
+
+      // The exposure sentence is derived from what the server reports, never
+      // hard-coded. A banner that still says "local only" after the owner opens
+      // the hosted flag would be actively misleading about its own reach.
+      function renderBanner() {
+        const hosted = state.data.hosted === true;
+        const shared =
+          "Everything shown is synthetic and fictional. It describes a generated " +
+          "dataset only, and carries no claim of standards compliance, vendor " +
+          "behaviour or suitability for any operational decision.";
+        if (hosted) {
+          $("banner-summary").textContent =
+            "Hosted and access-restricted \u2014 synthetic data, not a public portal";
+          $("banner-body").innerHTML =
+            "<strong>Hosted.</strong> This page is being served from hosted infrastructure " +
+            "because the owner set both the review flag and the separate hosted flag. It is " +
+            "not reachable from the public internet at large: access is limited to the " +
+            "network ranges named in the deployment. These families are still excluded from " +
+            "the public portal and the ADLS monitoring sink, and this page is marked " +
+            "<code>noindex</code>. " +
+            escapeHtml(shared);
+        } else {
+          $("banner-summary").textContent =
+            "Local only \u2014 synthetic data, not a publication path";
+          $("banner-body").innerHTML =
+            "<strong>Local only.</strong> These families are deliberately excluded from the " +
+            "public portal, the ADLS monitoring sink and the public manifest, and this page " +
+            "is marked <code>noindex</code>. " +
+            escapeHtml(shared);
+        }
+      }
+
+      function renderOverview() {
+        const d = state.data;
+        const t = d.totals;
+        const cards = [
+          { k: "Parts", v: count(t.parts), u: "distinct part numbers" },
+          { k: "Locations", v: count(t.locations), u: "storerooms, vans, consignment" },
+          { k: "Stock positions", v: count(t.stock_rows), u: "part and location pairs" },
+          { k: "Fitment rules", v: count(t.fitment_rows), u: "part to asset configuration" }
+        ];
+        $("cards").innerHTML = cards
+          .map(
+            (c) =>
+              `<div class="card"><div class="k">${escapeHtml(c.k)}</div>` +
+              `<div class="v">${escapeHtml(c.v)}</div>` +
+              `<div class="u">${escapeHtml(c.u)}</div></div>`
+          )
+          .join("");
+
+        $("overview-scope").textContent =
+          `Dataset ${d.source_dataset}. All inventory quantities show the current movement frame; ` +
+          "catalog and invariance metadata describe the unchanged generated baseline.";
+        $("basis-note").textContent = d.stock_note;
+
+        const inv = d.scenario_invariance;
+        const parts = [];
+        if (inv.holds === null) {
+          parts.push(
+            inv.datasets_compared < 2
+              ? `Only ${inv.datasets_compared} dataset is available under this root, so whether ` +
+                "the inventory varies between scenarios could not be tested here."
+              : "No family could be compared across these datasets, so whether the inventory " +
+                "varies between scenarios is untested."
+          );
+        } else if (inv.holds) {
+          // The claim is bounded twice over: to the datasets present, and to
+          // the families that could actually be compared. A partial comparison
+          // cannot speak for the inventory as a whole.
+          const subject = inv.families_not_comparable.length
+            ? "The families compared do not depend on the scenario across these datasets"
+            : "The inventory does not depend on the scenario across these datasets";
+          parts.push(
+            `Compared across ${inv.datasets_compared} generated datasets ` +
+              `(${inv.datasets.join(", ")}): ` +
+              `${inv.families_compared.join(", ")} are identical in all of them, ignoring ` +
+              `identifier fields, which are content-derived and differ per run. ` +
+              `${subject}. Scenarios not generated under this root ` +
+              "were not tested."
+          );
+        } else {
+          parts.push(
+            `Compared across ${inv.datasets_compared} generated datasets: ` +
+              `${inv.families_that_vary.join(", ")} differ between them, so this page shows one ` +
+              "dataset rather than a scenario-independent inventory."
+          );
+        }
+        if (inv.families_not_comparable.length) {
+          parts.push(
+            "Not compared: " +
+              inv.families_not_comparable
+                .map((name) => `${name} (${inv.not_comparable_reasons[name]})`)
+                .join("; ") +
+              "."
+          );
+        }
+        $("invariance").textContent = parts.join(" ");
+      }
+
+      function renderParts() {
+        const rows = state.data.parts.filter((p) =>
+          matches(`${p.part_key} ${p.part_name} ${p.stock_code} ${p.part_class} ${p.criticality_class}`)
+        );
+        $("parts-body").innerHTML = rows
+          .map(
+            (p) =>
+              `<tr class="pick${p.part_master_id === state.selected ? " on" : ""}" data-part="${escapeHtml(
+                p.part_master_id
+              )}">` +
+              `<td><div>${humanize(p.part_key)}</div><div class="mono unknown">${escapeHtml(
+                p.stock_code || ""
+              )}</div></td>` +
+              `<td><span class="tag">${humanize(p.part_class)}</span></td>` +
+              `<td><span class="tag">${humanize(p.criticality_class)}</span></td>` +
+              `<td class="num">${quantity(p.quantity, p.uom)}</td>` +
+              `<td class="num">${qty(p.location_count)}</td>` +
+              "</tr>"
+          )
+          .join("");
+        $("parts-count").textContent =
+          state.data.totals.parts === null
+            ? "part_master is not present in this dataset, so no part can be listed."
+            : `${rows.length} of ${state.data.parts.length} parts shown.`;
+        renderPartDetail();
+      }
+
+      function renderPartDetail() {
+        const p = state.data.parts.find((x) => x.part_master_id === state.selected);
+        if (!p) {
+          $("part-detail").innerHTML = '<p class="note">Select a part.</p>';
+          return;
+        }
+        const fields = [
+          ["Name", p.part_name],
+          ["Stock code", p.stock_code],
+          ["Scope", p.part_scope],
+          ["ABC class", p.abc_class],
+          ["Movement", p.movement_class],
+          ["Lead band", p.lead_band],
+          ["Nominal lead time", p.nominal_lead_time_days_synthetic === null ? null : `${p.nominal_lead_time_days_synthetic} days (synthetic)`],
+          ["Tracking", p.tracking_mode],
+          ["Unit of measure", p.uom],
+          ["Storage class", p.required_storage_class],
+          ["Insurance spare", p.is_insurance_spare ? "yes" : "no"],
+          ["Kit", p.is_kit ? "yes" : "no"],
+          ["Operational use", p.operational_use]
+        ];
+        const held = p.held_at.length
+          ? p.held_at
+              .map(
+                (h) =>
+                  `<li><span class="mono">${escapeHtml(h.location_code || h.location_id)}</span> ` +
+                  `&mdash; ${quantity(h.quantity, p.uom)} (${humanize(h.location_type)})</li>`
+              )
+              .join("")
+          : `<li class="unknown">${
+              state.data.stock_is_known
+                ? "No stock position is recorded for this part in the current frame."
+                : escapeHtml(state.data.stock_note)
+            }</li>`;
+        const fits = p.fits.length
+          ? p.fits
+              .map(
+                (f) =>
+                  `<li>${humanize(f.asset_config_code)} &mdash; ${escapeHtml(
+                    String(f.quantity_per_assembly)
+                  )} ${escapeHtml(p.uom)} per assembly <span class="tag">${humanize(f.fitment_claim)}</span></li>`
+              )
+              .join("")
+          : `<li class="unknown">${
+              state.data.families_present.part_applicability
+                ? "No fitment rule recorded."
+                : "part_applicability is not in this dataset, so no fitment rule could be recorded."
+            }</li>`;
+
+        $("part-detail").innerHTML =
+          `<h3>${humanize(p.part_key)}</h3>` +
+          '<dl class="kv">' +
+          fields
+            .map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${humanize(v)}</dd>`)
+            .join("") +
+          "</dl>" +
+          `<h4>Held at</h4><ul>${held}</ul>` +
+          `<h4>Fits</h4><ul>${fits}</ul>`;
+      }
+
+      function renderLocations() {
+        const rows = state.data.locations.filter((l) =>
+          matches(`${l.location_code} ${l.location_type} ${l.velocity_zone}`)
+        );
+        $("locations-body").innerHTML = rows
+          .map(
+            (l) =>
+              `<tr data-loc="${escapeHtml(l.location_id)}" class="pick ${l.location_id === state.loc ? "on" : ""}">` +
+              `<td class="mono"><span class="swatch" style="background: ${tierColor(l.location_type)}"></span>` +
+              `${escapeHtml(l.location_code || l.location_id)}</td>` +
+              `<td>${humanize(l.location_type)}</td>` +
+              `<td>${escapeHtml((l.storage_classes_supported || []).join(", ").replace(/_/g, " ")) || "\u2014"}</td>` +
+              `<td>${humanize(l.velocity_zone)}</td>` +
+              `<td class="num">${km(l.grid_distance_to_field_km)}</td>` +
+              `<td class="num">${km(l.service_radius_km_synthetic)}</td>` +
+              `<td class="num">${qty(l.part_count)}</td>` +
+              `<td class="num">${locationStock(l.location_id)}</td>` +
+              "</tr>"
+          )
+          .join("");
+        $("locations-note").textContent =
+          state.data.totals.locations === null
+            ? "storeroom_location is not present in this dataset, so no location can be listed."
+            : `${rows.length} of ${state.data.locations.length} locations shown.`;
+      }
+
+      function renderStock() {
+        const names = new Map(state.data.parts.map((p) => [p.part_master_id, p.part_key]));
+        const rows = state.data.stock.filter((s) =>
+          matches(`${names.get(s.part_master_id) || ""} ${s.location_code} ${s.location_type}`)
+        );
+        $("stock-body").innerHTML = rows
+          .map(
+            (s) =>
+              "<tr>" +
+              `<td>${humanize(names.get(s.part_master_id))}</td>` +
+              `<td class="mono">${escapeHtml(s.location_code || s.location_id)}</td>` +
+              `<td>${humanize(s.location_type)}</td>` +
+              `<td class="num">${quantity(s.quantity, partFor(s).uom)}</td>` +
+              "</tr>"
+          )
+          .join("");
+        $("stock-note").textContent = state.data.stock_is_known
+          ? `${rows.length} of ${state.data.stock.length} positions shown. ` +
+            "Each quantity is from the current portal-only movement frame; opening ledger records are unchanged."
+          : // Reuse the API's own wording so the page cannot drift from it: the
+            // ledger may be absent, or present without an opening balance.
+            state.data.stock_note;
+      }
+
+      function renderFitment() {
+        const rows = [];
+        state.data.parts.forEach((p) => {
+          p.fits.forEach((f) => rows.push({ part_key: p.part_key, uom: p.uom, ...f }));
+        });
+        const shown = rows.filter((r) => matches(`${r.part_key} ${r.asset_config_code} ${r.fitment_claim}`));
+        $("fitment-body").innerHTML = shown
+          .map(
+            (r) =>
+              "<tr>" +
+              `<td>${humanize(r.part_key)}</td>` +
+              `<td>${humanize(r.asset_config_code)}</td>` +
+              `<td class="num">${quantity(r.quantity_per_assembly, r.uom)}</td>` +
+              `<td><span class="tag">${humanize(r.fitment_claim)}</span></td>` +
+              "</tr>"
+          )
+          .join("");
+
+        if (!state.data.families_present.part_applicability) {
+          $("fitment-note").textContent =
+            "This dataset does not include part_applicability, so no fitment rule can be shown.";
+          return;
+        }
+        // The table is built by joining fitment onto parts, so it can hold
+        // fewer rules than the family does. Report the shortfall rather than
+        // presenting the joined count as the whole population.
+        const total = state.data.totals.fitment_rows;
+        let note =
+          `${shown.length} of ${rows.length} fitment rules shown. A rule states that a part is ` +
+          "recorded as fitting an asset configuration in this generated dataset.";
+        if (typeof total === "number" && total > rows.length) {
+          note +=
+            ` ${total - rows.length} of the ${total} rules in the family could not be joined to ` +
+            "a part in this dataset and are not listed.";
+        }
+        $("fitment-note").textContent = note;
+      }
+
+      function partFor(row) {
+        return state.data.parts.find(p => p.part_master_id === row.part_master_id) || {};
+      }
+
+      function quantity(value, uom) {
+        return `${num(value) === null ? '<span class="unknown">Unknown</span>' : qty(value)} ${escapeHtml(uom || "UOM unknown")}`;
+      }
+
+      function stockStatus(row) {
+        return InventoryStudio.quantityStatus(row.quantity, state.data.stock_is_known);
+      }
+
+      function statusBadge(row) {
+        const status = stockStatus(row);
+        const labels = { unknown: "Unknown", out_of_stock: "Out of stock", low: "Below demo threshold", healthy: "At / above demo threshold" };
+        return `<span class="badge ${status}">${labels[status]}</span>`;
+      }
+
+      function locationStock(id) {
+        if (!state.data.stock_is_known) return "Unknown stock";
+        const totals = new Map();
+        const rows = state.data.stock.filter(row => row.location_id === id);
+        rows.forEach(row => {
+          const uom = partFor(row).uom || "UOM unknown";
+          totals.set(uom, (totals.get(uom) || 0) + row.quantity);
+        });
+        return [...totals].map(([uom, total]) => quantity(total, uom)).join(" · ") || "No recorded stock positions";
+      }
+
+      function renderRail() {
+        $("location-rail").innerHTML = `<button type="button" data-rail="" aria-pressed="${state.loc === null}">Entire supply network<small>${state.data.locations.length} locations</small></button>` +
+          state.data.locations.slice().sort((a, b) => tierRank(a.location_type) - tierRank(b.location_type)).map(l => {
+            const rows = state.data.stock.filter(r => r.location_id === l.location_id);
+            const low = rows.filter(r => ["low", "out_of_stock"].includes(stockStatus(r))).length;
+            return `<button type="button" data-rail="${escapeHtml(l.location_id)}" aria-pressed="${l.location_id === state.loc}"><strong>${escapeHtml(l.location_code)}</strong><small>${humanize(l.location_type)} · ${km(l.grid_distance_to_field_km)} km</small><small>${state.data.stock_is_known ? `${low} shortage positions / ${rows.length} positions` : "Stock unknown"}</small></button>`;
+          }).join("");
+      }
+
+      function selectedFocus() {
+        return state.snapshot.movement.focus[state.focus];
+      }
+
+      function frameLabel(frame, uom) {
+        return frame.label.replace(/\b(12|10|9|0)\b/g, value => `${value} ${uom}`);
+      }
+
+      function renderHero() {
+        const {movement, frame, index, playing} = state.snapshot;
+        const focus = selectedFocus();
+        const uom = focus ? partFor(focus).uom : "UOM unknown";
+        $("playback-title").textContent = movement.title;
+        $("stage-copy").textContent = movement.available
+          ? `${index + 1} / ${movement.frames.length} · ${frameLabel(frame, uom)} · T+${frame.elapsed_minutes} synthetic min. ${index === 0 ? "Unchanged opening stock; playback starts paused." : "Portal-only movement; opening ledger unchanged."}`
+          : movement.unavailable_reason;
+        $("play").textContent = playing ? "Pause" : "Play";
+        $("play").disabled = !movement.available || index === movement.frames.length - 1;
+        $("step").disabled = !movement.available || index === movement.frames.length - 1;
+        $("reset").disabled = !movement.available;
+        $("speed").disabled = !movement.available;
+        $("focus-part").disabled = !movement.focus.length;
+        $("locate-focus").disabled = !movement.focus.length;
+        $("timeline").innerHTML = movement.frames.map((f, i) => `<li ${i === index ? 'aria-current="step"' : ""}><b>${String(i + 1).padStart(2, "0")}</b>${escapeHtml(frameLabel(f, uom))}</li>`).join("");
+        if (!focus) {
+          $("focus-story").innerHTML = '<p>No eligible focus position. Unknown stock is never shown as zero or healthy.</p>';
+          return;
+        }
+        const row = frame.stock.find(r => InventoryStudio.stockKey(r) === InventoryStudio.stockKey(focus));
+        $("focus-story").innerHTML = `<p>${escapeHtml(focus.location_code)} · ${escapeHtml(focus.part_name)}</p><div class="focus-number" id="focus-quantity">${qty(row.quantity)} <small>${escapeHtml(uom)}</small></div>${statusBadge(row)}<p class="note">Demo threshold ${quantity(movement.threshold, uom)} · fires strictly below ${quantity(movement.threshold, uom)}.</p>`;
+      }
+
+      function alertItem(alert) {
+        const current = state.data.stock.find(r => InventoryStudio.stockKey(r) === InventoryStudio.stockKey(alert));
+        return `<li><strong>${escapeHtml(alert.part_name)} · ${escapeHtml(alert.location_code)}</strong>${quantity(current ? current.quantity : null, partFor(alert).uom)} · ${humanize(alert.status)}<br><span class="note">Demo threshold ${quantity(alert.threshold, partFor(alert).uom)} · Episode ${escapeHtml(alert.alert_id)}</span></li>`;
+      }
+
+      function renderAttention() {
+        const {frame, movement, history} = state.snapshot;
+        const keys = new Set(movement.focus.map(InventoryStudio.stockKey));
+        const focusAlerts = frame.active_alerts.filter(a => keys.has(InventoryStudio.stockKey(a)));
+        const otherAlerts = frame.active_alerts.filter(a => !keys.has(InventoryStudio.stockKey(a)));
+        const unknown = state.data.stock.filter(r => stockStatus(r) === "unknown").length;
+        $("attention-count").textContent = `· ${frame.active_alerts.length} active previews`;
+        $("attention-summary").textContent = state.data.stock_is_known
+          ? `${focusAlerts.length} movement-focus exceptions · ${otherAlerts.length} other active previews · ${unknown} unknown positions. All previews are available below.`
+          : "Opening stock is unknown. No threshold assessment is possible; an empty alert list does not indicate healthy inventory.";
+        $("focus-alerts").innerHTML = focusAlerts.map(alertItem).join("") || '<li>No active movement-focus alert at this stage.</li>';
+        $("remaining-alerts-label").textContent = `View ${otherAlerts.length} other active previews (all included)`;
+        $("other-alerts").innerHTML = otherAlerts.map(alertItem).join("") || '<li>No other active previews.</li>';
+        $("history-count").textContent = `· ${history.movements.length} movements / ${history.alerts.length} alert transitions`;
+        const movementTimes = new Map(movement.frames.flatMap(f =>
+          f.movements.map(e => [e.movement_id, f.elapsed_minutes])));
+        const events = [
+          ...history.movements.map(e => ({...e, elapsed_minutes: movementTimes.get(e.movement_id), kindOfEvent: "movement"})),
+          ...history.alerts.map(e => ({...e, kindOfEvent: "alert"}))
+        ].sort((a, b) => a.elapsed_minutes - b.elapsed_minutes);
+        $("activity").innerHTML = events.map(e => `<li><strong>T+${escapeHtml(e.elapsed_minutes)} synthetic min · ${escapeHtml(e.part_name)} · ${escapeHtml(e.location_code)}</strong>` +
+          (e.kindOfEvent === "movement"
+            ? `${humanize(e.kind)}: ${quantity(e.quantity_before, e.uom)} → ${quantity(e.quantity_after, e.uom)} · change ${quantity(e.delta, e.uom)}`
+            : `Alert ${humanize(e.state)} · ${quantity(e.quantity, e.uom)} · Episode ${escapeHtml(e.alert_id)}`) +
+          `<br><span class="note">${humanize(e.reason)} · historical event, not current stock</span></li>`).join("") ||
+          '<li>Opening frame. No movement or alert transitions recorded.</li>';
+      }
+
+      function renderWorkbench() {
+        if (!state.snapshot) return;
+        const status = $("stock-status").value;
+        const criticality = $("crit").value;
+        const focusKeys = new Set(state.snapshot.movement.focus.map(InventoryStudio.stockKey));
+        const priority = {out_of_stock: 0, low: 1, unknown: 2, healthy: 3};
+        const rows = state.data.stock.filter(row => {
+          const p = partFor(row), value = stockStatus(row);
+          return (!state.loc || row.location_id === state.loc) &&
+            (!criticality || p.criticality_class === criticality) &&
+            (!status || (status === "attention" ? ["low", "out_of_stock"].includes(value) : status === "focus" ? focusKeys.has(InventoryStudio.stockKey(row)) : status === value)) &&
+            matches(`${p.part_name} ${p.part_key} ${p.stock_code} ${row.location_code} ${row.location_type}`);
+        }).sort((a, b) => priority[stockStatus(a)] - priority[stockStatus(b)]);
+        $("current-stock-body").innerHTML = rows.map(row => {
+          const p = partFor(row), key = InventoryStudio.stockKey(row);
+          return `<tr class="${state.stockSelection === key ? "on" : ""}"><td><button type="button" class="text-button" data-stock="${escapeHtml(key)}">${escapeHtml(p.part_name || p.part_key)}</button><div class="note">${escapeHtml(p.stock_code)} · ${humanize(p.criticality_class)}${focusKeys.has(key) ? " · Movement focus" : ""}</div></td><td>${escapeHtml(row.location_code)}<div class="note">${humanize(row.location_type)}</div></td><td>${quantity(row.quantity, p.uom)}</td><td>${statusBadge(row)}</td></tr>`;
+        }).join("") || '<tr><td colspan="4">No stock positions match. Clear filters to broaden the view. Missing stock is not a zero balance.</td></tr>';
+        $("selection-note").textContent = state.loc ? `Linked location: ${state.data.locations.find(l => l.location_id === state.loc)?.location_code || state.loc}. Map tier visibility and stock filters are independent.` : "All stocking tiers. Select a location in the rail or map to narrow this list.";
+        $("current-stock-count").textContent = `${rows.length} of ${state.data.stock.length} positions shown · current frame ${state.snapshot.index + 1}. Unlike units are never summed.`;
+        renderStockDetail();
+      }
+
+      function renderStockDetail() {
+        const row = state.data.stock.find(r => InventoryStudio.stockKey(r) === state.stockSelection);
+        if (!row) {
+          $("stock-detail").innerHTML = '<h3>Stock-position detail</h3><p class="note">Select a part to connect current stock, field logistics and asset fitment.</p>';
+          return;
+        }
+        const p = partFor(row);
+        const location = state.data.locations.find(l => l.location_id === row.location_id);
+        const others = state.data.stock.filter(r => r.part_master_id === row.part_master_id && r.location_id !== row.location_id);
+        $("stock-detail").innerHTML = `<div class="eyebrow">Selected stock position</div><h3>${escapeHtml(p.part_name)}</h3><p>${escapeHtml(row.location_code)} · ${quantity(row.quantity, p.uom)}</p>${statusBadge(row)}<dl class="kv"><dt>Criticality</dt><dd>${humanize(p.criticality_class)}</dd><dt>Tracking</dt><dd>${humanize(p.tracking_mode)}</dd><dt>Storage requirement</dt><dd>${humanize(p.required_storage_class)}</dd><dt>Field distance</dt><dd>${km(location.grid_distance_to_field_km)} km (synthetic)</dd></dl>` +
+          `<h4>Other locations · current frame</h4><ul class="activity-list">${others.map(r => `<li><button type="button" class="text-button" data-stock="${escapeHtml(InventoryStudio.stockKey(r))}">${escapeHtml(r.location_code)}</button> ${quantity(r.quantity, p.uom)} · ${statusBadge(r)}</li>`).join("") || "<li>No other recorded stock position.</li>"}</ul>` +
+          `<h4>Asset fitment · catalog metadata</h4><ul>${(p.fits || []).map(f => `<li>${humanize(f.asset_config_code)} · ${quantity(f.quantity_per_assembly, p.uom)} per assembly · ${humanize(f.fitment_claim)}</li>`).join("") || "<li>No fitment rule recorded.</li>"}</ul><p class="note">Fitment is a generated record, not compatibility validation. Other stock is not a transfer commitment or validated ETA.</p>`;
+      }
+
+      function preserveFocus(render) {
+        const active = document.activeElement;
+        const attributes = ["data-stock", "data-rail", "data-loc", "data-zoom", "data-tier", "data-part"];
+        const attribute = active && attributes.find(a => active.getAttribute && active.getAttribute(a) !== null);
+        const value = attribute ? active.getAttribute(attribute) : null;
+        render();
+        if (attribute) {
+          const replacement = document.querySelector(`[${attribute}="${cssEscape(value)}"]`);
+          if (replacement) replacement.focus({preventScroll: true});
+          else $("stock-status").focus({preventScroll: true});
+        }
+      }
+
+      function renderStudio(snapshot) {
+        state.snapshot = snapshot;
+        const baseline = snapshot.inventory;
+        // Baseline aggregates remain untouched; every visible quantity is folded
+        // only from this frame, including the progressively disclosed catalog.
+        const stock = snapshot.frame.stock.map(r => ({...r, quantity: baseline.stock_is_known ? r.quantity : null}));
+        state.data = {
+          ...baseline, stock,
+          parts: baseline.parts.map(p => {
+            const held = stock.filter(r => r.part_master_id === p.part_master_id);
+            return {...p, quantity: baseline.stock_is_known ? held.reduce((total, r) => total + r.quantity, 0) : null, held_at: held, location_count: baseline.stock_is_known ? held.length : null};
+          }),
+          locations: baseline.locations.map(l => ({...l, quantity: null, part_count: baseline.stock_is_known ? stock.filter(r => r.location_id === l.location_id).length : null}))
+        };
+        preserveFocus(() => {
+          renderHero(); renderAttention(); renderRail(); renderMap(); renderLocDetail();
+          renderStorage(); renderParts(); renderLocations(); renderStock(); renderWorkbench();
+        });
+      }
+
+      function renderAll() {
+        renderBanner();
+        renderOverview();
+        renderZoom();
+        renderLegend();
+        renderMap();
+        renderLocDetail();
+        renderStorage();
+        renderParts();
+        renderLocations();
+        renderStock();
+        renderFitment();
+      }
+
+      $("zoom").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-zoom]");
+        if (!button) return;
+        state.zoom = Number(button.dataset.zoom);
+        renderZoom();
+        renderMap();
+        refocus("zoom", `button[data-zoom="${state.zoom}"]`);
+      });
+
+      // Every activation re-renders the container wholesale, which removes the
+      // focused node from the document and drops a keyboard user back to the top
+      // of the tab order. Put focus back on the equivalent node afterwards.
+      function refocus(container, selector) {
+        const next = $(container).querySelector(selector);
+        if (next && typeof next.focus === "function") next.focus();
+      }
+
+      function cssEscape(value) {
+        return window.CSS && window.CSS.escape
+          ? window.CSS.escape(value)
+          : String(value).replace(/["\\]/g, "\\$&");
+      }
+
+      function toggleTier(item, keyboard) {
+        const tier = item.dataset.tier;
+        if (state.hidden.has(tier)) state.hidden.delete(tier);
+        else state.hidden.add(tier);
+        renderLegend();
+        renderMap();
+        if (keyboard) refocus("legend", `li[data-tier="${cssEscape(tier)}"]`);
+      }
+
+      $("legend").addEventListener("click", (event) => {
+        const item = event.target.closest("li[data-tier]");
+        if (item) toggleTier(item, false);
+      });
+      $("legend").addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        const item = event.target.closest("li[data-tier]");
+        if (!item) return;
+        event.preventDefault();
+        toggleTier(item, true);
+      });
+
+      function mapActivate(target, keyboard) {
+        const cluster = target.closest("g[data-cluster]");
+        if (cluster) {
+          if (state.zoom > 0) {
+            state.zoom -= 1;
+            renderZoom();
+            renderMap();
+            // The puck may be gone at the closer extent; fall back to the first
+            // marker so focus stays inside the map rather than jumping to body.
+            if (keyboard) refocus("map", "g[data-cluster], g[data-loc]");
+          }
+          return true;
+        }
+        const marker = target.closest("g[data-loc]");
+        if (marker) {
+          const id = marker.dataset.loc;
+          selectLocation(id);
+          if (keyboard) refocus("map", `g[data-loc="${cssEscape(id)}"]`);
+          return true;
+        }
+        return false;
+      }
+
+      $("map").addEventListener("click", (event) => {
+        mapActivate(event.target, false);
+      });
+      $("map").addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        if (mapActivate(event.target, true)) event.preventDefault();
+      });
+
+      $("locations-body").addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-loc]");
+        if (!row) return;
+        selectLocation(row.dataset.loc);
+        document.getElementById("network").scrollIntoView({ block: "start" });
+      });
+
+      $("parts-body").addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-part]");
+        if (!row) return;
+        state.selected = row.dataset.part;
+        renderParts();
+      });
+
+      $("q").addEventListener("input", (event) => {
+        state.filter = event.target.value.trim().toLowerCase();
+        renderParts(); renderLocations(); renderStock(); renderFitment(); renderWorkbench();
+      });
+
+      $("play").addEventListener("click", () => studio && (studio.snapshot().playing ? studio.pause() : studio.play()));
+      $("step").addEventListener("click", () => studio && studio.step());
+      $("reset").addEventListener("click", () => studio && studio.reset());
+      $("speed").addEventListener("change", event => studio && studio.setSpeed(Number(event.target.value)));
+      $("focus-part").addEventListener("change", event => {
+        state.focus = Number(event.target.value);
+        renderHero();
+      });
+      $("locate-focus").addEventListener("click", () => {
+        const focus = selectedFocus();
+        if (!focus) return;
+        state.stockSelection = InventoryStudio.stockKey(focus);
+        state.selected = focus.part_master_id;
+        state.hidden.delete(state.data.locations.find(l => l.location_id === focus.location_id).location_type);
+        state.zoom = zoomLevels().length - 1;
+        renderZoom(); renderLegend(); selectLocation(focus.location_id);
+        $("current-stock").scrollIntoView({block: "start"});
+      });
+      $("location-rail").addEventListener("click", event => {
+        const button = event.target.closest("button[data-rail]");
+        if (button) preserveFocus(() => selectLocation(button.dataset.rail || null));
+      });
+      function chooseStock(event) {
+        const button = event.target.closest("button[data-stock]");
+        if (!button) return;
+        preserveFocus(() => {
+          state.stockSelection = button.dataset.stock;
+          const row = state.data.stock.find(r => InventoryStudio.stockKey(r) === state.stockSelection);
+          if (row) { state.selected = row.part_master_id; selectLocation(row.location_id); renderParts(); }
+        });
+      }
+      $("current-stock-body").addEventListener("click", chooseStock);
+      $("stock-detail").addEventListener("click", chooseStock);
+      $("stock-status").addEventListener("change", renderWorkbench);
+      $("crit").addEventListener("change", renderWorkbench);
+      function clearFilters() {
+        state.filter = ""; state.loc = null;
+        $("q").value = ""; $("stock-status").value = ""; $("crit").value = "";
+        renderAll(); renderRail(); renderWorkbench();
+      }
+      $("clear-filters").addEventListener("click", clearFilters);
+      $("show-low").addEventListener("click", () => {
+        clearFilters(); $("stock-status").value = "attention"; renderWorkbench();
+        $("current-stock").scrollIntoView({block: "start"}); $("stock-status").focus();
+      });
+      window.addEventListener("pagehide", event => {
+        if (!studio) return;
+        if (event.persisted) studio.pause();
+        else studio.dispose();
+      });
+
+      // The basemap is decoration for data the page already states in text, so
+      // its absence must never take the inventory down with it.
+      async function loadBasemap() {
+        try {
+          const response = await fetch("/upstream/review/inventory/basemap.json", {
+            headers: { Accept: "application/json" }
+          });
+          if (!response.ok) return null;
+          const payload = await response.json();
+          if (!payload || typeof payload.outline !== "string") return null;
+          // The paths are written straight into an SVG attribute by innerHTML,
+          // so they are validated as path data rather than trusted because of
+          // where they came from.
+          const safe = (value) =>
+            typeof value === "string" && /^[MLZ0-9 .,-]*$/.test(value) ? value : "";
+          const outline = safe(payload.outline);
+          if (!outline) return null;
+          return {
+            outline: outline,
+            counties: safe(payload.counties),
+            context: safe(payload.context),
+            region: typeof payload.region === "string" ? payload.region : ""
+          };
+        } catch (error) {
+          return null;
+        }
+      }
+
+      async function load() {
+        try {
+          const [response, basemap] = await Promise.all([
+            fetch("/api/upstream/review/inventory/movement", { headers: { Accept: "application/json" } }),
+            loadBasemap()
+          ]);
+          state.basemap = basemap;
+          const body = await response.text();
+          let payload;
+          try {
+            payload = JSON.parse(body);
+          } catch (parseError) {
+            // A non-JSON body means the server failed before the guard could
+            // shape an answer. Say that, rather than the JSON parser's message.
+            throw new Error(
+              `the server returned status ${response.status} with a non-JSON body`
+            );
+          }
+          if (!response.ok) {
+            throw new Error(payload.message || `request failed with status ${response.status}`);
+          }
+          studio = InventoryStudio.create(payload);
+          state.data = payload.inventory;
+          state.selected = state.data.parts.length ? state.data.parts[0].part_master_id : null;
+          const focus = payload.movement.focus[0];
+          state.stockSelection = focus ? InventoryStudio.stockKey(focus) : null;
+          $("focus-part").innerHTML = payload.movement.focus.map((f, i) => `<option value="${i}">${escapeHtml(f.part_name)} · ${escapeHtml(f.location_code)}</option>`).join("") || '<option>No movement focus</option>';
+          $("crit").innerHTML += [...new Set(state.data.parts.map(p => p.criticality_class).filter(Boolean))].sort().map(c => `<option value="${escapeHtml(c)}">${humanize(c)}</option>`).join("");
+          renderBanner(); renderOverview(); renderZoom(); renderLegend(); renderFitment();
+          studio.subscribe(renderStudio);
+          $("loading").classList.add("hidden");
+          $("main").classList.remove("hidden");
+        } catch (error) {
+          if (studio) studio.dispose();
+          $("main").classList.add("hidden");
+          $("loading").classList.add("hidden");
+          $("error").textContent = `Could not load the inventory: ${error.message}`;
+          $("error").classList.remove("hidden");
+        }
+      }
+
+      load();
+    </script>
+  </body>
+</html>

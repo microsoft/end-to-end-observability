@@ -1,0 +1,169 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram id="outcome-flow" name="Outcome flow">
+    <mxGraphModel grid="1" page="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Domains V2 -&gt; all-nine Foundry portfolio -&gt; operator review and learning&#10;PROPOSED logical sequence. Synthetic only. No cloud deployment performed." vertex="1" parent="1" style="text;html=0;fontColor=#000000;fontSize=22;align=left;">
+          <mxGeometry as="geometry" x="40" y="10" width="1750" height="100" />
+        </mxCell>
+        <mxCell id="sequence-note" value="Arrows are logical handoffs. 00 coordinates specialists; they do not call each other.&#10;Native A2A or a guarded gateway must prove intermediate validation and budget control at P0.&#10;Search/publisher and SQL/Blob are grouped for readability, not single resources." vertex="1" parent="1" style="text;html=0;fontColor=#000000;fontSize=17;align=left;">
+          <mxGeometry as="geometry" x="40" y="730" width="1700" height="130" />
+        </mxCell>
+        <mxCell id="producer" value="Domains V2 (unchanged)&#10;Log Analytics observations&#10;No alerts or audit labels" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#CFE4FA;strokeColor=#0078D4;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="40" y="140" width="320" height="170" />
+        </mxCell>
+        <mxCell id="reader" value="Consumer Function worker&#10;Typed complete windows&#10;EventId dedup / Blob evidence" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF4CE;strokeColor=#F7630C;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="380" y="140" width="320" height="170" />
+        </mxCell>
+        <mxCell id="detector" value="Domain detector + 01&#10;Features / baseline / findings&#10;Stable incident correlation" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF4CE;strokeColor=#F7630C;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="720" y="140" width="320" height="170" />
+        </mxCell>
+        <mxCell id="context" value="10 Industry + 02 Triage&#10;Criticality and prohibitions&#10;Context, not physical truth" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1060" y="140" width="320" height="170" />
+        </mxCell>
+        <mxCell id="ops" value="00 Ops Orchestrator&#10;Actual Foundry prompt agent&#10;Four specialist A2A bindings" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1400" y="140" width="320" height="170" />
+        </mxCell>
+        <mxCell id="memory" value="04 Runbook Memory&#10;Reviewed Search knowledge&#10;Exact revisions / abstention" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="40" y="500" width="320" height="170" />
+        </mxCell>
+        <mxCell id="rca" value="03 RCA Investigator&#10;Evidence and contradictions&#10;Hypotheses, not certainty" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="380" y="500" width="320" height="170" />
+        </mxCell>
+        <mxCell id="planner" value="05 Remediation Planner&#10;Exact target / component&#10;Proposal, not execution" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="720" y="500" width="320" height="170" />
+        </mxCell>
+        <mxCell id="gate" value="06 Trusted code gate&#10;Proposal-bound receipt&#10;Execution always prohibited" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF4CE;strokeColor=#F7630C;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1060" y="500" width="320" height="170" />
+        </mxCell>
+        <mxCell id="comms" value="07 Incident Comms&#10;After verified gate result&#10;Audience drafts; never send" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1400" y="500" width="320" height="170" />
+        </mxCell>
+        <mxCell id="search" value="Approved publisher + Search&#10;Synthetic knowledge revisions&#10;Review / expiry / revocation" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E8DAEF;strokeColor=#5C2D91;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="40" y="960" width="320" height="170" />
+        </mxCell>
+        <mxCell id="closure" value="08 Postmortem Drafter&#10;Deliberate reviewed closure&#10;Draft and evidence lineage" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="380" y="960" width="320" height="170" />
+        </mxCell>
+        <mxCell id="review" value="Separate review UI / API&#10;Entra + App Service&#10;Review only; no Execute" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E8DAEF;strokeColor=#5C2D91;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="720" y="960" width="320" height="170" />
+        </mxCell>
+        <mxCell id="state" value="Azure SQL + Blob&#10;Results / reviews / outbox&#10;Immutable evidence / leases" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#E8DAEF;strokeColor=#5C2D91;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1060" y="960" width="320" height="170" />
+        </mxCell>
+        <mxCell id="validate" value="Trusted result processor&#10;Schemas / citations / scope&#10;Atomic result + next work" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF4CE;strokeColor=#F7630C;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1400" y="960" width="320" height="170" />
+        </mxCell>
+        <mxCell id="hygiene" value="09 Alert Hygiene + code&#10;Detector transition history&#10;Reviewed noise report" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#DFF6DD;strokeColor=#107C10;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="720" y="1360" width="320" height="170" />
+        </mxCell>
+        <mxCell id="tools" value="Authenticated tools / MCP&#10;Six code operations&#10;No fictional ARM authority" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#FFF4CE;strokeColor=#F7630C;fontColor=#000000;fontSize=16;">
+          <mxGeometry as="geometry" x="1400" y="1360" width="320" height="170" />
+        </mxCell>
+        <mxCell id="edge-0" value="read only" edge="1" parent="1" source="producer" target="reader" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-1" value="complete evidence" edge="1" parent="1" source="reader" target="detector" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-2" value="derived incident" edge="1" parent="1" source="detector" target="context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-3" value="triage handoff" edge="1" parent="1" source="context" target="ops" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-4" value="00 coordinates this sequence" edge="1" parent="1" source="ops" target="memory" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1560" y="400" />
+              <mxPoint x="200" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-5" value="00 next" edge="1" parent="1" source="memory" target="rca" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-6" value="00 next" edge="1" parent="1" source="rca" target="planner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-7" value="exact proposal" edge="1" parent="1" source="planner" target="gate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-8" value="00 last" edge="1" parent="1" source="gate" target="comms" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-9" value="untrusted candidate" edge="1" parent="1" source="comms" target="validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-10" value="validated or incomplete" edge="1" parent="1" source="validate" target="state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-11" value="persisted views" edge="1" parent="1" source="state" target="review" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-12" value="explicit closure" edge="1" parent="1" source="review" target="closure" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-13" value="draft candidate" edge="1" parent="1" source="closure" target="validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="540" y="875" />
+              <mxPoint x="1560" y="875" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-14" value="reviewed retrieval" edge="1" parent="1" source="search" target="memory" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="edge-15" value="bounded history job" edge="1" parent="1" source="state" target="hygiene" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1220" y="1290" />
+              <mxPoint x="880" y="1290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-16" value="report candidate" edge="1" parent="1" source="hygiene" target="validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="880" y="1260" />
+              <mxPoint x="1560" y="1260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-17" value="review exact revision" edge="1" parent="1" source="review" target="state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="880" y="1180" />
+              <mxPoint x="1220" y="1180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-18" value="approved publication outbox" edge="1" parent="1" source="state" target="search" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1220" y="1230" />
+              <mxPoint x="200" y="1230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-19" value="indexing / revocation status" edge="1" parent="1" source="search" target="state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="200" y="910" />
+              <mxPoint x="1220" y="910" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-20" value="receipts / typed evidence" edge="1" parent="1" source="tools" target="validate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;fontColor=#000000;fontSize=13;">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="safety" value="OperationalUse=prohibited | execution_allowed=false | Review acceptance is not execution permission.&#10;Audit labels stay outside inference. No producer controls, automatic sending or live suppression." vertex="1" parent="1" style="text;html=0;fontColor=#000000;fontSize=19;align=left;">
+          <mxGeometry as="geometry" x="40" y="1570" width="1720" height="100" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

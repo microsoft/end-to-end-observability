@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "seed": 20260819,
+  "scenario": "normal_production",
+  "site": {
+    "site_id": "fictional-onshore-upstream-field-001",
+    "display_name": "Fictional Onshore Upstream Field",
+    "time_zone": "America/Chicago"
+  },
+  "facility": {
+    "facility_id": "fictional-central-production-001",
+    "display_name": "Fictional Central Production Facility"
+  },
+  "simulation": {
+    "start_utc": "2026-08-19T12:00:00Z",
+    "end_utc": "2026-08-19T12:30:00Z",
+    "interval_seconds": 300
+  },
+  "fleet": {
+    "oil_well_pads": 1,
+    "gas_well_pads": 1,
+    "multiwell_pads": 1,
+    "wells_per_multiwell_pad": 3
+  },
+  "fidelity": {
+    "measurement_effects": true,
+    "delivery_effects": true,
+    "sparse_workflows": true
+  },
+  "monitoring": {
+    "max_records_per_type": 20000,
+    "max_total_records": 120000
+  }
+}

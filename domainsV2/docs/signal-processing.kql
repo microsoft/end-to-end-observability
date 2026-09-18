@@ -1,0 +1,43 @@
+// Run discovery, not detector features. Retained runs are not necessarily active.
+EnergyObservations_CL
+| where TimeGenerated >= ago(7d)
+| where SchemaVersion == "1" and IsSynthetic == true and OperationalUse == "prohibited"
+| summarize arg_max(TimeGenerated, *) by EventId
+| summarize Records=count(), FirstObserved=min(ObservedAt), LastObserved=max(ObservedAt)
+    by Domain, Surface, Portal, RunId
+| order by LastObserved desc, Surface asc
+
+// Run ONE statement at a time. Replace the exact RunId from discovery.
+// This is a bounded observation window, not a lossless ingestion change feed.
+// For a historical stopped run, replace WindowEnd with its absolute UTC time.
+let SelectedRunId = "REPLACE_WITH_EXACT_RUN_ID";
+let WindowEnd = now();
+let WindowStart = WindowEnd - 15m;
+EnergyObservations_CL
+| where TimeGenerated >= ago(7d)
+| where RunId == SelectedRunId
+| where ObservedAt >= WindowStart and ObservedAt < WindowEnd
+| where SchemaVersion == "1" and IsSynthetic == true and OperationalUse == "prohibited"
+| summarize arg_max(TimeGenerated, *) by EventId
+| project TimeGenerated, ObservedAt, SimulatedAt, SchemaVersion, EventId,
+          RunId, Domain, Surface, Portal, RecordType, EntityId, LocationId,
+          Payload, Context, IsSynthetic, OperationalUse
+| order by ObservedAt asc, EventId asc
+
+// Same input envelope plus a derived series key. These derived columns are NOT
+// producer fields. Retain raw Payload/Context and do not coerce missing values.
+let SelectedRunId = "REPLACE_WITH_EXACT_RUN_ID";
+let WindowEnd = now();
+let WindowStart = WindowEnd - 15m;
+EnergyObservations_CL
+| where TimeGenerated >= ago(7d)
+| where RunId == SelectedRunId
+| where ObservedAt >= WindowStart and ObservedAt < WindowEnd
+| where SchemaVersion == "1" and IsSynthetic == true and OperationalUse == "prohibited"
+| summarize arg_max(TimeGenerated, *) by EventId
+| extend SignalIdentity = pack_array(Domain, Surface, RunId, RecordType,
+    EntityId, LocationId, Payload.measurement, Payload.tag_id, Payload.phase)
+| project TimeGenerated, ObservedAt, SimulatedAt, SchemaVersion, EventId,
+          RunId, Domain, Surface, Portal, RecordType, EntityId, LocationId,
+          Payload, Context, IsSynthetic, OperationalUse, SignalIdentity
+| order by ObservedAt asc, EventId asc
