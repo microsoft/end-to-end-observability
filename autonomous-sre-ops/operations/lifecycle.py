@@ -11,18 +11,19 @@ from typing import Protocol
 from urllib.parse import urlparse
 from uuid import UUID
 
-SUBSCRIPTION = "00000001-000a-4000-a000-000000000001"
-TARGETS = {
-    f"/subscriptions/{SUBSCRIPTION}/resourcegroups/rg-asre-{role}-cus/providers/microsoft.compute/virtualmachines/vm-asre-{role}-cus": role
-    for role in ("linux", "patch", "backup")
-}
+from operations import context
+
+# The deployment context is the only source of deployment identity; a missing or invalid one fails the import.
+CTX = context.load()
+SUBSCRIPTION = CTX.subscription_id
+TARGETS = dict(CTX.roles_by_resource_id())
 ALLOWED_ACTIONS = {
     "linux": {"recover_workload"},
     "patch": {"recover_selected_patch"},
     "backup": {"recover_guest_agent_and_backup"},
 }
 TERMINAL = {"verified", "failed", "escalated"}
-EVIDENCE_HOST = f"stasre{hashlib.sha256(f'{SUBSCRIPTION}:asre-demo'.encode()).hexdigest()[:10]}.blob.core.windows.net"
+EVIDENCE_HOST = urlparse(CTX.storage.blob_endpoint).hostname
 VERIFICATION_CHECKS = {
     "recover_workload": {"service_healthy", "resource_below_threshold", "stable_observation_window"},
     "recover_selected_patch": {"installation_succeeded", "approved_version_installed"},
@@ -201,7 +202,7 @@ class AzureTable:
         from azure.data.tables import TableClient
         from azure.identity import ManagedIdentityCredential
 
-        if not re.fullmatch(r"https://stasre[a-f0-9]{10}\.table\.core\.windows\.net/?", endpoint):
+        if endpoint not in (CTX.storage.table_endpoint, CTX.storage.table_endpoint + "/"):
             raise ValueError("Only the dedicated operational storage endpoint is accepted.")
         self.client = TableClient(
             endpoint=endpoint, table_name="Operations",

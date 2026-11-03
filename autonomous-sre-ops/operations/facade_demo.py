@@ -12,16 +12,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from uuid import UUID, uuid4, uuid5
 
+from operations import context as deployment
 from operations.lifecycle import EVIDENCE_HOST, canonical_uuid
 from operations.servicenow import (
     CLIENT_ID, SENSITIVE, CaseClient, ClientCredentials, Contracts, ServiceNowError,
 )
 
-RESOURCE = (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/"
-    "resourceGroups/rg-asre-linux-cus/providers/Microsoft.Compute/"
-    "virtualMachines/vm-asre-linux-cus"
-)
+CTX = deployment.load()
+RESOURCE = CTX.targets["linux"].resource_id
 LIMIT = 48000
 TERMINAL = {"applied", "already_applied"}
 STATES = {"prepared", "pending", "applied", "blocked"}

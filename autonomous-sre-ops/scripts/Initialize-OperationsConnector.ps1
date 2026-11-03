@@ -1,4 +1,16 @@
 #requires -Version 7.5
+<#
+.SYNOPSIS
+    Creates or verifies the two native read-only telemetry connectors of the existing SRE agent.
+.DESCRIPTION
+    Everything comes from the deployment context (Get-AsreContext): the agent, its action identity and the
+    Log Analytics workspace. Requests go through the agent plane (AgentPlane.Common.ps1), which refuses any ARM
+    write outside the agent resource. -VerifyOnly and -WhatIf use a read-only plane and never publish.
+    Only the connectors asre-operations-logs (LogAnalytics) and monitor-client (MonitorClient) are touched;
+    a connector with another type or identity is refused, never replaced.
+.EXAMPLE
+    ./scripts/Initialize-OperationsConnector.ps1 -VerifyOnly
+#>
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [switch]$VerifyOnly,
@@ -7,6 +19,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+if (-not (Get-Command Get-AsreContext -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'Context.Common.ps1') }
+if (-not (Get-Command Get-AsreAgentPlane -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'AgentPlane.Common.ps1') }
 
 function Get-OperationsConnectorDefinitions {
     param([hashtable]$Workspace, [string]$Identity)
@@ -30,6 +44,28 @@ function Get-OperationsConnectorDefinitions {
     }
 }
 
+function New-OperationsConnectorContext {
+    # Binds the deployment context and an agent plane into the one hashtable the functions below accept.
+    param(
+        [Parameter(Mandatory)][System.Collections.IDictionary]$Context,
+        [Parameter(Mandatory)][System.Collections.IDictionary]$Plane
+    )
+    $agent = Get-AsreMember -Value $Context -Path @('agent', 'resource_id')
+    $identity = Get-AsreMember -Value $Context -Path @('identities', 'agent', 'resource_id')
+    $workspaceId = Get-AsreMember -Value $Context -Path @('log_analytics', 'resource_id')
+    $workspaceName = Get-AsreMember -Value $Context -Path @('log_analytics', 'name')
+    foreach ($value in @($agent, $identity, $workspaceId, $workspaceName)) {
+        if ($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value)) {
+            throw 'Connector setup needs the agent, action identity and workspace of the deployment context.'
+        }
+    }
+    if ($Plane['agent'] -cne $agent) { throw 'Connector setup is restricted to the existing ASRE agent.' }
+    return @{
+        agent = $agent; identity = $identity; workspaceId = $workspaceId; workspaceName = $workspaceName
+        readOnly = [bool]$Plane['readOnly']; plane = $Plane
+    }
+}
+
 function Invoke-OperationsConnectorRequest {
     param(
         [hashtable]$Context,
@@ -38,49 +74,56 @@ function Invoke-OperationsConnectorRequest {
         [hashtable]$Properties,
         [switch]$AllowNotFound
     )
-    $agent = '/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.App/agents/asre-demo-cus'
-    if ($Context.agent -cne $agent) { throw 'Connector setup is restricted to the existing ASRE agent.' }
+    $agent = Get-AsreMember -Value $Context -Path @('agent')
+    $plane = Get-AsreMember -Value $Context -Path @('plane')
+    if ($agent -isnot [string] -or $plane -isnot [System.Collections.IDictionary] -or $plane['agent'] -cne $agent) {
+        throw 'Connector setup is restricted to the existing ASRE agent.'
+    }
     switch ($Resource) {
         Agent { $path = "${agent}?api-version=2026-01-01" }
         Workspace {
-            $path = '/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus?api-version=2023-09-01'
+            $workspaceId = Get-AsreMember -Value $Context -Path @('workspaceId')
+            if ($workspaceId -isnot [string] -or
+                $workspaceId -cnotmatch '\A/subscriptions/[^/]+/resourceGroups/[^/]+/providers/Microsoft\.OperationalInsights/workspaces/[^/]+\z') {
+                throw 'Connector setup needs the workspace of the deployment context.'
+            }
+            $path = "${workspaceId}?api-version=2023-09-01"
         }
         default { $path = "$agent/DataConnectors/${Resource}?api-version=2025-05-01-preview" }
     }
-    if ($Method -eq 'ReadConfiguration') {
+    $effectivePlane = $plane
+    $planeMethod = $Method
+    if ($Method -ceq 'ReadConfiguration') {
         if ($Resource -in @('Agent', 'Workspace')) { throw 'Configuration hydration is restricted to the two named connectors.' }
         $path = "$agent/DataConnectors/$Resource/ListSecrets?api-version=2025-05-01-preview"
+        $planeMethod = 'Post'
+        # ListSecrets only reads (a GET redacts the workspace descriptor) but is a POST, which a read-only plane
+        # refuses. This one fixed, agent-child call uses a writable copy of the plane; nothing else does.
+        $effectivePlane = @{}
+        foreach ($key in $plane.Keys) { $effectivePlane[$key] = $plane[$key] }
+        $effectivePlane['readOnly'] = $false
     }
-    if ($Method -eq 'Put' -and ($Context.readOnly -or $Resource -in @('Agent', 'Workspace') -or
-        $null -eq $Properties -or $Properties.name -cne $Resource)) {
+    if ($Method -ceq 'Put' -and ((Get-AsreMember -Value $Context -Path @('readOnly')) -or $plane['readOnly'] -or
+        $Resource -in @('Agent', 'Workspace') -or $null -eq $Properties -or $Properties['name'] -cne $Resource)) {
         throw 'Only the two named connector configurations may be published.'
     }
-    $arguments = @{
-        Uri = "https://management.azure.com$path"; Method = $(if ($Method -eq 'ReadConfiguration') { 'Post' } else { $Method })
-        Headers = $Context.armHeaders; MaximumRedirection = 0; TimeoutSec = 60
-        SkipHttpErrorCheck = $true
-    }
-    if ($Method -eq 'Put') {
-        $arguments.Body = @{ properties = $Properties } | ConvertTo-Json -Depth 12
-        $arguments.ContentType = 'application/json'
-    }
-    elseif ($Method -eq 'ReadConfiguration') {
-        $arguments.Body = '{}'
-        $arguments.ContentType = 'application/json'
-    }
-    $response = Invoke-WebRequest @arguments
-    if ($response.StatusCode -eq 404 -and $AllowNotFound -and $Method -eq 'Get' -and
-        $Resource -notin @('Agent', 'Workspace')) { return $null }
-    if ($response.StatusCode -notin @(200, 201, 202)) {
-        throw "Native connector $Method $Resource returned HTTP $($response.StatusCode)."
-    }
-    if ($Method -eq 'Put') { return }
-    $data = $response.Content | ConvertFrom-Json -AsHashtable -DateKind String
-    if ($Method -eq 'Get' -and $Resource -notin @('Agent', 'Workspace')) {
+    $arguments = @{ Plane = $effectivePlane; Service = 'Arm'; Method = $planeMethod; Path = $path }
+    if ($Method -ceq 'Put') { $arguments['Body'] = @{ properties = $Properties } }
+    elseif ($Method -ceq 'ReadConfiguration') { $arguments['Body'] = @{} }
+    if ($AllowNotFound -and $Method -ceq 'Get' -and $Resource -notin @('Agent', 'Workspace')) { $arguments['AllowNotFound'] = $true }
+    $response = Invoke-AsreAgentPlaneRequest @arguments
+    $status = $response['status']
+    if ($status -eq 404 -and $arguments.ContainsKey('AllowNotFound')) { return $null }
+    if ($status -notin @(200, 201, 202)) { throw "Native connector $Method $Resource returned HTTP $status." }
+    if ($Method -ceq 'Put') { return }
+    $data = $response['data']
+    if ($data -isnot [System.Collections.IDictionary]) { throw 'The native connector response was not a JSON object.' }
+    if ($Method -ceq 'Get' -and $Resource -notin @('Agent', 'Workspace')) {
         $expectedType = if ($Resource -ceq 'asre-operations-logs') { 'LogAnalytics' } else { 'MonitorClient' }
-        $identity = '/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-asre-agent-cus'
-        if ($data.properties.name -cne $Resource -or $data.properties.dataConnectorType -cne $expectedType -or
-            $data.properties.identity -cne $identity) {
+        $identity = Get-AsreMember -Value $Context -Path @('identity')
+        if ((Get-AsreMember -Value $data -Path @('properties', 'name')) -cne $Resource -or
+            (Get-AsreMember -Value $data -Path @('properties', 'dataConnectorType')) -cne $expectedType -or
+            $identity -isnot [string] -or (Get-AsreMember -Value $data -Path @('properties', 'identity')) -cne $identity) {
             throw "Refusing to read configuration of a foreign connector: $Resource."
         }
         # GET redacts even the workspace descriptor. Hydrate only this owned MI connector, never the collection.
@@ -111,14 +154,22 @@ function Test-OperationsConnectorProperties {
 function Initialize-OperationsConnector {
     [CmdletBinding(SupportsShouldProcess)]
     param([hashtable]$Context, [switch]$VerifyOnly)
-    $identity = '/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-asre-agent-cus'
-    $workspaceId = '/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus'
+    $identity = Get-AsreMember -Value $Context -Path @('identity')
+    $workspaceId = Get-AsreMember -Value $Context -Path @('workspaceId')
+    $workspaceName = Get-AsreMember -Value $Context -Path @('workspaceName')
+    foreach ($value in @($identity, $workspaceId, $workspaceName)) {
+        if ($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value)) {
+            throw 'Connector setup needs the agent, action identity and workspace of the deployment context.'
+        }
+    }
     $agent = Invoke-OperationsConnectorRequest -Context $Context -Resource Agent
     $workspace = Invoke-OperationsConnectorRequest -Context $Context -Resource Workspace
-    if ($agent.properties.actionConfiguration.identity -cne $identity -or
-        $agent.properties.actionConfiguration.mode -cne 'Review' -or
-        $agent.properties.actionConfiguration.accessLevel -cne 'Low' -or
-        $workspace.id -ine $workspaceId -or $workspace.name -cne 'law-asre-cus') {
+    $action = Get-AsreMember -Value $agent -Path @('properties', 'actionConfiguration')
+    if ((Get-AsreMember -Value $action -Path @('identity')) -cne $identity -or
+        (Get-AsreMember -Value $action -Path @('mode')) -cne 'Review' -or
+        (Get-AsreMember -Value $action -Path @('accessLevel')) -cne 'Low' -or
+        (Get-AsreMember -Value $workspace -Path @('id')) -ine $workspaceId -or
+        (Get-AsreMember -Value $workspace -Path @('name')) -cne $workspaceName) {
         throw 'Connector setup requires the existing Review/Low agent, action identity and workspace.'
     }
     $definitions = @(Get-OperationsConnectorDefinitions -Workspace $workspace -Identity $identity)
@@ -126,15 +177,16 @@ function Initialize-OperationsConnector {
     foreach ($definition in $definitions) {
         $actual = Invoke-OperationsConnectorRequest -Context $Context -Resource $definition.name -AllowNotFound
         if ($null -ne $actual) {
-            $properties = $actual.properties
+            $properties = Get-AsreMember -Value $actual -Path @('properties')
+            if ($properties -isnot [System.Collections.IDictionary]) { throw "Connector response was not understood: $($definition.name)." }
             if ($properties.ContainsKey('provisioningState') -and
                 $properties.provisioningState -in @('Failed', 'Canceled', 'Deleting')) {
                 throw "Connector provisioning failed: $($definition.name)."
             }
-            if ($properties.dataConnectorType -cne $definition.dataConnectorType -or
-                $properties.identity -cne $identity -or
+            if ($properties['dataConnectorType'] -cne $definition.dataConnectorType -or
+                $properties['identity'] -cne $identity -or
                 ($definition.name -ceq 'asre-operations-logs' -and
-                 $properties.extendedProperties.armResourceId -ine $workspaceId)) {
+                 (Get-AsreMember -Value $properties -Path @('extendedProperties', 'armResourceId')) -ine $workspaceId)) {
                 throw "Refusing to replace a foreign connector: $($definition.name)."
             }
         }
@@ -155,7 +207,8 @@ function Initialize-OperationsConnector {
         for ($attempt = 0; $attempt -lt 12; $attempt++) {
             $actual = Invoke-OperationsConnectorRequest -Context $Context -Resource $definition.name -AllowNotFound
             if ($null -ne $actual) {
-                $properties = $actual.properties
+                $properties = Get-AsreMember -Value $actual -Path @('properties')
+                if ($properties -isnot [System.Collections.IDictionary]) { throw "Connector response was not understood: $($definition.name)." }
                 if ($properties.ContainsKey('provisioningState') -and
                     $properties.provisioningState -in @('Failed', 'Canceled', 'Deleting')) {
                     throw "Connector provisioning failed: $($definition.name)."
@@ -180,20 +233,12 @@ function Initialize-OperationsConnector {
 }
 
 if ($DefinitionsOnly) { return }
-$action = if ($VerifyOnly -or $WhatIfPreference) { 'Preflight' }
-elseif ($env:servicePrincipalId) { 'PublishDisabled' }
-else { 'PublishHandler' }
-$context = & {
-    param($Action, $Root)
-    # Local definition imports use Set/Remove-Variable; authentication itself only reads.
-    $WhatIfPreference = $false
-    . (Join-Path $Root 'scripts\ReviewAgent.Common.ps1')
-    Get-MonitorNativeContext -Action $Action -Root $Root
-} $action (Split-Path $PSScriptRoot -Parent)
+$deploymentContext = Get-AsreContext
+$plane = Get-AsreAgentPlane -Context $deploymentContext -ReadOnly:($VerifyOnly -or $WhatIfPreference)
 try {
-    Initialize-OperationsConnector -Context $context -VerifyOnly:$VerifyOnly -WhatIf:$WhatIfPreference
+    $connectorContext = New-OperationsConnectorContext -Context $deploymentContext -Plane $plane
+    Initialize-OperationsConnector -Context $connectorContext -VerifyOnly:$VerifyOnly -WhatIf:$WhatIfPreference
 }
 finally {
-    $context.armHeaders.Clear()
-    $context.sreHeaders.Clear()
+    Clear-AsreAgentPlane -Plane $plane
 }

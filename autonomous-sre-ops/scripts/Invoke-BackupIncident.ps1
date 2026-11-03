@@ -8,16 +8,21 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$subscription = '00000001-000a-4000-a000-000000000001'
-$group = 'rg-asre-backup-cus'
-$vm = 'vm-asre-backup-cus'
-$vault = 'rsv-asre-cus'
 if ($ScenarioId -and [guid]::Parse($ScenarioId).ToString() -cne $ScenarioId) { throw 'ScenarioId must be a canonical lowercase UUID.' }
 if ($Action -cne 'Trigger' -and -not $ScenarioId) { throw 'Status/Reset require the original ScenarioId and evidence directory.' }
 if (-not $ScenarioId) { $ScenarioId = [guid]::NewGuid().ToString() }
 if (-not $EvidenceDirectory) { $EvidenceDirectory = Join-Path ([IO.Path]::GetTempPath()) 'asre-infrastructure-evidence' }
 if (-not [IO.Path]::IsPathFullyQualified($EvidenceDirectory)) { throw 'EvidenceDirectory must be absolute.' }
+# The target and the vault come from the deployment context only (reading the file is offline; no Azure call happens before the gate).
+if (-not (Get-Command Get-AsreContext -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'Context.Common.ps1') }
+$context = Get-AsreContext
+$subscription = $context['subscription_id']
+$group = $context['targets']['backup']['resource_group']
+$vm = $context['targets']['backup']['name']
+$vault = $context['recovery_vault']['name']
+$vaultGroup = $context['recovery_vault']['resource_group']
 if (-not $PSCmdlet.ShouldProcess("$subscription/$group/$vm", "$Action bounded backup incident $ScenarioId")) { return }
+Assert-AsreSubscription -Context $context
 $null = [IO.Directory]::CreateDirectory($EvidenceDirectory)
 $prefix = Join-Path $EvidenceDirectory ('backup-' + $ScenarioId)
 function Save-New([string]$Path, [string]$Text) {
@@ -116,7 +121,7 @@ if ($Action -ceq 'Trigger') {
         $guest.faults_enabled -or -not $guest.owned_data_empty -or ($guest.state -and $guest.state.status -cne 'restored')) {
         throw 'A source-exact healthy, empty backup guest with no active episode is required.'
     }
-    $jobs = (& az backup job list --subscription $subscription --resource-group $group --vault-name $vault --output json --only-show-errors) -join "`n"
+    $jobs = (& az backup job list --subscription $subscription --resource-group $vaultGroup --vault-name $vault --output json --only-show-errors) -join "`n"
     if ($LASTEXITCODE) { throw 'Existing native backup job enumeration failed; no new job/fault submitted.' }
     if (@(($jobs | ConvertFrom-Json) | Where-Object {
         $_.properties.status -notin @('Completed','Failed','Cancelled','CompletedWithWarnings')
@@ -127,14 +132,14 @@ if ($Action -ceq 'Trigger') {
         admission_cutoff = $begin.AddSeconds(120).ToUnixTimeSeconds(); target = "$subscription/$group/$vm"
         monitoring_changes = 0; investigations_started = 0; case_or_note_writes = 0; protection_or_policy_changes = 0 }
     Save-New ($prefix + '-intent.json') ($intent | ConvertTo-Json -Depth 6)
-    $raw = (& az backup protection backup-now --subscription $subscription --resource-group $group --vault-name $vault `
-        --backup-management-type AzureIaasVM --container-name 'IaasVMContainer;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus' `
-        --item-name 'VM;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus' --output json --only-show-errors) -join "`n"
+    $raw = (& az backup protection backup-now --subscription $subscription --resource-group $vaultGroup --vault-name $vault `
+        --backup-management-type AzureIaasVM --container-name "IaasVMContainer;iaasvmcontainerv2;$group;$vm" `
+        --item-name "VM;iaasvmcontainerv2;$group;$vm" --output json --only-show-errors) -join "`n"
     $code = $LASTEXITCODE
     Save-New ($prefix + '-native-job.json') $raw
     if ($code) { throw "Backup submission outcome is unknown; do not repeat. Evidence: $prefix" }
     $job = $raw | ConvertFrom-Json -AsHashtable -DateKind String
-    $expected = "/subscriptions/$subscription/resourceGroups/$group/providers/Microsoft.RecoveryServices/vaults/$vault/backupJobs/"
+    $expected = "/subscriptions/$subscription/resourceGroups/$vaultGroup/providers/Microsoft.RecoveryServices/vaults/$vault/backupJobs/"
     if (-not $job.id -or -not $job.id.StartsWith($expected,[StringComparison]::OrdinalIgnoreCase) -or
         $job.properties.operation -cne 'Backup' -or $job.properties.entityFriendlyName -cne $vm -or
         $job.properties.status -cne 'InProgress' -or [guid]::Parse($job.name).ToString() -cne $job.name -or
@@ -157,7 +162,7 @@ if ($Action -ceq 'Reset') {
 }
 $job = Get-Content -LiteralPath ($prefix + '-native-job.json') -Raw | ConvertFrom-Json -AsHashtable -DateKind String
 if ([guid]::Parse($job.name).ToString() -cne $job.name) { throw 'Original native job identity is invalid.' }
-$raw = (& az backup job show --subscription $subscription --resource-group $group --vault-name $vault --name $job.name --output json --only-show-errors) -join "`n"
+$raw = (& az backup job show --subscription $subscription --resource-group $vaultGroup --vault-name $vault --name $job.name --output json --only-show-errors) -join "`n"
 if ($LASTEXITCODE) { throw 'Native backup job status could not be read.' }
 $native = $raw | ConvertFrom-Json -AsHashtable -DateKind String
 if ($native.id -ine $job.id) { throw 'Native backup status returned another job.' }

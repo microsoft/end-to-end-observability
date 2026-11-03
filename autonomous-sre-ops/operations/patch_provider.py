@@ -19,14 +19,13 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID, uuid5
 
-TARGET = (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/"
-    "resourceGroups/rg-asre-patch-cus/providers/Microsoft.Compute/"
-    "virtualMachines/vm-asre-patch-cus"
-)
+from . import context as deployment
+
+CTX = deployment.load()
+TARGET = CTX.targets["patch"].resource_id
 API_VERSION = "2024-07-01"
 COMPUTE_URL = "https://management.azure.com" + TARGET + "/instanceView?api-version=" + API_VERSION
-STORAGE = "https://stasre8a327010f9.blob.core.windows.net/evidence/"
+STORAGE = CTX.storage.blob_endpoint + "/evidence/"
 ARCHIVE_PREFIX = "patch-provider/v1/sha256/"
 SOURCE = "Microsoft.Compute/virtualMachines/instanceView"
 MARKER = "ASRE_PATCH_FAILURE_V1 "

@@ -1,19 +1,17 @@
 """Fixed read-only queries; provider templates match the native Context guide."""
 
-SUBSCRIPTION = "00000001-000a-4000-a000-000000000001"
-TENANT = "00000002-000a-4000-9000-000000000002"
-CONTROL = f"/subscriptions/{SUBSCRIPTION}/resourceGroups/rg-asre-control-cus"
-AGENT_ID = CONTROL + "/providers/Microsoft.App/agents/asre-demo-cus"
-WORKSPACE_ID = CONTROL + "/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus"
-LINUX_ID = (
-    f"/subscriptions/{SUBSCRIPTION}/resourceGroups/rg-asre-linux-cus"
-    "/providers/Microsoft.Compute/virtualMachines/vm-asre-linux-cus"
-)
-PATCH_ID = LINUX_ID.replace("linux", "patch")
-BACKUP_VAULT = (
-    f"/subscriptions/{SUBSCRIPTION}/resourceGroups/rg-asre-backup-cus"
-    "/providers/Microsoft.RecoveryServices/vaults/rsv-asre-cus"
-)
+from dashboard import context as deployment
+
+CTX = deployment.load()
+
+SUBSCRIPTION = CTX.subscription_id
+TENANT = CTX.tenant_id
+CONTROL = CTX.resource_group_id("control")
+AGENT_ID = CTX.agent.resource_id
+WORKSPACE_ID = CTX.log_analytics.resource_id
+LINUX_ID = CTX.targets["linux"].resource_id
+PATCH_ID = CTX.targets["patch"].resource_id
+BACKUP_VAULT = CTX.recovery_vault.resource_id
 RULE_NAMES = ("disk", "patch-installation", "noise-overlap", "capacity-growth", "backup-job")
 RULE_IDS = tuple(
     CONTROL + "/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-" + name
@@ -21,6 +19,10 @@ RULE_IDS = tuple(
 )
 WINDOWS = {"1h": "PT1H", "6h": "PT6H", "24h": "PT24H", "7d": "P7D"}
 BUCKETS = {"1h": "5m", "6h": "5m", "24h": "5m", "7d": "15m"}
+_RULE_LIST = ",\n    ".join('"' + rule + '"' for rule in RULE_IDS)
+_PATCH_GROUP = CTX.targets["patch"].resource_group
+_BACKUP_GROUP = CTX.recovery_vault.resource_group
+_BACKUP_VM = CTX.targets["backup"].name
 
 QUERIES = {
     "filesystem": f'''Perf
@@ -34,16 +36,12 @@ QUERIES = {
     by bucket=bin(TimeGenerated, 5m), resource_id=_ResourceId, mount=InstanceName
 | order by bucket asc
 | limit 1000''',
-    "alerts": '''arg("").AlertsManagementResources
-| where subscriptionId =~ "00000001-000a-4000-a000-000000000001"
+    "alerts": f'''arg("").AlertsManagementResources
+| where subscriptionId =~ "{SUBSCRIPTION}"
 | where type =~ "microsoft.alertsmanagement/alerts"
 | extend p=parse_json(properties)
 | where tostring(p.essentials.alertRule) in~ (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-disk",
-    "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-patch-installation",
-    "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-noise-overlap",
-    "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-capacity-growth",
-    "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-backup-job")
+    {_RULE_LIST})
 | extend fired_at=todatetime(p.essentials.startDateTime)
 | where fired_at >= ago(24h)
 | project alert_id=id, fired_at, rule_id=tostring(p.essentials.alertRule),
@@ -53,11 +51,11 @@ QUERIES = {
     alert_target_id=tostring(p.essentials.targetResource)
 | order by fired_at desc
 | limit 1000''',
-    "patch": '''arg("").PatchInstallationResources
-| where subscriptionId =~ "00000001-000a-4000-a000-000000000001"
+    "patch": f'''arg("").PatchInstallationResources
+| where subscriptionId =~ "{SUBSCRIPTION}"
 | where type =~ "microsoft.compute/virtualmachines/patchinstallationresults"
-| where resourceGroup =~ "rg-asre-patch-cus"
-| where id startswith "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-patch-cus/providers/Microsoft.Compute/virtualMachines/vm-asre-patch-cus/patchInstallationResults/"
+| where resourceGroup =~ "{_PATCH_GROUP}"
+| where id startswith "{PATCH_ID}/patchInstallationResults/"
 | extend p=parse_json(properties)
 | extend observed_at=todatetime(p.lastModifiedDateTime)
 | where observed_at >= ago(24h)
@@ -68,15 +66,15 @@ QUERIES = {
     reboot_status=tostring(p.rebootStatus)
 | order by observed_at desc
 | limit 1000''',
-    "backup": '''arg("").RecoveryServicesResources
-| where subscriptionId =~ "00000001-000a-4000-a000-000000000001"
+    "backup": f'''arg("").RecoveryServicesResources
+| where subscriptionId =~ "{SUBSCRIPTION}"
 | where type =~ "microsoft.recoveryservices/vaults/backupjobs"
-| where resourceGroup =~ "rg-asre-backup-cus"
-| where id startswith "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-backup-cus/providers/Microsoft.RecoveryServices/vaults/rsv-asre-cus/backupJobs/"
+| where resourceGroup =~ "{_BACKUP_GROUP}"
+| where id startswith "{BACKUP_VAULT}/backupJobs/"
 | extend p=parse_json(properties)
 | where tostring(p.backupManagementType) == "AzureIaasVM"
 | where tostring(p.operation) == "Backup"
-| where tostring(p.entityFriendlyName) == "vm-asre-backup-cus"
+| where tostring(p.entityFriendlyName) == "{_BACKUP_VM}"
 | extend started_at=todatetime(p.startTime)
 | where started_at >= ago(24h)
 | project job_id=id, started_at, ended_at=todatetime(p.endTime),

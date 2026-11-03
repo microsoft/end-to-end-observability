@@ -5,9 +5,11 @@ from __future__ import annotations
 import io
 import json
 
+from operations import context
 from operations.lifecycle import TARGETS, normalized_target
 
-ADDRESSES = {"linux": "10.42.0.10", "patch": "10.42.0.11", "backup": "10.42.0.12"}
+CTX = context.load()
+ADDRESSES = {role: target.address for role, target in CTX.targets.items()}
 
 
 class GuestError(RuntimeError):

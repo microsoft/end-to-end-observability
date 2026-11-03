@@ -10,9 +10,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$subscription = '00000001-000a-4000-a000-000000000001'
-$group = 'rg-asre-linux-cus'
-$vm = 'vm-asre-linux-cus'
 if ($ScenarioId -and ([guid]::Parse($ScenarioId).ToString() -cne $ScenarioId)) {
     throw 'ScenarioId must be a canonical lowercase UUID.'
 }
@@ -20,7 +17,14 @@ if ($Action -ceq 'Reset' -and -not $ScenarioId) { throw 'Reset requires the orig
 if ($Action -ceq 'Trigger' -and -not $ScenarioId) { $ScenarioId = [guid]::NewGuid().ToString() }
 if (-not $EvidenceDirectory) { $EvidenceDirectory = Join-Path ([IO.Path]::GetTempPath()) 'asre-infrastructure-evidence' }
 if (-not [IO.Path]::IsPathFullyQualified($EvidenceDirectory)) { throw 'EvidenceDirectory must be absolute.' }
+# The target comes from the deployment context only (reading the file is offline; no Azure call happens before the gate).
+if (-not (Get-Command Get-AsreContext -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'Context.Common.ps1') }
+$context = Get-AsreContext
+$subscription = $context['subscription_id']
+$group = $context['targets']['linux']['resource_group']
+$vm = $context['targets']['linux']['name']
 if (-not $PSCmdlet.ShouldProcess("$subscription/$group/$vm", "$Action $Fault incident $ScenarioId")) { return }
+Assert-AsreSubscription -Context $context
 $null = [IO.Directory]::CreateDirectory($EvidenceDirectory)
 $prefix = Join-Path $EvidenceDirectory ("linux-$($Action.ToLowerInvariant())-" + [guid]::NewGuid())
 function Save-New([string]$Suffix, [string]$Text) {

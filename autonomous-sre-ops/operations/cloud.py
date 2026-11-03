@@ -8,11 +8,13 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from operations import context
 from operations.lifecycle import SUBSCRIPTION, TARGETS, normalized_target
 
+CTX = context.load()
 ARM = "https://management.azure.com"
-WORKSPACE = f"/subscriptions/{SUBSCRIPTION}/resourceGroups/rg-asre-control-cus/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus"
-VAULT = f"/subscriptions/{SUBSCRIPTION}/resourceGroups/rg-asre-backup-cus/providers/Microsoft.RecoveryServices/vaults/rsv-asre-cus"
+WORKSPACE = CTX.log_analytics.resource_id
+VAULT = CTX.recovery_vault.resource_id
 MAX_RESPONSE = 4 * 1024 * 1024
 
 
@@ -90,8 +92,9 @@ class AzureReader:
                 datetime.now(timezone.utc) - timedelta(days=7)
             ).strftime("%Y-%m-%dT%H:%M:%SZ") + "'"}),
         )
-        container = "iaasvmcontainer;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus"
-        item = "vm;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus"
+        protected = CTX.targets["backup"]
+        container = f"iaasvmcontainer;iaasvmcontainerv2;{protected.resource_group};{protected.name}"
+        item = f"vm;iaasvmcontainerv2;{protected.resource_group};{protected.name}"
         points = self.request(
             "GET", ARM + VAULT + "/backupFabrics/Azure/protectionContainers/" + container
             + "/protectedItems/" + item + "/recoveryPoints?api-version=2024-04-01",

@@ -15,6 +15,7 @@ def _runtime():
     import importlib.util
     import io
     import json
+    import os
     import sys
     import tempfile
     import zipfile
@@ -25,7 +26,8 @@ def _runtime():
         with zipfile.ZipFile(io.BytesIO(base64.b64decode(__CASE_TOOL_BUNDLE__, validate=True))) as archive:
             allowed = {
                 "_asre_case/__init__.py", "_asre_case/agent_case.py", "_asre_case/servicenow.py",
-                "_asre_case/patch_provider.py",
+                "_asre_case/patch_provider.py", "_asre_case/context.py",
+                "_asre_case/context.json",
                 "_asre_case/commissioning.json",
                 "_asre_case/runtime-configuration.json",
                 *("_asre_case/contracts/" + name + ".schema.json" for name in (
@@ -44,7 +46,12 @@ def _runtime():
             raise RuntimeError("An unrelated case-tool package is already loaded.")
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
+        # The bundled context is authoritative: the bundled modules capture it at import, so the
+        # environment is only overridden while they load and is restored on success and on failure.
+        previous = {name: os.environ.get(name) for name in ("ASRE_CONTEXT", "ASRE_CONTEXT_FILE")}
         try:
+            os.environ.pop("ASRE_CONTEXT", None)
+            os.environ["ASRE_CONTEXT_FILE"] = str(package / "context.json")
             spec.loader.exec_module(module)
             from _asre_case import agent_case
             agent_case.freeze_runtime_configuration(json.loads((package / "runtime-configuration.json").read_text(encoding="utf-8")))
@@ -53,6 +60,12 @@ def _runtime():
                 if name == "_asre_case" or name.startswith("_asre_case."):
                     sys.modules.pop(name, None)
             raise
+        finally:
+            for name, value in previous.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
         _case_runtime, _case_directory = agent_case, directory
         return agent_case
     except Exception:

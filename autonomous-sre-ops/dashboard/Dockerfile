@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-COPY __init__.py server.py queries.py journey.py index.html evidence.html ./dashboard/
+COPY __init__.py context.py server.py queries.py journey.py index.html evidence.html ./dashboard/
 USER 65532:65532
 EXPOSE 8765
 ENTRYPOINT ["python", "-m", "dashboard.server"]

@@ -1,8 +1,10 @@
 # ASRE incident journey console
 
-Run from the repository root with the existing Python environment:
+Run from the subproject root (`autonomous-sre-ops\`) with the existing Python environment and a
+deployment context (see **Deployment context**):
 
 ```powershell
+$env:ASRE_CONTEXT_FILE = "$PWD\infra\environments\context.generated.json"
 .\.venv\Scripts\python.exe -m dashboard.server
 ```
 
@@ -19,12 +21,39 @@ For a new checkout, create a Python 3.11+ environment and install
 `dashboard\requirements.txt`. Azure CLI must be installed and signed in:
 
 ```powershell
-az login --tenant 00000002-000a-4000-9000-000000000002
+az login --tenant <tenant-id>
 ```
 
-The adapter pins its credential's tenant and every resource/query's subscription;
-it does not change the shared Azure CLI default subscription. Tokens stay in server memory,
+Use the `tenant_id` of the deployment context. The adapter pins its credential's tenant and every
+resource/query's subscription, and both come from the context; it does not change the shared Azure CLI
+default subscription. Tokens stay in server memory,
 never in HTML, responses, browser storage or source files.
+
+## Deployment context
+
+Every deployment-specific value (subscription, tenant, resource ids, the ServiceNow origin) comes from the
+deployment context document, never from the source:
+
+- **Hosted:** Terraform sets the static `ASRE_CONTEXT` environment variable on the container app.
+- **Local viewer:** point `ASRE_CONTEXT_FILE` at the context written by `scripts/Export-AsreContext.ps1`
+  after an apply:
+
+  ```powershell
+  $env:ASRE_CONTEXT_FILE = '<repo>\autonomous-sre-ops\infra\environments\context.generated.json'
+  ```
+
+There is **no default**: without a context the modules raise `ContextError` at import. The dashboard needs
+only the core context. It works without the optional `servicenow` section (no case reference is then
+recognised), without `agent.endpoint` (the endpoint is read from the agent's ARM resource) and without
+`operator_object_id`.
+
+`dashboard\context.py` is a byte-identical vendored copy of `operations\context.py`, because the image build
+context is `dashboard\` and cannot see `operations\`. `tests/test_dashboard_context.py` pins the equality;
+refresh the copy with:
+
+```powershell
+Copy-Item operations\context.py dashboard\context.py
+```
 
 ## Journey evidence and actions
 
@@ -46,7 +75,8 @@ and approval prompts are excluded. A completed PostToolUse hook does not prove
 that a named tool succeeded. Eligible events are capped at the last 250.
 
 Case links are extracted only from native public agent messages and restricted
-to the known ServiceNow instance and incident/sys_id URL shape. They are labeled
+to the deployment context's ServiceNow origin and the incident/sys_id URL shape;
+with no `servicenow` section no reference is ever recognised. They are labeled
 **agent-reported references**, not independently verified case delivery or live
 case state. Delivery verification remains Not observed until an independent
 case/findings receipt source is bound. No case closure or recovery is inferred.
@@ -74,7 +104,9 @@ mark retained data stale; selecting another incident discards the old journey.
   provider access: Azure Monitor can suppress underlying ARG errors.
 
 The three default-24h provider queries exactly match
-`agent\knowledge\asre-live-report-sources-v1.md`. Closed period choices change
+`agent\knowledge\asre-live-report-sources-v1.md` as rendered for the deployment
+(`scripts/Render-AgentAssets.ps1`); the checked-in guide carries the synthetic test
+context, and `tests/test_dashboard.py` pins the equality under it. Closed period choices change
 the provider's own timestamp predicate as well as the API timespan. Filesystem
 charts use interval means, not instantaneous readings; the seven-day choice
 uses 15-minute bins to stay below the 1,000-row cap.
@@ -109,8 +141,10 @@ panel. Do not elevate to Administrator just to fill a dashboard card.
 The agent endpoint and workspace customer ID are resolved from their fixed ARM
 resources each refresh, so redeployment does not require editing a dynamic
 hostname or customer ID. The native plan, schedule and connectors are selected
-by their owned names. Changing the lab's subscription/resource names requires
-an intentional update to the fixed scope and provider templates.
+by their owned names. Subscription, tenant and resource ids come from the
+deployment context; resource names follow the fixed `asre` convention, which the
+context loader enforces, so a different convention is a deliberate code change
+(the queries, the rule ids and the loader).
 
 Shared deployment requires Entra viewer authorization and a dedicated
 least-privilege read identity. Do not expose the local mode publicly, add a
@@ -147,44 +181,56 @@ hostname. Its response describes process health, not successful Azure access.
 The platform's authenticated ingress and actual source-read permissions require
 separate deployment verification.
 
+The offline tests need a context too. pytest sets one by itself (the committed synthetic fixture); plain
+`unittest discover` needs `ASRE_CONTEXT_FILE` to point at a context file. The synthetic fixture
+`tests\fixtures\context.synthetic.json` is fine for tests, never for a real run:
+
 ```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_dashboard.py tests\test_dashboard_journey.py tests\test_dashboard_context.py -q
+$env:ASRE_CONTEXT_FILE = "$PWD\tests\fixtures\context.synthetic.json"
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p test_dashboard.py
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p test_dashboard_journey.py
 ```
 
-## Protected Azure hosting
+## Azure hosting (deferred phase)
 
-The hosting increment uses `.pipelines/dashboard.yml` and the existing
-protected Terraform/ADO saved-plan workflow, not local Terraform apply or azd.
-The new child retains the required shared parent, private `alz-mgmt` pool,
-Plan/Apply environments and immutable exact-source publication. Its
-`ASRE_RUNTIME_IMAGE_KIND=dashboard` selects only `asre-dashboard`; the existing
-operations pipeline defaults to `asre-operations`.
+The dashboard is a deferred component and is not deployed with the foundation. The image is
+built from a workstation with `scripts/Build-RuntimeImages.ps1` and `ASRE_RUNTIME_IMAGE_KIND=dashboard`, which
+selects only the `asre-dashboard` repository (the default kind builds `asre-operations`); the image digest
+comes from the `image-provenance.json` that the build writes. The infrastructure is planned and applied with
+`scripts/Invoke-Terraform.ps1 -Action Plan|Apply` from a reviewed saved plan. See `docs/deployment.md` for the sequence.
 
-`infra/dashboard.tf` is off by default. The `dashboard` input has four phases:
+`infra/dashboard.tf` is off by default. The `dashboard` input has four phases; every phase other than
+`disabled` also requires the field `viewer_group_id` (a lowercase GUID) and `operator_object_id` in the
+deployment inputs:
 
 | Phase | Effect |
 |---|---|
 | `disabled` | No dashboard resources |
-| `bootstrap` | New dashboard group/environment/identity/vault and scoped read/pull grants; no app |
+| `bootstrap` | New dashboard group/environment/identity/vault and scoped read/pull grants; no app. Names derive from the deployment's `name_suffix` |
 | `private` | Digest-pinned app, internal ingress and native Entra group authentication |
 | `public` | Publish HTTPS only after private authentication/source verification |
 
 Use the actual image provenance digest, not `latest` or a guessed digest.
-The approved viewer security group is **vigil**
-(`00000042-000a-4000-8000-000000000042`). Native authentication uses
+The viewer group is the Entra security group whose object id the operator supplies as
+`dashboard.viewer_group_id` (Terraform) and `-ViewerGroupId` (bootstrap helper); the helper cross-checks both
+and verifies it is an enabled security group in the tenant. Native authentication uses
 `allowedPrincipals.groups`, single-tenant issuance and `SecurityGroup` token
 claims. Missing or group-overage claims must not become all-tenant access.
 Do not change membership as part of deployment.
 
-Only after approved protected foundation Apply, the deployment owner can run:
+Only after the reviewed foundation apply (`phase = "bootstrap"`), the operator named in
+`operator_object_id` (the signed-in user must be that principal) can run:
 
 ```powershell
 .\scripts\Initialize-DashboardAuthentication.ps1 `
   -OutputsFile <actual-foundation-deployment-outputs.json> `
   -MetadataPath <ignored-session-directory>\dashboard-authentication.json `
+  -ViewerGroupId <viewer-group-id> `
   -Execute
 ```
+
+`-OutputsFile` is `terraform -chdir=infra output -json` saved to an ignored session directory.
 
 The helper verifies the tenant-pinned operator, group and exact foundation.
 It creates only the owned dashboard registration/enterprise application and a
@@ -197,7 +243,7 @@ Resolve that recorded key before retrying. Rotation is a separate operation.
 Before issuing a real credential, it checks newly propagated vault set access
 using a disabled, noncredential version at the owned secret name.
 
-Terraform receives only `image_digest`, `entra_client_id` and
+Besides the viewer group, Terraform receives only `image_digest`, `entra_client_id` and
 `secret_version_uri`. The app uses AzAPI metadata reads and a Key Vault
 reference: no Plan `listSecrets` grant or actual credential value is needed.
 No workspace shared keys, log-export jobs, SRE writes, tool invocation or
@@ -216,7 +262,7 @@ at one or logging ticket/incident contents. A partial probe remains a warning,
 not an application health success claim. Public startup does not run this
 qualification probe.
 
-The existing private operations environment and ServiceNow feedback worker
+The private operations environment and the feedback worker
 are not changed. The new app scales from zero to one replica; open tabs can
 keep it active. The modeled compute/request subtotal is USD 0.85/month before
 shared grants for one active hour/day and 100,000 requests/month. Logs,

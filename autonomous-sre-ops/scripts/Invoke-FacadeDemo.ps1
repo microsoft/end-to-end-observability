@@ -7,6 +7,9 @@ Prepare/check are offline. Live commands require an explicitly named, already
 established CURRENT USER Microsoft.PowerShell.SecretStore vault and reference.
 This script never installs, registers, unlocks, searches for, or falls back to
 another vault. Python output is deliberately discarded, including on failure.
+The deployment context (ASRE_CONTEXT_FILE, else infra/environments/context.generated.json)
+is validated here and handed to the child as ASRE_CONTEXT_FILE; it must carry the
+ServiceNow section, and the default client id is the one it names.
 Exit codes: 0 completed, 1 command failed, 2 not ready (nothing launched).
 #>
 [CmdletBinding()]
@@ -17,7 +20,7 @@ param(
     [string]$State,
     [string]$InputPath,
     [switch]$Synthetic,
-    [string]$ClientId = '0000000000000000000000000000003a',
+    [string]$ClientId,
     [string]$VaultName,
     [string]$SecretName,
     [switch]$EstablishedCurrentUserStore,
@@ -60,6 +63,16 @@ try {
     if (($actionName -eq 'reconcile') -ne $PSBoundParameters.ContainsKey('Write')) {
         throw 'Reconcile requires an explicit write kind.'
     }
+    # The context is read and validated here, offline; a synthetic or incomplete one is "not ready".
+    if (-not (Get-Command Get-AsreContext -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'Context.Common.ps1') }
+    $contextFile = $env:ASRE_CONTEXT_FILE
+    if ([string]::IsNullOrWhiteSpace($contextFile)) {
+        $contextFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'infra\environments\context.generated.json'
+    }
+    $contextFile = [IO.Path]::GetFullPath($contextFile)
+    $context = Get-AsreContext -Path $contextFile
+    if ($null -eq $context['servicenow']) { throw 'The context has no ServiceNow section.' }
+    if (-not $PSBoundParameters.ContainsKey('ClientId')) { $ClientId = [string]$context['servicenow']['client_id'] }
     if ($live -and ($ClientId -cnotmatch '^[0-9a-f]{32}$' -or
             -not $EstablishedCurrentUserStore -or
             [string]::IsNullOrWhiteSpace($VaultName) -or
@@ -153,6 +166,9 @@ try {
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
     $startInfo.StandardInputEncoding = [Text.UTF8Encoding]::new($false, $true)
+    # The child reads exactly the validated document; an inherited inline context would otherwise compete with it.
+    $startInfo.Environment['ASRE_CONTEXT_FILE'] = $contextFile
+    [void]$startInfo.Environment.Remove('ASRE_CONTEXT')
     foreach ($argument in $arguments) { $startInfo.ArgumentList.Add($argument) }
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $startInfo

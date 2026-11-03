@@ -5,23 +5,18 @@ param(
     [ValidateRange(5, 120)][int]$MaxFaultMinutes = 120,
     [ValidateRange(35, 150)][int]$WatchdogMinutes = 150,
     [string]$ScenarioId,
-    [string]$EvidenceDirectory
+    [string]$EvidenceDirectory,
+    [string]$ContextPath
 )
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 Set-StrictMode -Version Latest
-$subscription = '00000001-000a-4000-a000-000000000001'
-$group = 'rg-asre-backup-cus'
-$vm = 'vm-asre-backup-cus'
-$vault = 'rsv-asre-cus'
+# Conventions of the demo environment (not deployment identifiers): the policy scope is the resource group Azure Backup
+# creates for restore points, the assignment and task names are fixed, and the canary needs only some Azure region.
 $backupGroup = 'AzureBackupRG_centralus_1'
 $assignmentName = 'asre-demo-bkp-deny-probe'
 $taskName = 'asre-bkp-policy-probe-watchdog'
-$scope = "/subscriptions/$subscription/resourceGroups/$backupGroup"
-$assignmentUrl = "https://management.azure.com$scope/providers/Microsoft.Authorization/policyAssignments/${assignmentName}?api-version=2023-04-01"
-$containerName = 'IaasVMContainer;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus'
-$itemName = 'VM;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus'
-$jobPrefix = "/subscriptions/$subscription/resourceGroups/$group/providers/Microsoft.RecoveryServices/vaults/$vault/backupJobs/"
+# Azure built-in policy definition "Not allowed resource types": the same in every tenant, not a deployment identifier.
 $builtinId = '/providers/Microsoft.Authorization/policyDefinitions/6c112d4e-5bc7-47ae-a041-ea2d9dccd749'
 $deniedTypes = @(
     'Microsoft.Compute/restorePointCollections'
@@ -58,7 +53,27 @@ if (-not [IO.Path]::IsPathFullyQualified($EvidenceDirectory)) { throw 'EvidenceD
 $EvidenceDirectory = [IO.Path]::GetFullPath($EvidenceDirectory).TrimEnd('\', '/')
 if ($EvidenceDirectory.Length -le 2) { throw 'EvidenceDirectory must not be a drive root.' }
 if ($Action -ceq 'Trigger' -and $WatchdogMinutes -lt $MaxFaultMinutes + 30) { throw 'WatchdogMinutes must be at least 30 minutes after MaxFaultMinutes.' }
+# The target and the vault come from the deployment context only (reading the file is offline; no Azure call happens before
+# the gate). The resolved absolute path is handed to the watchdog, whose fresh session must read the same document.
+if (-not (Get-Command Get-AsreContext -ErrorAction SilentlyContinue)) { . (Join-Path $PSScriptRoot 'Context.Common.ps1') }
+$contextFile = $ContextPath
+if ([string]::IsNullOrWhiteSpace($contextFile)) { $contextFile = $env:ASRE_CONTEXT_FILE }
+if ([string]::IsNullOrWhiteSpace($contextFile)) { $contextFile = Join-Path (Split-Path $PSScriptRoot -Parent) 'infra\environments\context.generated.json' }
+$contextFile = [IO.Path]::GetFullPath($contextFile)
+if ($contextFile.Contains('"')) { throw 'ContextPath must not contain a quotation mark.' }
+$context = Get-AsreContext -Path $contextFile
+$subscription = $context['subscription_id']
+$group = $context['targets']['backup']['resource_group']
+$vm = $context['targets']['backup']['name']
+$vault = $context['recovery_vault']['name']
+$vaultGroup = $context['recovery_vault']['resource_group']
+$scope = "/subscriptions/$subscription/resourceGroups/$backupGroup"
+$assignmentUrl = "https://management.azure.com$scope/providers/Microsoft.Authorization/policyAssignments/${assignmentName}?api-version=2023-04-01"
+$containerName = "IaasVMContainer;iaasvmcontainerv2;$group;$vm"
+$itemName = "VM;iaasvmcontainerv2;$group;$vm"
+$jobPrefix = "/subscriptions/$subscription/resourceGroups/$vaultGroup/providers/Microsoft.RecoveryServices/vaults/$vault/backupJobs/"
 if ($Action -cne 'Preflight' -and -not $PSCmdlet.ShouldProcess("$subscription/$backupGroup", "$Action bounded policy-deny backup probe $ScenarioId")) { return }
+Assert-AsreSubscription -Context $context
 $null = [IO.Directory]::CreateDirectory($EvidenceDirectory)
 $prefix = Join-Path $EvidenceDirectory ('backup-policy-' + $ScenarioId)
 $invocation = $prefix + '-' + $Action.ToLowerInvariant() + '-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')
@@ -135,7 +150,7 @@ function Get-AssignmentState {
     return 'unknown: ' + $r.Text
 }
 function Get-BackupJob([string]$Name) {
-    $r = Invoke-Az @('backup', 'job', 'show', '--subscription', $subscription, '--resource-group', $group, '--vault-name', $vault, '--name', $Name, '--output', 'json') -AllowFailure
+    $r = Invoke-Az @('backup', 'job', 'show', '--subscription', $subscription, '--resource-group', $vaultGroup, '--vault-name', $vault, '--name', $Name, '--output', 'json') -AllowFailure
     if ($r.Code -eq 0) { Read-Json $r }
 }
 function Get-ArgJob([string]$QueryFile) {
@@ -143,7 +158,7 @@ function Get-ArgJob([string]$QueryFile) {
     if ($r.Code -eq 0) { @(Get-Path (Read-Json $r) 'data') | Select-Object -First 1 }
 }
 function Get-ItemState {
-    $r = Invoke-Az @('backup', 'item', 'list', '--subscription', $subscription, '--resource-group', $group, '--vault-name', $vault, '--backup-management-type', 'AzureIaasVM', '--workload-type', 'VM', '--output', 'json') -AllowFailure
+    $r = Invoke-Az @('backup', 'item', 'list', '--subscription', $subscription, '--resource-group', $vaultGroup, '--vault-name', $vault, '--backup-management-type', 'AzureIaasVM', '--workload-type', 'VM', '--output', 'json') -AllowFailure
     if ($r.Code -ne 0) { return $r.Text }
     @(Read-Json $r) | ForEach-Object { [ordered]@{ name = (Get-Path $_ 'name'); protectionState = (Get-Path $_ 'properties', 'protectionState'); healthStatus = (Get-Path $_ 'properties', 'healthStatus'); lastBackupStatus = (Get-Path $_ 'properties', 'lastBackupStatus'); lastBackupTime = (Get-Path $_ 'properties', 'lastBackupTime') } }
 }
@@ -205,7 +220,7 @@ function Invoke-Preflight {
     if ($state -cne 'absent') { throw "Unexpected assignment lookup result: $state" }
     if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) { throw 'The watchdog task already exists; run -Action Cleanup for the previous episode before starting.' }
 
-    $jobs = @(Read-Json (Invoke-Az @('backup', 'job', 'list', '--subscription', $subscription, '--resource-group', $group, '--vault-name', $vault, '--output', 'json')))
+    $jobs = @(Read-Json (Invoke-Az @('backup', 'job', 'list', '--subscription', $subscription, '--resource-group', $vaultGroup, '--vault-name', $vault, '--output', 'json')))
     if (@($jobs | Where-Object { (Get-Path $_ 'properties', 'status') -notin $terminal }).Count) { throw 'A vault backup job is not terminal; not starting.' }
 
     $rgRes = @(Read-Json (Invoke-Az @('resource', 'list', '--subscription', $subscription, '--resource-group', $backupGroup, '--output', 'json')))
@@ -227,7 +242,7 @@ function Invoke-Trigger {
     try {
         # The watchdog is armed before any fault exists.
         $watchdogAt = (Get-Date).AddMinutes($WatchdogMinutes)
-        $taskArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -Action Cleanup -ScenarioId {1} -EvidenceDirectory "{2}"' -f $PSCommandPath, $ScenarioId, $EvidenceDirectory
+        $taskArguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -ContextPath "{3}" -Action Cleanup -ScenarioId {1} -EvidenceDirectory "{2}"' -f $PSCommandPath, $ScenarioId, $EvidenceDirectory, $contextFile
         $taskAction = New-ScheduledTaskAction -Execute (Join-Path $PSHOME 'pwsh.exe') -Argument $taskArguments
         $taskTrigger = New-ScheduledTaskTrigger -Once -At $watchdogAt
         $taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
@@ -273,7 +288,7 @@ function Invoke-Trigger {
         } else {
             Write-Log ('policy enforced after {0:n0}s; submitting ONE on-demand backup' -f ($enforcedAt - $assignedAt).TotalSeconds)
             $submittedAt = [DateTimeOffset]::UtcNow
-            $submit = Invoke-Az @('backup', 'protection', 'backup-now', '--subscription', $subscription, '--resource-group', $group, '--vault-name', $vault, '--backup-management-type', 'AzureIaasVM', '--container-name', $containerName, '--item-name', $itemName, '--output', 'json') -AllowFailure
+            $submit = Invoke-Az @('backup', 'protection', 'backup-now', '--subscription', $subscription, '--resource-group', $vaultGroup, '--vault-name', $vault, '--backup-management-type', 'AzureIaasVM', '--container-name', $containerName, '--item-name', $itemName, '--output', 'json') -AllowFailure
             Save-New ($prefix + '-native-job.json') ($submit.Text + "`n")
             if ($submit.Code -ne 0) { throw 'backup-now outcome unknown; not repeating. See native-job.json and list vault jobs.' }
             $job = Read-Json $submit

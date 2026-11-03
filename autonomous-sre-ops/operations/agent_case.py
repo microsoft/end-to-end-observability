@@ -29,6 +29,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID, uuid5
 from xml.etree import ElementTree
 
+from . import context as deployment
 from . import patch_provider as patch
 
 from .servicenow import (
@@ -36,16 +37,13 @@ from .servicenow import (
     Contracts, ServiceNowError, canonical_uuid,
 )
 
-RESOURCE = (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/"
-    "resourceGroups/rg-asre-linux-cus/providers/Microsoft.Compute/"
-    "virtualMachines/vm-asre-linux-cus"
-)
-RULE = (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/"
-    "resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/"
-    "scheduledQueryRules/asre-demo-disk"
-)
+CTX = deployment.load()
+# Both optional context parts (ServiceNow, agent endpoint) are mandatory here: ContextError otherwise.
+CTX.require_servicenow()
+CTX.require_agent_endpoint()
+
+RESOURCE = CTX.targets["linux"].resource_id
+RULE = CTX.resource_group_id("control") + "/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-disk"
 QUERY = (
     'Perf | where _ResourceId =~ "' + RESOURCE + '" '
     '| where ObjectName == "Logical Disk" and CounterName == "% Used Space" '
@@ -54,11 +52,12 @@ QUERY = (
 )
 NAMESPACE = UUID("91b92a24-4bb0-580f-9b2a-05a85c649dd7")
 PREFIX = "case-intents/v1/"
-STORAGE = "https://stasre8a327010f9.blob.core.windows.net"
+STORAGE = CTX.storage.blob_endpoint
 CONTAINER = "evidence"
-SECRET_URL = "https://kv-asre-8a327010f9.vault.azure.net/secrets/asre-facade-client-credential?api-version=7.4"
-UAMI = "00000028-000a-4000-9000-000000000028"
-FACADE_CLIENT = "0000000000000000000000000000005a"
+SECRET_URL = CTX.key_vault.uri + "secrets/asre-facade-client-credential?api-version=7.4"
+# The case tool runs in the managed agent's sandbox as the agent identity.
+UAMI = CTX.identities["agent"].client_id
+FACADE_CLIENT = CTX.require_servicenow().facade_client_id
 LIMIT = 192000
 PATCH_DISPLAY_LIMIT = 3072  # Internal canonical-JSON budget, not a platform limit.
 # Escaped JSON string content bytes, excluding the surrounding quotes.
@@ -69,21 +68,19 @@ PATCH_DETAIL_LIMIT = 3
 _NATIVE_COLLECTION_LIMIT = 1048576
 TERMINAL = {"applied", "already_applied"}
 RECEIPT_PREFIX = STORAGE + "/evidence/tool-results/"
-WORKSPACE = (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/"
-    "resourcegroups/rg-asre-control-cus/providers/microsoft.operationalinsights/"
-    "workspaces/law-asre-cus"
-)
-SRE_ORIGIN = "https://asre-demo-cus--0a1b2c3d.4e5f6a7b.centralus.azuresre.ai"
+WORKSPACE = CTX.log_analytics.resource_id.lower()
+SRE_ORIGIN = CTX.require_agent_endpoint()
 SRE_SCOPE = "https://azuresre.dev/.default"
-LOG_QUERY_URL = "https://api.loganalytics.io/v1/workspaces/00000062-000a-4000-8000-000000000062/query"
-LOG_WORKSPACE_ID = "00000062-000a-4000-8000-000000000062"
+LOG_WORKSPACE_ID = CTX.log_analytics.customer_id
+LOG_QUERY_URL = "https://api.loganalytics.io/v1/workspaces/" + LOG_WORKSPACE_ID + "/query"
 ALERT_FRESHNESS_SECONDS = 900  # Age of this alert, not lifetime after commissioning.
 BACKUP_MAX_EVALUATION_LAG_SECONDS = 3600  # Observed stale-window lag is ~1806 s. Stored Backup intents re-validate with this bound; never lower it.
 NATIVE_DTO_VERSION = "azmonitor-incident/v1"
-NATIVE_RULE_ID = "azmon:v2:arm-rule:000000000000000000000000000000000000000000000000000000000000015A"
+# The disk rule's canonical incident id is platform-computed and known only after its first real alert;
+# None = not commissioned, so the disk profile fails closed until the id is set.
+NATIVE_RULE_ID = None
 GRAPH_QUERY_URL = "https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=2022-10-01"
-PATCH_RESOURCE = RESOURCE.replace("linux", "patch")
+PATCH_RESOURCE = CTX.targets["patch"].resource_id
 LEGACY_PATCH_ALERT_QUERY = (
     'arg("").PatchInstallationResources '
     "| where type =~ 'microsoft.compute/virtualmachines/patchinstallationresults' "
@@ -96,7 +93,7 @@ LEGACY_PATCH_ALERT_QUERY = (
     "status=tostring(properties.status), failed_patch_count=toint(properties.failedPatchCount), "
     "error_details=substring(tostring(properties.errorDetails), 0, 1600)"
 )
-# Exact released Oct 22 query (129d7e78/d360da01), before the Oct 27 alias
+# Exact released Oct 22 query, before the Oct 27 alias
 # and upper-bound correction. Only frozen v1 intent validation/reconciliation
 # and historical-series recognition admit these two forms; neither is fresh
 # patch-case authority. Do not synthesize combinations or accept query fragments.
@@ -135,12 +132,14 @@ GROWTH_QUERY = (
     "| extend forecast_seconds=(80.0-last_value)/(last_value-first_value)*baseline_seconds "
     "| where forecast_seconds > 0 and forecast_seconds <= 900"
 )
-BACKUP_RESOURCE = RESOURCE.replace("linux", "backup")
-BACKUP_VAULT = BACKUP_RESOURCE.split("/providers/")[0] + "/providers/Microsoft.RecoveryServices/vaults/rsv-asre-cus"
+BACKUP_RESOURCE = CTX.targets["backup"].resource_id
+BACKUP_VAULT = CTX.recovery_vault.resource_id
 BACKUP_ITEM = (
     BACKUP_VAULT + "/backupFabrics/Azure/protectionContainers/"
-    "IaasVMContainer;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus/"
-    "protectedItems/VM;iaasvmcontainerv2;rg-asre-backup-cus;vm-asre-backup-cus"
+    "IaasVMContainer;iaasvmcontainerv2;"
+    + CTX.targets["backup"].resource_group + ";" + CTX.targets["backup"].name
+    + "/protectedItems/VM;iaasvmcontainerv2;"
+    + CTX.targets["backup"].resource_group + ";" + CTX.targets["backup"].name
 )
 BACKUP_GRAPH_QUERY = (
     "recoveryservicesresources "
@@ -720,7 +719,7 @@ def _azure_json(credential, scope, url, payload=None):
 
 
 def decode_native_incident(raw, profile=DISK_PROFILE):
-    """Decode server-owned fields observed on automatic incident 00000029... .
+    """Decode server-owned fields observed on automatic Azure Monitor incidents.
 
     Azure SRE reports startMessageIsHuman=null for this native trigger. Source,
     origin, author, response plan and structured incident identity must agree;
@@ -740,7 +739,8 @@ def decode_native_incident(raw, profile=DISK_PROFILE):
         or raw.get("isIncidentTestModeEnabled") is True
         or not isinstance(source, dict) or source.get("incidentType") != "AzMonitor"
         or not isinstance(source.get("incidentId"), str) or source["incidentId"].lower() != profile.rule_id.lower()
-        or (source.get("canonicalIncidentId") != NATIVE_RULE_ID if profile.name == "disk"
+        or (not (NATIVE_RULE_ID is not None and source.get("canonicalIncidentId") == NATIVE_RULE_ID)
+            if profile.name == "disk"
             else not isinstance(source.get("canonicalIncidentId"), str)
             or not re.fullmatch(r"azmon:v2:arm-rule:[0-9A-F]{64}", source["canonicalIncidentId"]))
         or not isinstance(details, dict) or details.get("filterId") != "asre-azure-monitor-review"

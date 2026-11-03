@@ -71,7 +71,7 @@ for host in [f"{sys.argv[1]}.{service}.core.windows.net" for service in ("blob",
     addresses = sorted({item[4][0] for item in socket.getaddrinfo(
         host, 443, socket.AF_INET, socket.SOCK_STREAM)})
     require(addresses and all(ipaddress.ip_address(address) in network for address in addresses),
-            f"Service did not resolve to the lab private endpoint subnet: {host}")
+            f"Service did not resolve to the demo private endpoint subnet: {host}")
     with socket.create_connection((host, 443), timeout=5) as connection:
         with ssl.create_default_context().wrap_socket(connection, server_hostname=host):
             pass

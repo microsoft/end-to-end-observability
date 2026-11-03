@@ -12,15 +12,18 @@ from urllib.parse import urlsplit
 from urllib.request import Request, build_opener
 
 from operations import agent_case as cases
+from operations import context as deployment
 from operations.feedback import (
     ACTIVE, Bridge, Conflict, FeedbackError, RejectedDelivery, UnknownDelivery, uuid,
 )
 from operations.servicenow import CaseClient, ClientCredentials, ServiceNowError
 
 LOG = logging.getLogger("asre-feedback")
-AGENT_ID = (
-    "/subscriptions/00000001-000a-4000-a000-000000000001/"
-    "resourceGroups/rg-asre-control-cus/providers/Microsoft.App/agents/asre-demo-cus"
+CTX = deployment.load()
+AGENT_ID = CTX.agent.resource_id
+# The agent endpoint is resolved through ARM and checked against the deployment's own agent name and region.
+_ENDPOINT_HOST = re.compile(
+    re.escape(CTX.agent.name) + r"--[a-z0-9]+\.[a-z0-9]+\." + re.escape(CTX.location) + r"\.azuresre\.ai"
 )
 SCOPE = "https://azuresre.dev/.default"
 LIMIT = 4_000_000
@@ -74,7 +77,7 @@ class Native:
             raise FeedbackError("The native agent endpoint is invalid.") from None
         if (
             parsed.scheme != "https" or not parsed.hostname
-            or not re.fullmatch(r"asre-demo-cus--[a-z0-9]+\.[a-z0-9]+\.centralus\.azuresre\.ai", parsed.hostname)
+            or not _ENDPOINT_HOST.fullmatch(parsed.hostname)
             or parsed.netloc != parsed.hostname or parsed.path not in {"", "/"}
             or parsed.query or parsed.fragment
             or any(ord(char) < 33 for char in endpoint)
@@ -216,7 +219,7 @@ def run():
     native = Native(credential)
     native.resolve()
     table = TableStore(TableClient(
-        "https://stasre8a327010f9.table.core.windows.net", "Episodes",
+        CTX.storage.table_endpoint, "Episodes",
         credential=credential, retry_total=0,
     ))
     client = CaseClient(ClientCredentials(

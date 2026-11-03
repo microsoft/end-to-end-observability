@@ -408,7 +408,7 @@ function renderInspector() {
     if(!references.length)mount.append(node("p","warning","No reported case reference in the available native messages. This does not prove that no case exists."));
     for(const ref of references) {
       fields(mount,[["Reported case",ref.number],["Source message ID",ref.source_message_id],["Reported at",when(ref.reported_at)],["Verification","Agent reported; independent receipt not connected"]]);
-      if(/^https:\/\/example-instance\.service-now\.com\/incident\.do\?sys_id=[0-9a-f]{32}$/.test(ref.url))mount.append(actionLink("Open reported "+ref.number,ref.url));
+      if(/^https:\/\/[a-z0-9-]+\.service-now\.com\/incident\.do\?sys_id=[0-9a-f]{32}$/.test(ref.url))mount.append(actionLink("Open reported "+ref.number,ref.url));
     }
   }
   if(selectedStage==="verify") {

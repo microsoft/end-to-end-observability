@@ -19,15 +19,19 @@ from azure.storage.blob import BlobServiceClient, ContentSettings
 from azure.storage.queue import QueueClient, TextBase64DecodePolicy
 from paramiko import SSHException
 
+from operations import context
 from operations.cloud import AzureReader, AzureReadError
 from operations.lifecycle import EVIDENCE_HOST, TARGETS, canonical_uuid
 from operations.protocol import fingerprint, parse_request
 from operations.ssh import Guest, GuestError, parse_host_trust
 
 LOG = logging.getLogger("asre-operations")
-ACCOUNT = EVIDENCE_HOST.split(".")[0]
+CTX = context.load()
+ACCOUNT = CTX.storage.account_name
+TABLE_ENDPOINT = CTX.storage.table_endpoint
+QUEUE_ENDPOINT = "https://" + ACCOUNT + ".queue.core.windows.net"
 QUEUE = "agent-requests"
-VAULT = "https://kv-asre-8a327010f9.vault.azure.net/"
+VAULT = CTX.key_vault.uri
 
 
 def identity(name: str):
@@ -107,7 +111,7 @@ def verify() -> None:
     check_id = str(uuid4())
     path = "baselines/runtime/" + check_id + ".json"
     write_blob(blobs(runner), path, evidence)
-    table = TableClient("https://" + ACCOUNT + ".table.core.windows.net", "Episodes", credential=runner, retry_total=0)
+    table = TableClient(TABLE_ENDPOINT, "Episodes", credential=runner, retry_total=0)
     table.create_entity({
         "PartitionKey": "runtime-verification", "RowKey": check_id,
         "status": "verified", "evidence_uri": "https://" + EVIDENCE_HOST + "/evidence/" + path,
@@ -183,9 +187,9 @@ def process() -> None:
     runner = identity("ASRE_RUNNER_CLIENT_ID")
     reader = AzureReader(identity("ASRE_COLLECTOR_CLIENT_ID"))
     storage = blobs(runner)
-    table = TableClient("https://" + ACCOUNT + ".table.core.windows.net", "Episodes", credential=runner, retry_total=0)
+    table = TableClient(TABLE_ENDPOINT, "Episodes", credential=runner, retry_total=0)
     queue = QueueClient(
-        "https://" + ACCOUNT + ".queue.core.windows.net", QUEUE, credential=runner,
+        QUEUE_ENDPOINT, QUEUE, credential=runner,
         message_decode_policy=TextBase64DecodePolicy(), retry_total=0,
     )
     guest = Guest(SecretClient(VAULT, runner, retry_total=0))

@@ -3,7 +3,10 @@
 import re
 from datetime import datetime
 
+from dashboard import context as deployment
 from dashboard.queries import RULE_IDS
+
+CTX = deployment.load()
 
 PROFILE_IDS = ("disk", "patch-installation", "alert-recurrence", "capacity-growth", "backup-job")
 PROFILE_NAMES = ("Filesystem pressure", "Patch installation", "Alert overlap", "Capacity growth", "Backup failure")
@@ -17,9 +20,8 @@ FOCUS = (
     "Verify an actual Failed Backup job for the exact VM, vault and protected item. Never start a replacement backup.",
 )
 SOURCES = ("filesystem", "patch", "alerts", "filesystem", "backup")
-CASE_LINK = re.compile(
-    r"\[(INC\d{7})\]\((https://example-instance\.service-now\.com/incident\.do\?sys_id=([0-9a-f]{32}))\)"
-)
+_ORIGIN = CTX.servicenow.origin.replace(".", r"\.") if CTX.servicenow else "(?!)"
+CASE_LINK = re.compile(r"\[(INC\d{7})\]\((" + _ORIGIN + r"/incident\.do\?sys_id=([0-9a-f]{32}))\)")
 STAGE_NAMES = {
     "signal": "Alert received", "route": "Plan & profile matched",
     "investigate": "Evidence & investigation", "case": "Case & findings",

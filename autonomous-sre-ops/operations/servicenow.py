@@ -19,22 +19,21 @@ from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import ValidationError
 from referencing import Registry, Resource
 
-ORIGIN = "https://example-instance.service-now.com"
-BASE = "/api/x_0000000_asre/case_adapter/v1"
-CLIENT_ID = "0000000000000000000000000000003a"
+from . import context as deployment
+
+# ServiceNow module: a context without the servicenow section fails closed with ContextError.
+CTX = deployment.load()
+SN = CTX.require_servicenow()
+
+ORIGIN = SN.origin
+BASE = SN.api_base
+CLIENT_ID = SN.client_id
 SCOPE = "asre_case_adapter_v1"
-GROUP = "0000000000000000000000000000007a"
-CIS = {
-    "linux": "0000000000000000000000000000014a",
-    "patch": "0000000000000000000000000000001a",
-    "backup": "0000000000000000000000000000012a",
-}
-# Keep the transport independently packageable; do not import the repair ledger
-# merely to validate its three fixed facade resources.
-TARGETS = {
-    f"/subscriptions/00000001-000a-4000-a000-000000000001/resourcegroups/rg-asre-{role}-cus/providers/microsoft.compute/virtualmachines/vm-asre-{role}-cus": role
-    for role in CIS
-}
+GROUP = SN.assignment_group
+CIS = dict(SN.configuration_items)
+# The transport stays independently packageable and does not import the repair
+# ledger; the three fixed facade resources come from the deployment context instead.
+TARGETS = dict(CTX.roles_by_resource_id())
 SCHEMAS = (
     "servicenow-case", "servicenow-case-write", "servicenow-note-write",
     "servicenow-feedback-ack", "servicenow-action-audit", "servicenow-adapter-response",
@@ -173,6 +172,45 @@ def parse_json(response: HttpResponse) -> dict:
     return value
 
 
+_CONTRACT_MISMATCH = "The ServiceNow contract schemas do not match the deployment context."
+
+
+def _contract_member(node, key):
+    if type(node) is not dict or key not in node:
+        raise ServiceNowError(_CONTRACT_MISMATCH)
+    return node[key]
+
+
+def _contract_only(node, key):
+    if type(node) is not dict or set(node) != {key}:
+        raise ServiceNowError(_CONTRACT_MISMATCH)
+    return node[key]
+
+
+def _bind_contracts(schemas: dict) -> None:
+    """Bind the pinned instance, scope and resource enum of the loaded schemas to the deployment context.
+
+    The schema files carry placeholders that the render step maps at publish time; binding in memory means a
+    schema that was never rendered still validates exactly the deployment's own facade. Every node is checked
+    before any is replaced, and any deviation fails closed with one fixed message.
+    """
+    instance = re.fullmatch(r"https://([a-z0-9-]+)\.service-now\.com", ORIGIN)
+    scope = re.fullmatch(r"/api/(x_[0-9a-z]+_asre)/case_adapter/v1", BASE)
+    if instance is None or scope is None:
+        raise ServiceNowError(_CONTRACT_MISMATCH)
+    health = _contract_member(_contract_member(_contract_member(
+        schemas["servicenow-adapter-response"], "$defs"), "health"), "properties")
+    _contract_only(_contract_member(health, "instance"), "const")
+    _contract_only(_contract_member(health, "scope"), "const")
+    case = _contract_member(schemas["servicenow-case"], "properties")
+    enum = _contract_only(_contract_member(case, "resource_id"), "enum")
+    if type(enum) is not list or len(enum) != 3 or any(type(item) is not str for item in enum):
+        raise ServiceNowError(_CONTRACT_MISMATCH)
+    health["instance"] = {"const": instance.group(1)}
+    health["scope"] = {"const": scope.group(1)}
+    case["resource_id"] = {"enum": [CTX.targets[role].resource_id for role in ("linux", "patch", "backup")]}
+
+
 class Contracts:
     def __init__(self):
         formats = FormatChecker()
@@ -181,6 +219,7 @@ class Contracts:
             json.loads((Path(__file__).parent / "contracts" / (name + ".schema.json")).read_text(encoding="utf-8"))
             for name in SCHEMAS
         ]
+        _bind_contracts(dict(zip(SCHEMAS, contents)))
         registry = Registry().with_resources((s["$id"], Resource.from_contents(s)) for s in contents)
         self.validators = {
             s["$id"]: Draft202012Validator(s, registry=registry, format_checker=formats)

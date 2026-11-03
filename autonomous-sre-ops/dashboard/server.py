@@ -24,11 +24,14 @@ from uuid import UUID
 from azure.core.exceptions import ClientAuthenticationError
 from azure.identity import AzureCliCredential, CredentialUnavailableError, ManagedIdentityCredential
 
+from dashboard import context as deployment
 from dashboard.journey import build_journey, catalog
 from dashboard.queries import (
     AGENT_ID, BACKUP_VAULT, LINUX_ID, PATCH_ID, QUERIES, RULE_IDS, RULE_NAMES,
     TENANT, WINDOWS, WORKSPACE_ID, query_for,
 )
+
+CTX = deployment.load()
 
 LOG = logging.getLogger("asre.dashboard")
 ARM = "https://management.azure.com"
@@ -253,7 +256,7 @@ class AzureReads:
         for key in ("powerState", "provisioningState"):
             require(isinstance(p.get(key), str) and bool(p[key]), "Agent state is unavailable.")
         return {
-            "name": "asre-demo-cus", "endpoint": endpoint_url(p.get("agentEndpoint")),
+            "name": CTX.agent.name, "endpoint": endpoint_url(p.get("agentEndpoint")),
             "power": p["powerState"], "provisioning": p["provisioningState"],
             "mode": action.get("mode"), "access": action.get("accessLevel"),
         }
@@ -270,7 +273,7 @@ class AzureReads:
         except ValueError:
             valid = False
         require(valid and UUID(customer_id).int != 0, "The workspace customer ID is invalid.")
-        return {"name": "law-asre-cus", "customer_id": customer_id}
+        return {"name": CTX.log_analytics.name, "customer_id": customer_id}
 
     def native(self, name: str, endpoint: str):
         return self._read(endpoint_url(endpoint) + NATIVE_READS[name], SRE_SCOPE)
@@ -451,7 +454,7 @@ class AzureReads:
             timestamp(row["observed_at"])
         elif name == "backup":
             require(str(row["job_id"]).lower().startswith(BACKUP_VAULT.lower() + "/backupjobs/")
-                    and row["vm"] == "vm-asre-backup-cus" and row["operation"] == "Backup"
+                    and row["vm"] == CTX.targets["backup"].name and row["operation"] == "Backup"
                     and isinstance(row["status"], str) and bool(row["status"]),
                     "The backup query returned a foreign or incomplete record.")
             timestamp(row["started_at"])

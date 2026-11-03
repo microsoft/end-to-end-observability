@@ -3,17 +3,30 @@
 param(
     [Parameter(Mandatory)][string]$OutputsFile,
     [Parameter(Mandatory)][string]$MetadataPath,
+    [Parameter(Mandatory)][string]$ViewerGroupId,
     [switch]$Execute
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$Tenant = '00000002-000a-4000-9000-000000000002'
-$Owner = '00000057-000a-4000-a000-000000000057'
-$Group = '00000042-000a-4000-8000-000000000042'
-$Name = 'ASRE dashboard demo 4d79'
-$Vault = 'https://kv-asre-dash-demo-4d79.vault.azure.net/'
+. (Join-Path $PSScriptRoot 'Context.Common.ps1')
+$Context = Get-AsreContext
 $Uuid = '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+if ($ViewerGroupId -cnotmatch $Uuid -or $ViewerGroupId.Length -ne 36) {
+    throw '-ViewerGroupId must be the lowercase object id (GUID) of the Entra viewer security group.'
+}
+$Tenant = $Context.tenant_id
+$Owner = $Context.operator_object_id
+if ([string]::IsNullOrWhiteSpace($Owner)) {
+    throw 'The dashboard bootstrap needs operator_object_id in the deployment context (the verified deployment owner).'
+}
+$Group = $ViewerGroupId
+$suffix = $Context.name_suffix
+$Name = "ASRE dashboard $suffix"
+$AppName = "ca-asre-dash-$suffix"
+$Vault = "https://kv-asre-dash-$suffix.vault.azure.net/"
+$OriginPattern = '^https://' + [regex]::Escape($AppName) + '\.[a-z0-9-]+\.centralus\.azurecontainerapps\.io$'
+$SecretPattern = '^' + [regex]::Escape($Vault) + 'secrets/entra-client-secret/[0-9a-f]{32}$'
 
 function Get-Token {
     param([string]$Resource)
@@ -57,13 +70,13 @@ function Save-Metadata {
 }
 
 if (-not $Execute) {
-    throw 'This performs directory and credential writes. Use -Execute only after deployment approval and protected foundation Apply.'
+    throw 'This performs directory and credential writes. Use -Execute only after deployment approval and the reviewed foundation apply.'
 }
 $outputs = Get-Content -LiteralPath $OutputsFile -Raw | ConvertFrom-Json
 $dashboard = $outputs.dashboard.value
 if ($dashboard.phase -ne 'bootstrap' -or $dashboard.viewer_group_id -ne $Group -or
-    $dashboard.vault_uri -cne $Vault -or $dashboard.app_name -ne 'ca-asre-dash-demo-4d79' -or
-    $dashboard.public_origin -cnotmatch '^https://ca-asre-dash-demo-4d79\.[a-z0-9-]+\.centralus\.azurecontainerapps\.io$') {
+    $dashboard.vault_uri -cne $Vault -or $dashboard.app_name -cne $AppName -or
+    $dashboard.public_origin -cnotmatch $OriginPattern) {
     throw 'Use the actual approved dashboard foundation outputs, not a live-app or unrelated deployment.'
 }
 $MetadataPath = [IO.Path]::GetFullPath($MetadataPath)
@@ -158,7 +171,7 @@ try {
         contentType = 'Entra native dashboard sign-in'
         attributes = @{ enabled = $true; exp = $expiry.ToUnixTimeSeconds() }
     }
-    if ($stored.id -cnotmatch '^https://kv-asre-dash-demo-4d79\.vault\.azure\.net/secrets/entra-client-secret/[0-9a-f]{32}$') {
+    if ($stored.id -cnotmatch $SecretPattern) {
         throw 'The vault did not return the expected exact versioned secret URI; inspect recorded issuance before retrying.'
     }
     $metadata.secret_version_uri = $stored.id
