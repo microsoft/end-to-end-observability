@@ -1,0 +1,61 @@
+{
+  "format": "asre-observe-workflow/v1",
+  "description": "Observe-only Review-mode handler for Azure Monitor alerts of the demo environment: it investigates and reports, with no case tool, no hook, no skill and no repair capability.",
+  "handler": {
+    "kind": "agents",
+    "name": "asre-azure-monitor-observe",
+    "type": "ExtendedAgent",
+    "instructions_file": "agent/instructions/azure-monitor-observe.md",
+    "properties": {
+      "handoffDescription": "Read-only investigator for Azure Monitor alerts of the demo environment; writes an investigation report and changes nothing.",
+      "tools": [
+        "QueryLogAnalyticsByResourceId",
+        "ReadFile",
+        "SearchMemory"
+      ],
+      "mcpTools": [
+        "asre-review-evidence"
+      ],
+      "commonTools": [],
+      "handoffs": [],
+      "enableSkills": false,
+      "allowedSkills": [],
+      "addSystemSkills": false
+    }
+  },
+  "permissions": {
+    "allow": [
+      "QueryLogAnalyticsByResourceId",
+      "ReadFile",
+      "SearchMemory",
+      "asre-review-evidence"
+    ]
+  },
+  "response_plan": {
+    "kind": "incidentFilters",
+    "name": "asre-azure-monitor-observe",
+    "type": "IncidentFilter",
+    "properties": {
+      "incidentPlatform": "AzMonitor",
+      "isEnabled": false,
+      "agentMode": "Review",
+      "handlingAgent": "asre-azure-monitor-observe",
+      "priorities": [
+        "Sev1",
+        "Sev2"
+      ],
+      "titleContains": "asre-demo-",
+      "maxAutomatedInvestigationAttempts": 1,
+      "mergeEnabled": false,
+      "mergeWindowHours": 3,
+      "azMonitorFilterSettings": {
+        "targetResourceType": "Microsoft.OperationalInsights/workspaces"
+      }
+    }
+  },
+  "platform_binding": {
+    "type": "AzMonitor",
+    "connectionName": "azmonitor",
+    "oboUser": ""
+  }
+}
