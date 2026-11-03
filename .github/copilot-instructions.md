@@ -14,6 +14,7 @@ a setup placeholder — ignore it for technical context.
 | `monitoring-baselines/` | Azure Policy initiative enforcing telemetry collection & posture (AMA + diagnostic settings + private endpoints), **separate from AMBA** | Terraform (built-in policy defs) + Azure Policy, PowerShell |
 | `utility-iot-observability/` | Utility/IoT synthetic telemetry research + data generator | Python |
 | `sre-agent-pre-req/` | Single integration checklist doc | Markdown only |
+| `autonomous-sre-ops/` | Standalone Azure SRE Agent demo (Review mode, three-VM demo environment, observe-only incident handler) — **not an onboarding phase** | Terraform + PowerShell + Python |
 
 ## Workbooks-as-code (the two workbook projects)
 
@@ -120,6 +121,27 @@ Deploy sequencing (per `docs/coverage-matrix.md`): Wave1 initiative+assignment+r
 Wave2 remediate AMA → Wave3 remediate diagnostic settings → Wave4 review PE audit.
 Diag coverage today: KeyVault, NSG, Storage, SQL, App Service, Event Hub, Service Bus,
 Recovery Services (NOT yet AKS, Cosmos DB, APIM, Container Apps).
+
+## autonomous-sre-ops
+
+Standalone demo (prefix `asre`, one subscription, `centralus`) of a managed Azure SRE
+Agent in Review mode investigating real Azure Monitor alerts on a three-VM demo
+environment — **not a phase of the client-onboarding pipeline**. Terraform **1.11.2
+(exact)** + PowerShell ≥ 7.5 + Python; deployed from the operator's workstation with
+reviewed saved plans and a remote state account (no pipeline yet). Runbook:
+`autonomous-sre-ops/docs/deployment.md`.
+- **No deployment value in source.** Everything deployment-specific comes from the
+  `asre-context/v1` document (Terraform `output "context"` → `scripts/Export-AsreContext.ps1`
+  → git-ignored `infra/environments/context.generated.json`; loaders `operations/context.py`
+  and `scripts/Context.Common.ps1` fail closed). Tests run on synthetic fixture contexts
+  (`tests/fixtures/`); the alternate-context fixture and leak detector must stay green.
+- **Agent assets are rendered, never hand-edited:** `scripts/Render-AgentAssets.ps1`
+  applies `scripts/AgentAssets.map.json` into git-ignored `out/`; publish with `-AssetRoot`.
+- Git-ignored, never commit: `infra/environments/{backend.hcl,*.tfvars,context.generated.json,keys/}`,
+  `out/`, `*.tfplan`; commit only the `*.example` templates.
+- Validate offline from `autonomous-sre-ops/`: `python -m pytest tests -q`, the plain
+  `tests/Test-*.ps1` scripts, and `terraform -chdir=infra` `init -backend=false` / `validate` / `test`.
+  The ServiceNow and dashboard parts are deferred (ported and tested, not deployed).
 
 ## Component deployment order (client onboarding)
 
