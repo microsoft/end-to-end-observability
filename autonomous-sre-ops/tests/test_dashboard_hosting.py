@@ -27,7 +27,7 @@ class DashboardHostingTests(unittest.TestCase):
 
     def test_native_authentication_is_group_restricted(self):
         source = (ROOT / "infra" / "dashboard.tf").read_text(encoding="utf-8")
-        self.assertIn('dashboard_group_id   = "00000042-000a-4000-8000-000000000042"', source)
+        self.assertIn("dashboard_group_id   = var.dashboard.viewer_group_id", source)
         self.assertIn("allowedPrincipals = { groups = [local.dashboard_group_id] }", source)
         self.assertIn('unauthenticatedClientAction = "RedirectToLoginPage"', source)
         self.assertIn("excludedPaths               = []", source)

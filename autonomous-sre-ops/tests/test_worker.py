@@ -10,10 +10,10 @@ from uuid import uuid4
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from paramiko import Ed25519Key, SSHException
 
-from operations.lifecycle import TARGETS
+from operations.lifecycle import EVIDENCE_HOST, TARGETS
 from operations.protocol import fingerprint
-from operations.ssh import GuestError, parse_host_trust
-from operations.worker import bootstrap, execute, process, receipt, verify
+from operations.ssh import ADDRESSES, GuestError, parse_host_trust
+from operations.worker import TABLE_ENDPOINT, bootstrap, execute, process, receipt, verify
 
 
 class WorkerTests(unittest.TestCase):
@@ -99,7 +99,8 @@ class WorkerTests(unittest.TestCase):
             self.run_request()
 
     def test_malformed_incomplete_duplicate_and_untrusted_host_keys_are_rejected(self):
-        for known in ("", "\n\n\n", "10.42.0.10 ssh-ed25519 invalid", "outside.example ssh-ed25519 invalid"):
+        for known in ("", "\n\n\n", f"{next(iter(ADDRESSES.values()))} ssh-ed25519 invalid",
+                      "outside.example ssh-ed25519 invalid"):
             with self.subTest(known=known), self.assertRaises((ValueError, SSHException)):
                 parse_host_trust(known)
 
@@ -130,7 +131,7 @@ class WorkerTests(unittest.TestCase):
         public = Ed25519PrivateKey.generate().public_key().public_bytes(
             serialization.Encoding.OpenSSH, serialization.PublicFormat.OpenSSH,
         ).decode()
-        lines = [f"{address} {public}" for address in ("10.42.0.10", "10.42.0.11", "10.42.0.12")]
+        lines = [f"{address} {public}" for address in ADDRESSES.values()]
         self.assertEqual(len(parse_host_trust("\n".join(lines))), 3)
         for wrong in (lines[:2], lines + [lines[0]]):
             with self.assertRaises(ValueError):
@@ -147,7 +148,7 @@ class WorkerTests(unittest.TestCase):
         public = key.public_key().public_bytes(
             serialization.Encoding.OpenSSH, serialization.PublicFormat.OpenSSH,
         ).decode()
-        known = "\n".join(f"{host} {public}" for host in ("10.42.0.10", "10.42.0.11", "10.42.0.12"))
+        known = "\n".join(f"{host} {public}" for host in ADDRESSES.values())
         return private, public, known
 
     def test_azure_local_bootstrap_generates_a_paramiko_compatible_key_without_disclosing_it(self):
@@ -183,7 +184,7 @@ class WorkerTests(unittest.TestCase):
             "observed_at": time.time(), "service": "ActiveState=active\n\nActiveState=active",
         }
         with patch.dict("os.environ", {"ASRE_EXECUTION_MODE": "Review"}), \
-             patch("operations.worker.identity"), patch("operations.worker.SecretClient"), \
+             patch("operations.worker.identity") as identity, patch("operations.worker.SecretClient"), \
              patch("operations.worker.Guest") as guest, patch("operations.worker.AzureReader") as reader, \
              patch("operations.worker.blobs") as storage, patch("operations.worker.TableClient") as table, \
              patch("builtins.print") as output:
@@ -200,3 +201,7 @@ class WorkerTests(unittest.TestCase):
         row = table.return_value.create_entity.call_args.args[0]
         table.return_value.get_entity.assert_called_once_with("runtime-verification", row["RowKey"])
         self.assertIn(row["evidence_uri"], output.call_args.args[0])
+        # The table endpoint and the evidence location come from the deployment context, not from literals.
+        self.assertEqual(table.call_args.args[:2], (TABLE_ENDPOINT, "Episodes"))
+        self.assertEqual(table.call_args.kwargs, {"credential": identity.return_value, "retry_total": 0})
+        self.assertTrue(row["evidence_uri"].startswith(f"https://{EVIDENCE_HOST}/evidence/"), row["evidence_uri"])

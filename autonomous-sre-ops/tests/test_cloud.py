@@ -5,8 +5,11 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 
-from operations.cloud import ARM, MAX_RESPONSE, AzureReader, AzureReadError, NoRedirect
+from operations import context
+from operations.cloud import ARM, MAX_RESPONSE, VAULT, WORKSPACE, AzureReader, AzureReadError, NoRedirect
 from operations.lifecycle import TARGETS
+
+CTX = context.load()
 
 
 class CloudTests(unittest.TestCase):
@@ -105,6 +108,36 @@ class CloudTests(unittest.TestCase):
         for bad in ({"value": [], "nextLink": "https://do-not-follow.example"}, {"items": []}):
             with self.subTest(bad=bad), patch.object(self.reader, "request", side_effect=[bad, {"value": []}]), self.assertRaises(AzureReadError):
                 self.reader.backup(self.targets["backup"])
+
+    def test_resources_queried_are_derived_from_the_deployment_context(self):
+        self.assertEqual(WORKSPACE, CTX.log_analytics.resource_id)
+        self.assertEqual(VAULT, CTX.recovery_vault.resource_id)
+        protected = CTX.targets["backup"]
+        with patch.object(self.reader, "request", side_effect=[{"value": []}, {"value": []}]) as request:
+            self.reader.backup(self.targets["backup"])
+        jobs, points = (call.args[1] for call in request.call_args_list)
+        self.assertTrue(jobs.startswith(ARM + VAULT + "/backupJobs?"), jobs)
+        container = f"iaasvmcontainer;iaasvmcontainerv2;{protected.resource_group};{protected.name}"
+        item = f"vm;iaasvmcontainerv2;{protected.resource_group};{protected.name}"
+        self.assertEqual(points, f"{ARM}{VAULT}/backupFabrics/Azure/protectionContainers/{container}"
+                                 f"/protectedItems/{item}/recoveryPoints?api-version=2024-04-01")
+        with patch.object(self.reader, "request", side_effect=RuntimeError("stop after the first query")) as request:
+            with self.assertRaises(RuntimeError):
+                self.reader.telemetry(self.targets["linux"])
+        self.assertEqual(request.call_args.args[1], ARM + WORKSPACE + "/api/query?api-version=2020-08-01")
+        with patch.object(self.reader, "request", return_value={"data": [], "count": 0, "totalRecords": 0}) as request:
+            self.reader.patches(self.targets["patch"])
+        for call in request.call_args_list:
+            self.assertEqual(call.args[2]["subscriptions"], [CTX.subscription_id])
+
+    def test_the_request_guard_follows_the_context_subscription(self):
+        opener = Mock()
+        opener.open.side_effect = RuntimeError("the opener was reached")
+        with patch("operations.cloud.build_opener", return_value=opener):
+            with self.assertRaises(RuntimeError):
+                self.reader.request("GET", f"{ARM}/subscriptions/{CTX.subscription_id}/resourceGroups/x")
+            with self.assertRaises(PermissionError):
+                self.reader.request("GET", f"{ARM}/subscriptions/00000000-0000-4000-8000-000000000000/resourceGroups/x")
 
     def test_bad_partial_large_and_non_json_evidence_is_not_success(self):
         for data in (b"not json", b"[]", b'{"error":{"code":"PartialError"}}', b"x" * (MAX_RESPONSE + 1)):

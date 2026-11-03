@@ -27,9 +27,8 @@ SENSITIVE_CURRENT_ERRORS = (
     "https://fixture.invalid/packages?access_token=" + FAKE_CURRENT_CREDENTIAL,
     "Authorization: Bearer " + FAKE_CURRENT_CREDENTIAL,
 )
-# Exact query released in 129d7e78/d360da01 and independently read from frozen
-# INC0900006 episode 00000027-000a-5000-8000-000000000027 by coordinator job
-# job-asre-worker-cus-42opszg at 2026-10-27T20:00:35Z. Keep this independent
+# Exact query as first released and independently read from a frozen incident
+# episode by the coordinator job. Keep this independent
 # of the runtime allowlist so a query change cannot silently redefine it.
 OCT22_PATCH_QUERY = (
     'arg("").PatchInstallationResources '

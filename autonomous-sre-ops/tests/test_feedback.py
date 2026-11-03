@@ -21,6 +21,20 @@ from test_agent_case import ALERT, NOTE, REFERENCE, evidence, make
 
 THREAD = "12345678-1234-4234-8234-abcdef012345"
 EVENT = "b" * 32
+# The shipped agent_case.NATIVE_RULE_ID is None until commissioned (fail closed), so a disk-profile
+# native incident carries this canonical id and the module patches NATIVE_RULE_ID to it.
+DISK_CANONICAL_ID = "azmon:v2:arm-rule:" + "B" * 64
+_native_rule_id_patch = None
+
+
+def setUpModule():
+    global _native_rule_id_patch
+    _native_rule_id_patch = patch.object(ac, "NATIVE_RULE_ID", DISK_CANONICAL_ID)
+    _native_rule_id_patch.start()
+
+
+def tearDownModule():
+    _native_rule_id_patch.stop()
 
 
 def intent_fixture():
@@ -36,7 +50,7 @@ def native_fixture():
         "startMessageIsHuman": None, "type": "Prod", "agentMode": "Review",
         "startMessage": {"author": {"role": "SREAgent", "userId": "agent-default"}},
         "incidentSource": {"incidentType": "AzMonitor", "incidentId": ac.RULE,
-                           "canonicalIncidentId": ac.NATIVE_RULE_ID},
+                           "canonicalIncidentId": DISK_CANONICAL_ID},
         "incidentDetails": {"filterId": "asre-azure-monitor-review", "incidentPriority": "Sev1"},
         "status": {"incidentStatus": {"incidentId": ALERT.split("/")[-1], "status": "resolved"}},
     }

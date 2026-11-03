@@ -3,8 +3,11 @@ param()
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = Split-Path -Parent $PSScriptRoot
+# The builder reads the deployment context with Get-AsreContext; every in-process build below runs under the committed
+# synthetic fixture (the render is then the identity) unless a check selects another context.
+. (Join-Path $PSScriptRoot 'TestContext.Common.ps1')
 $python = Join-Path $root '.venv/Scripts/python.exe'
-if (-not (Test-Path -LiteralPath $python)) { $python = (Get-Command python -CommandType Application -ErrorAction Stop).Source }
+if (-not (Test-Path -LiteralPath $python)) { $python = (Get-Command python -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source }
 $builder = Join-Path $root 'scripts/Build-CaseTool.ps1'
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('asre-case-package-' + [guid]::NewGuid())
 [void][IO.Directory]::CreateDirectory($temporary)
@@ -13,7 +16,65 @@ function Assert-Package([bool]$Condition, [string]$Message) {
     if (-not $Condition) { throw $Message }
     $script:count++
 }
+function Get-CanonicalContextJson([string]$Path) {
+    # Independent of the builder: sorted-key minified JSON of the stored context document, computed by Python.
+    $text = & $python -I -B -c 'import json, sys; sys.stdout.write(json.dumps(json.load(open(sys.argv[1], encoding="utf-8")), sort_keys=True, separators=(",", ":"), ensure_ascii=False))' $Path
+    if ($LASTEXITCODE -ne 0) { throw 'The canonical context document could not be computed.' }
+    return [string]$text
+}
+function New-RealisticDocument {
+    # A valid, non-synthetic context (the real loader accepts it): the alternative fixture with values that match no
+    # sentinel shape and a complete ServiceNow section.
+    $document = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'fixtures\context.alt.json') -Raw | ConvertFrom-Json -AsHashtable
+    $subscription = '5b7c1e84-2f3a-4d96-8c05-a1e3f7b92d60'
+    $suffix = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes("${subscription}:asre-demo"))).ToLowerInvariant().Substring(0, 10)
+    $document['subscription_id'] = $subscription
+    $document['tenant_id'] = '9d2e6a41-7c58-4b03-b6f9-3e8a15c07d24'
+    $document['operator_object_id'] = '1f6b8c32-5a47-4e09-8d13-c92b0e7a4f58'
+    $document['name_suffix'] = $suffix
+    $document['log_analytics']['customer_id'] = '4a9d7e13-6b20-4c85-9f41-d27e0b5a8c63'
+    $document['registry'] = @{ name = "acrasre$suffix"; login_server = "acrasre$suffix.azurecr.io" }
+    $document['key_vault'] = @{ name = "kv-asre-$suffix"; uri = "https://kv-asre-$suffix.vault.azure.net/" }
+    $document['storage'] = @{
+        account_name = "stasre$suffix"
+        blob_endpoint = "https://stasre$suffix.blob.core.windows.net"
+        table_endpoint = "https://stasre$suffix.table.core.windows.net"
+    }
+    $guids = @('7e1a4c92-3b58-4d06-a2f7-6c80d1e95b34', '2c93f0a7-8d14-4e6b-b05a-91e7c3d28f46', 'd4b61e08-9a27-4f35-8c19-0a7e52b3d6f1',
+               'f08a3d65-1c94-47b2-9e60-5d2b7a1c84e9', '63e7b2d0-a815-4c93-b7f4-18d90e5a3c27', 'a95c1f48-6e03-4d7a-8b21-c4f60d9e7a15',
+               '0b3d8e72-f594-4a16-9c8d-72e1a60b5f39', 'e6a07c13-4d82-4b59-a3f0-9b15c8d2e764')
+    $index = 0
+    foreach ($key in @('agent', 'runner', 'collector', 'pull', 'bootstrap')) {
+        $document['identities'][$key] = @{ client_id = $guids[$index % 8]; principal_id = $guids[($index + 3) % 8] }
+        $index++
+    }
+    $document['agent']['endpoint'] = 'https://asre-demo-cus--c4e81b27.7f3a95d0.centralus.azuresre.ai'
+    $document['servicenow'] = @{
+        origin = 'https://tenant-fixture.service-now.com'
+        api_base = '/api/x_4417_asre/case_adapter/v1'
+        client_id = 'c1a2b3d4e5f60718293a4b5c6d7e8f90'
+        facade_client_id = 'b7a6c5d4e3f2019887766554433221ff'
+        assignment_group = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6'
+        configuration_items = @{
+            linux = 'd1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6'
+            patch = 'e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7'
+            backup = 'f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8'
+        }
+    }
+    return $document
+}
+function Write-ContextFile([string]$Path, $Document) {
+    [IO.File]::WriteAllText($Path, (ConvertTo-Json -InputObject $Document -Depth 10), [Text.UTF8Encoding]::new($false))
+}
+function Get-BuildFailure([scriptblock]$Build) {
+    # The exception message of a refused build, or $null when the build succeeded.
+    try { & $Build | Out-Null } catch { return [string]$_.Exception.Message }
+    return $null
+}
+$syntheticFixture = Join-Path $root 'tests/fixtures/context.synthetic.json'
+$altFixture = Join-Path $root 'tests/fixtures/context.alt.json'
 try {
+    [void](Use-AsreTestContext -Name synthetic)
     $source = & $builder -PassThru
     $again = & $builder -PassThru
     Assert-Package ($source -is [string] -and $source -ceq $again) 'Bundle generation must be deterministic and return only code.'
@@ -37,9 +98,12 @@ try {
     Assert-Package ((@($declaration.properties.parameters.name) -join ',') -ceq ($expected -join ',')) 'Declaration parameters changed.'
     Assert-Package ($declaration.name -ceq 'asre-servicenow-case' -and $declaration.callable -ceq 'main') 'Fixed native tool binding changed.'
     $hashes = [ordered]@{}
-    foreach ($path in @('operations/agent_case.py', 'operations/servicenow.py', 'operations/patch_provider.py')) {
+    foreach ($path in @('operations/agent_case.py', 'operations/servicenow.py', 'operations/patch_provider.py', 'operations/context.py')) {
         $hashes[('_asre_case/' + [IO.Path]::GetFileName($path))] = (Get-FileHash -LiteralPath (Join-Path $root $path) -Algorithm SHA256).Hash.ToLowerInvariant()
     }
+    # The bundled context is the stored context document, sorted-key and minified (no trailing newline).
+    $contextBytes = [Text.UTF8Encoding]::new($false).GetBytes((Get-CanonicalContextJson $syntheticFixture))
+    $hashes['_asre_case/context.json'] = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($contextBytes)).ToLowerInvariant()
     foreach ($path in Get-ChildItem -LiteralPath (Join-Path $root 'operations/contracts') -Filter 'servicenow-*.schema.json' -File) {
         $hashes[('_asre_case/contracts/' + $path.Name)] = (Get-FileHash -LiteralPath $path.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
     }
@@ -952,12 +1016,19 @@ print("DATETIME_PACKAGE_PROBE " + json.dumps({"mode": mode, "checks": checks,
             }
         }
     } finally { Pop-Location }
-    # Only temporary fixture files are modified; real source/config is untouched.
+    # Only temporary fixture files are modified; real source/config is untouched. The fixture holds exactly what the
+    # builder needs: itself, the context and asset-render helpers with their map and map-source context, the three
+    # bundled modules plus the context module, and every asset root of the map.
     $fixture = Join-Path $temporary 'source-fixture'
-    $paths = @('scripts/Build-CaseTool.ps1','operations/agent_case.py','operations/servicenow.py','operations/patch_provider.py',
-               'agent/tools/servicenow_case.py','agent/tools/servicenow_case.json',
-               'agent/workflows/azure-monitor-review.json','config/native-incident-runtime.json')
-    $paths += @(Get-ChildItem -LiteralPath (Join-Path $root 'operations/contracts') -Filter 'servicenow-*.schema.json' -File | ForEach-Object { 'operations/contracts/' + $_.Name })
+    $paths = @('scripts/Build-CaseTool.ps1','scripts/Context.Common.ps1','scripts/AgentAssets.Common.ps1','scripts/AgentAssets.map.json',
+               'tests/fixtures/context.synthetic.json',
+               'operations/agent_case.py','operations/servicenow.py','operations/patch_provider.py','operations/context.py',
+               'config/native-incident-runtime.json')
+    foreach ($assetRoot in @('agent', 'contracts', 'operations/contracts')) {
+        $assetBase = Join-Path $root $assetRoot
+        $paths += @(Get-ChildItem -LiteralPath $assetBase -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/]__pycache__[\\/]' } |
+            ForEach-Object { [IO.Path]::GetRelativePath($root, $_.FullName).Replace('\', '/') })
+    }
     foreach ($relative in $paths) {
         $destination = Join-Path $fixture $relative
         [void][IO.Directory]::CreateDirectory((Split-Path -Parent $destination))
@@ -1194,7 +1265,180 @@ print("FINITE_PACKAGE_PROBE " + json.dumps({"reservation_creates": 1, "intent_cr
     $denied = $false
     try { & $fixtureBuilder -HealthOnly -PassThru | Out-Null } catch { $denied = $true }
     Assert-Package $denied 'Health-only must retain shared commissioning policy validation.'
+
+    # ---- The bundle follows the deployment context --------------------------------------------------------------
+    $bindingMessage = 'Trusted runtime binding differs from the deployment context.'
+    $contextMessage = 'The case-tool bundle needs a deployment context with its ServiceNow section and agent endpoint.'
+    $contextProbe = @'
+import base64, importlib.util, io, json, pathlib, sys, zipfile
+def deny_network(event, args):
+    if event in {"socket.connect", "socket.getaddrinfo"}:
+        raise AssertionError("Network is forbidden in offline package verification.")
+sys.addaudithook(deny_network)
+path, expected = pathlib.Path(sys.argv[1]), json.loads(sys.argv[2])
+spec = importlib.util.spec_from_file_location("context_case_tool", path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+with zipfile.ZipFile(io.BytesIO(base64.b64decode(module.__CASE_TOOL_BUNDLE__))) as package:
+    stored = package.read("_asre_case/context.json").decode("utf-8")
+    config = json.loads(package.read("_asre_case/runtime-configuration.json").decode("utf-8"))
+    contracts = package.read("_asre_case/contracts/servicenow-case.schema.json").decode("utf-8")
+assert stored == expected["context_json"]
+assert config["facade_origin"] == expected["origin"]
+assert config["facade_client_id"] == expected["facade_client_id"]
+assert config["resource_id"] == expected["resource_id"]
+assert config["rule_id"].lower().startswith(expected["control_group_id"].lower() + "/providers/microsoft.insights/scheduledqueryrules/")
+assert config["reader"]["sre_origin"] == expected["sre_origin"]
+assert config["reader"]["log_analytics_workspace_id"] == expected["customer_id"]
+assert config["reader"]["workspace_resource_id"] == expected["workspace_resource_id"]
+for resource_id in expected["target_resource_ids"]:
+    assert resource_id in contracts, resource_id
+for stale in expected["stale"]:
+    assert stale not in contracts and stale not in stored, stale
+    assert stale not in config["resource_id"] and stale not in config["rule_id"], stale
+    assert stale not in config["reader"]["workspace_resource_id"] and stale not in config["facade_origin"], stale
+    assert stale not in config["reader"]["sre_origin"], stale
+runtime = module._runtime()
+facade = sys.modules[runtime.CaseClient.__module__]
+assert facade.ORIGIN == expected["origin"] and facade.CLIENT_ID == expected["client_id"]
+assert runtime.FACADE_CLIENT == expected["facade_client_id"] and runtime.SRE_ORIGIN == expected["sre_origin"]
+assert runtime.RESOURCE == expected["resource_id"] and runtime.WORKSPACE.lower() == expected["workspace_resource_id"].lower()
+assert runtime.LOG_WORKSPACE_ID == expected["customer_id"]
+assert runtime._configuration_frozen and runtime._frozen_configuration == config
+'@
+    function Get-ContextExpectation([string]$DocumentPath, [string[]]$Stale) {
+        # Every expected value is derived from the stored document itself, never from the builder or the loader.
+        $document = Get-Content -LiteralPath $DocumentPath -Raw | ConvertFrom-Json -AsHashtable
+        $base = '/subscriptions/' + $document['subscription_id'] + '/resourceGroups/'
+        $vm = { param($role) $base + $document['targets'][$role]['resource_group'] + '/providers/Microsoft.Compute/virtualMachines/' + $document['targets'][$role]['name'] }
+        return [ordered]@{
+            context_json = Get-CanonicalContextJson $DocumentPath
+            origin = $document['servicenow']['origin']
+            client_id = $document['servicenow']['client_id']
+            facade_client_id = $document['servicenow']['facade_client_id']
+            sre_origin = $document['agent']['endpoint']
+            customer_id = $document['log_analytics']['customer_id']
+            control_group_id = $base + $document['resource_groups']['control']
+            workspace_resource_id = $base + $document['resource_groups']['control'] + '/providers/Microsoft.OperationalInsights/workspaces/' + $document['log_analytics']['name']
+            resource_id = (& $vm 'linux')
+            target_resource_ids = @((& $vm 'linux'), (& $vm 'patch'), (& $vm 'backup'))
+            stale = $Stale
+        }
+    }
+    function Assert-ContextBundle([string]$Bundle, [string]$DocumentPath, [string[]]$Stale, [string]$Label) {
+        $expectation = Get-ContextExpectation $DocumentPath $Stale
+        Push-Location $temporary
+        try {
+            & $python -I -B -c $contextProbe $Bundle ($expectation | ConvertTo-Json -Compress -Depth 6)
+            if ($LASTEXITCODE -ne 0) { throw "Context-bound package verification failed ($Label)." }
+        } finally { Pop-Location }
+        Assert-Package $true $Label
+    }
+    $syntheticSubscription = '00000001-000a-4000-a000-000000000001'
+    $altBundle = Join-Path $temporary 'alt_case_tool.py'
+    [void](Use-AsreTestContext -Name alt)
+    & $builder -OutputPath $altBundle
+    Assert-Package ([IO.File]::ReadAllText($altBundle) -cne $source) 'A different deployment context must produce a different bundle.'
+    Assert-ContextBundle $altBundle $altFixture @($syntheticSubscription, 'example-instance') 'The alternative context must bind origin, client, endpoint, workspace and resource.'
+    $altHealth = & $builder -HealthOnly -PassThru
+    Assert-Package ($altHealth -is [string] -and $altHealth -cne $healthSource -and $altHealth -cne $source) 'Health-only output must also follow the deployment context.'
+    Assert-Package ((& $builder -PassThru) -ceq [IO.File]::ReadAllText($altBundle)) 'A context-bound bundle must be deterministic.'
+    [void](Use-AsreTestContext -Name synthetic)
+    Assert-Package ((& $builder -PassThru) -ceq $source) 'Returning to the synthetic context must restore the synthetic bundle.'
+
+    # A deployment context that the real loader accepts (non-synthetic), through the real loader and no test alias.
+    $realisticFile = Join-Path $temporary 'context.realistic.json'
+    Write-ContextFile $realisticFile (New-RealisticDocument)
+    $savedContextFile = $env:ASRE_CONTEXT_FILE
+    Clear-AsreTestContext
+    try {
+        $env:ASRE_CONTEXT_FILE = $realisticFile
+        $realisticBundle = Join-Path $temporary 'realistic_case_tool.py'
+        & $builder -OutputPath $realisticBundle
+        Assert-ContextBundle $realisticBundle $realisticFile @($syntheticSubscription, 'example-instance', 'alt-instance', '00000901-000a-4000-8000-000000000901') 'A real (non-synthetic) context must bind origin, client, endpoint, workspace and resource.'
+        # The real loader refuses synthetic contexts and unreadable files: nothing is published.
+        foreach ($refused in @($syntheticFixture, $altFixture, (Join-Path $temporary 'absent-context.json'))) {
+            $env:ASRE_CONTEXT_FILE = $refused
+            $refusedOutput = Join-Path $temporary ('refused-' + [guid]::NewGuid().ToString('N') + '.py')
+            Assert-Package ($null -ne (Get-BuildFailure { & $builder -OutputPath $refusedOutput })) 'The real loader must refuse a synthetic or absent context.'
+            Assert-Package (-not (Test-Path -LiteralPath $refusedOutput)) 'A refused context must leave no artifact.'
+            Assert-Package ($null -ne (Get-BuildFailure { & $builder -PassThru })) 'A refused context must not return code.'
+            Assert-Package ($null -ne (Get-BuildFailure { & $builder -HealthOnly -PassThru })) 'A refused context must not return health-only code.'
+        }
+    } finally {
+        if ($null -eq $savedContextFile) { Remove-Item -LiteralPath Env:ASRE_CONTEXT_FILE -ErrorAction SilentlyContinue } else { $env:ASRE_CONTEXT_FILE = $savedContextFile }
+        [void](Use-AsreTestContext -Name synthetic)
+    }
+
+    # A context without its ServiceNow section or its agent endpoint is refused with the fixed message, before any file.
+    foreach ($missing in @('servicenow', 'agent endpoint')) {
+        $incomplete = Get-Content -LiteralPath $altFixture -Raw | ConvertFrom-Json -AsHashtable
+        if ($missing -ceq 'servicenow') { $incomplete.Remove('servicenow') } else { $incomplete['agent'].Remove('endpoint') }
+        $incompleteFile = Join-Path $temporary ('context.without-' + $missing.Replace(' ', '-') + '.json')
+        Write-ContextFile $incompleteFile $incomplete
+        [void](Use-AsreTestContext -Path $incompleteFile)
+        $incompleteOutput = Join-Path $temporary ('incomplete-' + [guid]::NewGuid().ToString('N') + '.py')
+        Assert-Package ((Get-BuildFailure { & $builder -OutputPath $incompleteOutput }) -ceq $contextMessage) "A context without its $missing must be refused with the fixed message."
+        Assert-Package (-not (Test-Path -LiteralPath $incompleteOutput)) "A context without its $missing must leave no artifact."
+        Assert-Package ((Get-BuildFailure { & $builder -PassThru }) -ceq $contextMessage) "A context without its $missing must not return code."
+        Assert-Package ((Get-BuildFailure { & $builder -HealthOnly -PassThru }) -ceq $contextMessage) "A context without its $missing must not return health-only code."
+    }
+    [void](Use-AsreTestContext -Name synthetic)
+
+    # Every trusted-runtime binding is tied to the deployment context itself: a self-consistent but different value is denied.
+    $fixtureWorkflow = Join-Path $fixture 'agent/workflows/azure-monitor-review.json'
+    function Set-FixtureDocuments([scriptblock]$Mutate) {
+        $mutableConfig = $runtimeRaw | ConvertFrom-Json -AsHashtable -DateKind String
+        $mutableWorkflow = $workflowRaw | ConvertFrom-Json -AsHashtable -DateKind String
+        & $Mutate $mutableConfig $mutableWorkflow
+        [IO.File]::WriteAllText($fixtureConfig, ($mutableConfig | ConvertTo-Json -Depth 8 -Compress))
+        [IO.File]::WriteAllText($fixtureWorkflow, ($mutableWorkflow | ConvertTo-Json -Depth 32))
+    }
+    Set-FixtureDocuments { param($c, $w) }
+    Assert-Package ($null -eq (Get-BuildFailure { & $fixtureBuilder -PassThru })) 'The unmutated fixture must build (control for the binding denials).'
+    $bindingCases = @(
+        @{ Name = 'facade origin'; Mutate = { param($c, $w) $c['facade_origin'] = 'https://other-instance.service-now.com' } },
+        @{ Name = 'facade client id'; Mutate = { param($c, $w) $c['facade_client_id'] = '0000000000000000000000000000ffff' } },
+        @{ Name = 'SRE origin'; Mutate = { param($c, $w) $c['reader']['sre_origin'] = 'https://other-agent.centralus.azuresre.ai' } },
+        @{ Name = 'workspace customer id'; Mutate = { param($c, $w) $c['reader']['log_analytics_workspace_id'] = '00000063-000a-4000-8000-000000000063' } },
+        @{ Name = 'configuration resource only'; Mutate = { param($c, $w) $c['resource_id'] = $c['resource_id'].Replace('vm-asre-linux-cus', 'vm-other') } },
+        @{ Name = 'workflow scope resource only'; Mutate = { param($c, $w) $w['scope']['resource_id'] = $w['scope']['resource_id'].Replace('vm-asre-linux-cus', 'vm-other') } },
+        @{ Name = 'resource agreed by configuration and workflow'; Mutate = { param($c, $w) $id = $c['resource_id'].Replace('vm-asre-linux-cus', 'vm-other'); $c['resource_id'] = $id; $w['scope']['resource_id'] = $id } },
+        @{ Name = 'workspace agreed by configuration and workflow'; Mutate = { param($c, $w) $id = $c['reader']['workspace_resource_id'].Replace('law-asre-cus', 'law-other'); $c['reader']['workspace_resource_id'] = $id; $w['scope']['workspace_resource_id'] = $id } },
+        @{ Name = 'rule outside the control group'; Mutate = { param($c, $w) $id = $c['rule_id'].Replace('rg-asre-control-cus', 'rg-other'); $c['rule_id'] = $id; $w['scope']['rule_id'] = $id } },
+        @{ Name = 'rule without a name'; Mutate = { param($c, $w) $id = $w['scope']['rule_id'].Substring(0, $w['scope']['rule_id'].LastIndexOf('/') + 1); $c['rule_id'] = $id; $w['scope']['rule_id'] = $id } },
+        @{ Name = 'rule of another subscription'; Mutate = { param($c, $w) $id = $c['rule_id'].Replace($syntheticSubscription, '00000002-000a-4000-a000-000000000002'); $c['rule_id'] = $id; $w['scope']['rule_id'] = $id } }
+    )
+    foreach ($case in $bindingCases) {
+        Set-FixtureDocuments $case.Mutate
+        $bindingOutput = Join-Path $temporary ('binding-' + [guid]::NewGuid().ToString('N') + '.py')
+        Assert-Package ((Get-BuildFailure { & $fixtureBuilder -OutputPath $bindingOutput }) -ceq $bindingMessage) "A different $($case.Name) must be denied by the context binding."
+        Assert-Package (-not (Test-Path -LiteralPath $bindingOutput)) "A different $($case.Name) must leave no artifact."
+    }
+
+    # The private render never outlives the build, whether it succeeds, is refused or fails.
+    $privateTemp = Join-Path $temporary 'private-temp'
+    [void][IO.Directory]::CreateDirectory($privateTemp)
+    $savedTmp = $env:TMP
+    $savedTemp = $env:TEMP
+    try {
+        $env:TMP = $privateTemp
+        $env:TEMP = $privateTemp
+        Assert-Package ([IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetTempPath()) -ieq $privateTemp) 'The temporary location must be redirected for the cleanup proof.'
+        Assert-Package ($null -eq (Get-BuildFailure { & $builder -PassThru })) 'A successful build must not leave a private render behind.'
+        Assert-Package ($null -eq (Get-BuildFailure { & $builder -HealthOnly -PassThru })) 'A successful health-only build must not leave a private render behind.'
+        Assert-Package ((Get-BuildFailure { & $fixtureBuilder -PassThru }) -ceq $bindingMessage) 'A denied build must fail while the cleanup proof is active.'
+        [void](Use-AsreTestContext -Path $incompleteFile)
+        Assert-Package ((Get-BuildFailure { & $builder -PassThru }) -ceq $contextMessage) 'A refused context must fail while the cleanup proof is active.'
+        [void](Use-AsreTestContext -Name synthetic)
+        Assert-Package (@(Get-ChildItem -LiteralPath $privateTemp -Force).Count -eq 0) 'No private render may remain after a successful, denied or refused build.'
+    } finally {
+        $env:TMP = $savedTmp
+        $env:TEMP = $savedTemp
+        [void](Use-AsreTestContext -Name synthetic)
+    }
     Write-Output "$count case-tool package checks passed (offline only)."
 } finally {
+    Clear-AsreTestContext
     [IO.Directory]::Delete($temporary, $true)
 }

@@ -32,6 +32,9 @@ from operations import agent_case as ac, servicenow as sn
 from operations.servicenow import BASE, CIS, GROUP, ORIGIN, CaseClient, HttpResponse
 
 ROOT = Path(__file__).resolve().parents[1]
+# The facade health reply echoes the instance (first label of the origin) and the scope (x_<id>_asre).
+HEALTH_INSTANCE = ORIGIN.split("//", 1)[1].split(".", 1)[0]
+HEALTH_SCOPE = BASE.split("/")[2]
 INVESTIGATION = "native-thread-unit-fixture"
 ALERT = ac.WORKSPACE + "/providers/Microsoft.AlertsManagement/alerts/11111111-1111-4111-8111-111111111111"
 RECURRENCE = ALERT[:-36] + "22222222-2222-4222-8222-222222222222"
@@ -48,6 +51,8 @@ COMMISSIONING = {
                "log_analytics_workspace_id": ac.LOG_WORKSPACE_ID, "native_dto_version": ac.NATIVE_DTO_VERSION},
 }
 NOTE = "Unit fixture findings only. Disk evidence; no repair or recovery asserted."
+# The shipped NATIVE_RULE_ID is None (not commissioned); tests that decode a disk native thread patch this in.
+DISK_CANONICAL_ID = "azmon:v2:arm-rule:" + "B" * 64
 RETRY_POLICY = {"version": "1.0", "minimum_not_before": "2026-10-18T21:15:23.835Z"}
 
 
@@ -1188,7 +1193,7 @@ class Facade:
                     result["case_reference"]["sys_id"] = "f" * 32
             elif method == "GET" and path.endswith("/health"):
                 result = {
-                    "version": "0.1.0", "instance": "example-instance", "scope": "x_0000000_asre",
+                    "version": "0.1.0", "instance": HEALTH_INSTANCE, "scope": HEALTH_SCOPE,
                     "execution_mode": "Review", "azure_mutations_exposed": False, "human_approval_enabled": False,
                     "trusted_verifier_bound": False, "feedback": "fixture", "agent_continuation": "fixture",
                 }
@@ -1591,7 +1596,7 @@ class AgentCaseTests(unittest.TestCase):
             self.assertEqual((store.creations, facade.posts), (0, []))
 
     def test_workspace_extension_alert_id_is_required_not_guessed_root_or_url(self):
-        for bad in (ac.RULE, "https://evil.invalid/alert", ALERT.replace(ac.WORKSPACE, "/subscriptions/00000001-000a-4000-a000-000000000001")):
+        for bad in (ac.RULE, "https://evil.invalid/alert", ALERT.replace(ac.WORKSPACE, "/subscriptions/" + ac.CTX.subscription_id)):
             tool, reader, store, facade = make()
             reader.thread["alert_ids"] = [bad]
             reader.alerts[bad] = {**reader.alerts[ALERT], "id": bad}
@@ -1831,7 +1836,7 @@ class AgentCaseTests(unittest.TestCase):
                                      "expires_in": 1800, "scope": sn.SCOPE})
                 assert request.full_url == ORIGIN + BASE + "/health"
                 return Response({"result": {
-                    "version": "0.1.0", "instance": "example-instance", "scope": "x_0000000_asre",
+                    "version": "0.1.0", "instance": HEALTH_INSTANCE, "scope": HEALTH_SCOPE,
                     "execution_mode": "Review", "azure_mutations_exposed": False, "human_approval_enabled": False,
                     "trusted_verifier_bound": False, "feedback": "fixture", "agent_continuation": "fixture",
                 }})
@@ -1860,6 +1865,7 @@ class AgentCaseTests(unittest.TestCase):
         self.assertEqual([call.args for call in factory.call_args_list],
                          [(identity, ac.decode_native_incident) for identity in identities])
 
+    @patch.object(ac, "NATIVE_RULE_ID", DISK_CANONICAL_ID)
     def test_observed_native_trigger_schema_accepts_null_human_flag_without_using_alert_prose(self):
         native = {
             "id": "00000029-000a-4000-b000-000000000029",
@@ -1867,7 +1873,7 @@ class AgentCaseTests(unittest.TestCase):
             "type": "Prod", "agentMode": "Review", "isIncidentTestModeEnabled": None,
             "createdTimestamp": "2026-10-22T01:37:55.0590765Z",
             "incidentSource": {"incidentType": "AzMonitor", "incidentId": ac.RULE,
-                               "canonicalIncidentId": ac.NATIVE_RULE_ID},
+                               "canonicalIncidentId": DISK_CANONICAL_ID},
             "incidentDetails": {"filterId": "asre-azure-monitor-review", "incidentPriority": "Sev1"},
             "status": {"incidentStatus": {"incidentId": "00000033-000a-0000-6000-000000000033"}},
             "startMessage": {"author": {"role": "SREAgent", "userId": "agent-default"},
@@ -1905,7 +1911,7 @@ class AgentCaseTests(unittest.TestCase):
             ("startMessageIsHuman", True), ("startMessageIsHuman", False),
             ("type", "Test"), ("agentMode", "Autonomous"), ("isIncidentTestModeEnabled", True),
             ("incidentSource", {"incidentType": "AzMonitor", "incidentId": ac.RULE + "-other",
-                                "canonicalIncidentId": ac.NATIVE_RULE_ID}),
+                                "canonicalIncidentId": DISK_CANONICAL_ID}),
             ("incidentDetails", {"filterId": "unrelated", "incidentPriority": "Sev1"}),
             ("status", None), ("startMessage", {"author": {"role": "Human", "userId": "agent-default"}}),
         ):

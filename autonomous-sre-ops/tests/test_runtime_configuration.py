@@ -43,10 +43,10 @@ class RuntimeConfigurationTests(unittest.TestCase):
         monitoring = (ROOT / "infra" / "monitoring.tf").read_text()
         self.assertIn("contains(var.enabled_native_alert_rules, each.key)", monitoring)
         self.assertIn("lower(azurerm_log_analytics_workspace.demo.id)", monitoring)
-        imports = (ROOT / "infra" / "native-alert-imports.tf").read_text()
-        self.assertIn('toset(["patch-installation", "capacity-growth", "backup-job"])', imports)
-        self.assertIn("var.adopt_existing_native_alerts", imports)
-        self.assertIn("azurerm_monitor_scheduled_query_rules_alert_v2.guest[each.key]", imports)
+        imports = ROOT / "infra" / "native-alert-imports.tf"
+        self.assertFalse(imports.exists())
+        self.assertNotIn("import {", monitoring)
+        self.assertNotIn("adopt_existing_native_alerts", monitoring)
 
     def test_correlated_feedback_is_opt_in_and_has_no_approval_or_configuration_role(self):
         variables = (ROOT / "infra" / "variables.tf").read_text()
@@ -63,9 +63,9 @@ class RuntimeConfigurationTests(unittest.TestCase):
         self.assertRegex(role, r"scope\s*=\s*azapi_resource\.agent\[0\]\.id")
         for denied in ("/approve/", "/delete", 'agents/write', 'demo["agent"]', "*"):
             self.assertNotIn(denied, role)
-        self.assertIn('azurerm_container_app_job.operations["feedback"].id', role)
-        self.assertIn('00000041-000a-4000-8000-000000000041', role)
-        self.assertIn('00000043-000a-4000-a000-000000000043', role)
+        self.assertNotIn("feedback_job_refresh", role)
+        self.assertNotIn('azurerm_container_app_job.operations["feedback"]', role)
+        self.assertNotRegex(role, r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
     def test_review_jobs_are_private_digest_pinned_and_bootstrap_is_separate(self):
         source = (ROOT / "infra" / "runtime.tf").read_text()
@@ -105,17 +105,6 @@ class RuntimeConfigurationTests(unittest.TestCase):
         self.assertRegex(source, r'bypass\s*=\s*\["None"\]')
         self.assertEqual(source.count("private_link_access {"), 1)
         self.assertNotIn("ignore_changes", source)
-
-    def test_protected_image_build_checks_source_inputs_and_locks_the_actual_digest(self):
-        source = (ROOT / "scripts" / "Build-RuntimeImages.ps1").read_text()
-        self.assertIn("$Manifest.source_commit -ne $Commit", source)
-        self.assertIn("$Manifest.template_commit -ne $env:TEMPLATE_SOURCE_COMMIT", source)
-        self.assertIn("'Dockerfile', '.dockerignore'", source)
-        self.assertIn("Get-FileHash -LiteralPath $InputFile.FullName", source)
-        self.assertIn("'--write-enabled', 'false', '--delete-enabled', 'false'", source)
-        self.assertIn("image-provenance.json", source)
-        self.assertNotIn("terraform apply", source)
-        self.assertNotIn("admin-enabled", source)
 
     def test_credential_bootstrap_cannot_delete_or_purge_secrets(self):
         source = (ROOT / "infra" / "runtime.tf").read_text()

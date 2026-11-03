@@ -3,12 +3,17 @@ import threading
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
+from urllib.parse import urlparse
 from uuid import uuid4
 
+from operations import context
 from operations.lifecycle import (
-    ALLOWED_ACTIONS, EVIDENCE_HOST, TARGETS, CaseProof, ConflictError,
+    ALLOWED_ACTIONS, EVIDENCE_HOST, SUBSCRIPTION, TARGETS, AzureTable, CaseProof, ConflictError,
     OperationLedger, Repair, normalized_target,
 )
+
+CTX = context.load()
 
 
 class MemoryTable:
@@ -142,6 +147,39 @@ class LifecycleTests(unittest.TestCase):
                 Repair(str(uuid4()), action, case).entity()
             with self.assertRaises(PermissionError):
                 Repair(str(uuid4()), "run_shell", case).entity()
+
+    def test_scope_values_come_from_the_deployment_context(self):
+        self.assertEqual(SUBSCRIPTION, CTX.subscription_id)
+        self.assertIs(type(TARGETS), dict)
+        self.assertEqual(list(TARGETS.items()), list(CTX.roles_by_resource_id().items()))
+        self.assertEqual(list(TARGETS.values()), ["linux", "patch", "backup"])
+        for resource_id in TARGETS:
+            self.assertTrue(resource_id.startswith(f"/subscriptions/{CTX.subscription_id}/resourcegroups/"))
+            self.assertEqual(normalized_target(resource_id), resource_id)
+        self.assertEqual(EVIDENCE_HOST, urlparse(CTX.storage.blob_endpoint).hostname)
+        self.assertTrue(EVIDENCE_HOST.startswith(CTX.storage.account_name + "."))
+        elsewhere = "/subscriptions/{}/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm"
+        with self.assertRaises(PermissionError):
+            normalized_target(elsewhere.format(str(uuid4())))
+
+    def test_the_operations_table_accepts_only_the_context_storage_endpoint(self):
+        endpoint = CTX.storage.table_endpoint
+        other = endpoint.replace(CTX.storage.account_name, "storageofanotherdeployment")
+        self.assertNotEqual(other, endpoint)
+        with patch("azure.data.tables.TableClient") as client, patch("azure.identity.ManagedIdentityCredential") as credential:
+            for accepted in (endpoint, endpoint + "/"):
+                with self.subTest(accepted=accepted):
+                    AzureTable(accepted, "00000000-0000-4000-8000-000000000000")
+                    self.assertEqual(client.call_args.kwargs["endpoint"], accepted)
+                    self.assertEqual(client.call_args.kwargs["table_name"], "Operations")
+                    self.assertIs(client.call_args.kwargs["credential"], credential.return_value)
+            client.reset_mock()
+            for rejected in (other, other + "/", endpoint + "//", endpoint + "/x", endpoint + "?sig=x", endpoint + ":443",
+                             endpoint.replace("https://", "http://", 1), endpoint.upper(), endpoint.replace(".table.", ".blob."),
+                             "", None):
+                with self.subTest(rejected=rejected), self.assertRaises(ValueError):
+                    AzureTable(rejected, "00000000-0000-4000-8000-000000000000")
+            client.assert_not_called()
 
 
 if __name__ == "__main__":
