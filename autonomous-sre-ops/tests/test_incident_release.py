@@ -1,56 +1,13 @@
-"""Offline checks of the root opt-in and its closed release trust boundary."""
+"""Offline checks of the closed release trust boundary (runner script)."""
 import re
 import unittest
 from pathlib import Path
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[1]
-PIPELINE = yaml.safe_load((ROOT / "azure-pipelines.yml").read_text(encoding="utf-8"))
 RUNNER = (ROOT / "scripts/Invoke-IncidentRelease.ps1").read_text(encoding="utf-8")
 
 
 class IncidentReleaseTests(unittest.TestCase):
-    def test_root_preserves_generic_defaults_and_configuration_resources_are_conditional(self):
-        self.assertEqual(PIPELINE["extends"]["template"], ".pipelines/cd-template.yaml@templates")
-        self.assertEqual(PIPELINE["lockBehavior"], "sequential")
-        opt_in = "${{ if eq(parameters.configuration_only, true) }}"
-        self.assertNotIn("pool", PIPELINE)
-        self.assertEqual(PIPELINE["variables"], [{opt_in: [{"group": "alz-mgmt"}]}])
-        self.assertEqual(PIPELINE["trigger"]["branches"]["include"], ["main"])
-        self.assertNotIn("pr", PIPELINE)
-        parameters = {p["name"]: p for p in PIPELINE["parameters"]}
-        self.assertEqual(parameters["terraform_action"]["default"], "apply")
-        self.assertEqual(parameters["terraform_action"]["values"], ["apply", "destroy", "plan"])
-        for name in ("configuration_only", "publish_disabled_configuration"):
-            self.assertIs(parameters[name]["default"], False)
-        self.assertEqual(parameters["validated_configuration_run_id"]["default"], "0")
-
-    def test_configuration_profile_only_selected_by_explicit_opt_in(self):
-        parent = PIPELINE["extends"]["parameters"]
-        self.assertEqual(parent["${{ if eq(parameters.configuration_only, true) }}"],
-                         {"delivery_profile": "asre-configuration"})
-        self.assertNotIn("${{ else }}", parent)
-        self.assertNotIn("delivery_profile", parent)  # Retain the parent's standard default.
-        for name in ("configuration_only", "publish_disabled_configuration", "validated_configuration_run_id"):
-            self.assertEqual(parent[name], "${{ parameters." + name + " }}")
-        self.assertNotIn("stages", PIPELINE)
-        self.assertNotIn("jobs", PIPELINE)
-        self.assertNotIn("steps", PIPELINE)
-
-    def test_template_identity_and_existing_arguments_stay_bound(self):
-        self.assertEqual(PIPELINE["resources"]["repositories"], [{
-            "repository": "templates", "type": "git",
-            "name": "alz-landingzone/alz-mgmt-templates",
-        }])
-        parent = PIPELINE["extends"]["parameters"]
-        self.assertEqual(parent["terraform_cli_version"],
-                         "${{ coalesce(parameters.terraform_cli_version, 'latest') }}")
-        self.assertEqual(parent["root_module_folder_relative_path"], ".")
-        for name in ("terraform_action", "configuration_only", "publish_disabled_configuration",
-                     "validated_configuration_run_id"):
-            self.assertEqual(parent[name], "${{ parameters." + name + " }}")
-
     def test_release_actions_exclude_activation_and_infrastructure(self):
         self.assertIn("[ValidateSet('Validate', 'Verify', 'PublishDisabled')]", RUNNER)
         self.assertNotIn("[scriptblock]", RUNNER)

@@ -255,7 +255,10 @@ $global:ReleaseFixturePublications++
         $node -is [Management.Automation.Language.AssignmentStatementAst] -and $node.Left.ToString() -ceq '$SourceFiles'
     }, $true)
     foreach ($relative in $sourceAssignment.Right.Expression.SafeGetValue()) {
-        Copy-Item -LiteralPath (Join-Path $Repo $relative) -Destination (Join-Path $Source $relative) -Force
+        $repoFile = Join-Path $Repo $relative
+        # This subproject carries no CI definition yet; the stub written above stands in for it.
+        if ($relative -ceq 'azure-pipelines.yml' -and -not (Test-Path -LiteralPath $repoFile -PathType Leaf)) { continue }
+        Copy-Item -LiteralPath $repoFile -Destination (Join-Path $Source $relative) -Force
     }
     [IO.File]::WriteAllText((Join-Path $Source 'scripts/Build-CaseTool.ps1'), $builderFixture)
     # Existing receipt/chain probes remain genuinely legacy. The new

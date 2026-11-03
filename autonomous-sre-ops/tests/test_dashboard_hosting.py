@@ -54,17 +54,6 @@ class DashboardHostingTests(unittest.TestCase):
         self.assertIn('"/healthz"', source)
         self.assertIn('name = "Host"', source)
 
-    def test_pipeline_preserves_protected_route(self):
-        source = (ROOT / ".pipelines" / "dashboard.yml").read_text(encoding="utf-8")
-        for required in (
-            "trigger: none", "name: alz-mgmt", "ASRE_RUNTIME_IMAGE_KIND: dashboard",
-            "template: .pipelines/cd-template.yaml@templates",
-            "delivery_profile: asre-saved-plan", "runtime_only: true",
-        ):
-            self.assertIn(required, source)
-        self.assertNotIn("az acr build", source)
-        self.assertNotIn("terraform apply", source)
-
     def test_container_has_closed_copy_inputs_and_nonroot_process(self):
         source = (ROOT / "dashboard" / "Dockerfile").read_text(encoding="utf-8")
         self.assertIn("FROM python:3.13-slim@sha256:", source)

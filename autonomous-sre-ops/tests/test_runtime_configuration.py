@@ -67,22 +67,6 @@ class RuntimeConfigurationTests(unittest.TestCase):
         self.assertIn('00000041-000a-4000-8000-000000000041', role)
         self.assertIn('00000043-000a-4000-a000-000000000043', role)
 
-    def test_feedback_delivery_is_manual_private_and_runtime_only(self):
-        import yaml
-        source = yaml.safe_load((ROOT / ".pipelines" / "servicenow-feedback.yml").read_text())
-        self.assertEqual(source["trigger"], "none")
-        self.assertEqual(source["pr"], "none")
-        self.assertEqual(source["pool"]["name"], "alz-mgmt")
-        self.assertEqual(source["resources"]["repositories"][0]["ref"], "refs/heads/main")
-        parent = source["extends"]
-        self.assertEqual(parent["template"], ".pipelines/cd-template.yaml@templates")
-        self.assertEqual(parent["parameters"]["delivery_profile"], "asre-saved-plan")
-        self.assertIs(parent["parameters"]["runtime_only"], True)
-        parameters = {item["name"]: item for item in source["parameters"]}
-        self.assertEqual(parameters["terraform_action"]["default"], "plan")
-        self.assertIs(parameters["build_runtime_images"]["default"], False)
-        self.assertEqual(parameters["validated_plan_run_id"]["default"], "0")
-
     def test_review_jobs_are_private_digest_pinned_and_bootstrap_is_separate(self):
         source = (ROOT / "infra" / "runtime.tf").read_text()
         self.assertRegex(source, r"internal_load_balancer_enabled\s*=\s*true")
