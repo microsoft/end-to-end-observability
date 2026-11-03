@@ -158,8 +158,8 @@ if ($Phase -ne 'Source') {
         }
         else {
             Add-Check 'network-feature' $false ("$FeatureNamespace/$FeatureName is $(Limit-Text $FeatureState 80), not Registered. The operator must run " +
-                "'az feature register --namespace $FeatureNamespace --name $FeatureName' and then " +
-                "'az provider register --namespace $FeatureNamespace'; this script never registers anything.")
+                "'az feature register --namespace $FeatureNamespace --name $FeatureName --subscription `$SubscriptionId' and then " +
+                "'az provider register --namespace $FeatureNamespace --subscription `$SubscriptionId'; this script never registers anything.")
         }
 
         $Compute = Get-Content -LiteralPath (Join-Path $Root 'compute.tf') -Raw

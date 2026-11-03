@@ -30,6 +30,7 @@ $SecretPattern = '^' + [regex]::Escape($Vault) + 'secrets/entra-client-secret/[0
 
 function Get-Token {
     param([string]$Resource)
+    # --tenant pins the token to the tenant; az rejects it together with --subscription, so this call is deliberately not subscription-scoped.
     $value = & az account get-access-token --tenant $Tenant --resource $Resource --query accessToken --output tsv --only-show-errors
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($value)) {
         throw 'Tenant-pinned operator authentication failed.'

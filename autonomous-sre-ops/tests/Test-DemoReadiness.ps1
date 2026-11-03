@@ -14,8 +14,8 @@ $null = New-Item -ItemType Directory -Path $Work
 $global:AssertionCount = 0
 $global:AzCalls = [System.Collections.Generic.List[string]]::new()
 $global:TfCalls = [System.Collections.Generic.List[string]]::new()
-$FeatureRegister = 'az feature register --namespace Microsoft.Network --name AllowBringYourOwnPublicIpAddress'
-$ProviderRegister = 'az provider register --namespace Microsoft.Network'
+$FeatureRegister = 'az feature register --namespace Microsoft.Network --name AllowBringYourOwnPublicIpAddress --subscription $SubscriptionId'
+$ProviderRegister = 'az provider register --namespace Microsoft.Network --subscription $SubscriptionId'
 
 function Assert-Test {
     param([bool]$Condition, [string]$Message)

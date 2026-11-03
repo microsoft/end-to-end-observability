@@ -157,8 +157,9 @@ foreach ($name in 'containerapp', 'scheduled-query', 'log-analytics') {
 ## Wave 0: preflight, SSH keys and state
 
 Creates the resource group `rg-asre-state-cus` and the storage account `stasrestate<suffix>`: shared-key access off,
-public network access enabled with the firewall default action Deny and exactly one rule (your address), blob
-versioning and soft delete on, and a private `tfstate` container. It gives you Storage Blob Data Contributor on the
+public network access enabled with the firewall default action Deny and one rule for each operator address you pass
+(normally just yours; see step 6), blob versioning and soft delete on, and a private `tfstate` container. It gives you
+Storage Blob Data Contributor on the
 account and writes `infra\environments\backend.hcl`. Nothing else changes. After its writes the script reads the account
 back; if the tenant forces public network access off, it stops with an error and writes no backend file (see the note
 after the gate, for a tenant with a storage public-network Modify policy).
@@ -185,11 +186,11 @@ after the gate, for a tenant with a storage public-network Modify policy).
    For the feature:
 
    ```powershell
-   az feature register --namespace Microsoft.Network --name AllowBringYourOwnPublicIpAddress
-   az provider register --namespace Microsoft.Network
+   az feature register --namespace Microsoft.Network --name AllowBringYourOwnPublicIpAddress --subscription $SubscriptionId
+   az provider register --namespace Microsoft.Network --subscription $SubscriptionId
    ```
 
-   For any other unregistered provider, run `az provider register --namespace <provider>`.
+   For any other unregistered provider, run `az provider register --namespace <provider> --subscription $SubscriptionId`.
 
 3. Confirm that the managed agent resource type is offered in Central US. The list must include `Central US`.
 
@@ -217,17 +218,37 @@ after the gate, for a tenant with a storage public-network Modify policy).
    Import-SshKeyEnvironment
    ```
 
-6. Record your public address and your Entra object id, then create the state backend. The first run is a rehearsal.
-   Both calls pass the object id. If your public address changes later, run the script again with the new address.
-   In a tenant with a storage public-network Modify policy, read the note after the gate first and add
-   `-ApplyPolicyExclusionTag` to both calls.
+6. Record the public address that Azure sees for your traffic and your Entra object id, then create the state backend.
+   `-OperatorIp` takes one to eight distinct addresses: the firewall gets one rule for each and every other rule is
+   removed. The first run is a rehearsal. Both calls pass the object id. If an address changes later, run the script
+   again with the current set. In a tenant with a storage public-network Modify policy, read the note after the gate
+   first and add `-ApplyPolicyExclusionTag` to both calls.
 
    ```powershell
-   $OperatorIp = '<operator-ip>'
+   $OperatorIp = @('<operator-ip>')
    $OperatorObjectId = (az ad signed-in-user show --query id --output tsv).Trim().ToLowerInvariant()
    & .\scripts\Initialize-TerraformState.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -OperatorIp $OperatorIp -OperatorObjectId $OperatorObjectId -WhatIf
    & .\scripts\Initialize-TerraformState.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -OperatorIp $OperatorIp -OperatorObjectId $OperatorObjectId
    ```
+
+   **Which address.** The firewall matches the address that Azure sees, which is not always the one a "what is my IP"
+   service reports. Behind a VPN, a proxy or the Global Secure Access client the two differ: the client tunnels Azure
+   traffic, so Azure sees its egress addresses. The sign is a run that ends with "not yet reachable with the operator
+   identity" after the Azure CLI reported `AuthorizationFailure` on every attempt (a missing role reports
+   `AuthorizationPermissionMismatch` instead). The first run has already created the resource group and the account,
+   so your sign-in has activity to read. List the addresses that Azure recorded for you in the Activity Log, review
+   them (the firewall takes IPv4 only), and run both calls again with all of them. Add your own address as well if you
+   sometimes work outside the tunnel. The script's data-plane wait proves that they work.
+
+   ```powershell
+   $me = (az account show --subscription $SubscriptionId --query user.name --output tsv).Trim()
+   $Seen = az monitor activity-log list --subscription $SubscriptionId --offset 7d --max-events 1000 --query "[].{caller:caller,ip:httpRequest.clientIpAddress}" --output json | ConvertFrom-Json | Where-Object { $_.caller -ieq $me -and $_.ip } | Select-Object -ExpandProperty ip -Unique
+   $Seen
+   $OperatorIp = @('<operator-ip>', '<seen-ip-1>', '<seen-ip-2>')
+   ```
+
+   Egress addresses can change over time; run the script again with the current set (it removes the rules that are no
+   longer listed).
 
 **Gate.** The delivery check adds `backend.hcl` and access to the state to the preflight. It must exit 0.
 
@@ -238,7 +259,7 @@ after the gate, for a tenant with a storage public-network Modify policy).
 **Note: a tenant with a storage public-network Modify policy.** Some tenants assign a policy that rewrites
 `publicNetworkAccess` to `Disabled` whenever a storage account is created or updated, unless the account (or its resource
 group) carries the tag `SecurityControl=Ignore`. The SFI network-security policy `StorageAccount_PublicNetwork_Modify`
-(effect Modify) is one. The state account is reached through its firewall from one operator address, so it cannot work
+(effect Modify) is one. The state account is reached through its firewall from the operator addresses, so it cannot work
 with public network access off. `-WhatIf` writes nothing and cannot show this policy behaviour; only the read-back of the
 real run can. The script reads the account back after its last account write (every run) and fails closed: it names the
 observed value, writes no backend file and never falls back to local Terraform state.
@@ -251,7 +272,7 @@ observed value, writes no backend file and never falls back to local Terraform s
   in the create call for a new account, or by a merge that keeps the other tags on an existing one. It prints one
   warning per run. It then requires public network access to read back as `Enabled` and the tag to read back as `Ignore`.
 - **What the tag does not do.** It does not touch any other resource, change any policy, grant any access or open the
-  firewall (the default action stays Deny with one operator address). Removing the tag changes nothing until the next
+  firewall (the default action stays Deny with only the operator addresses). Removing the tag changes nothing until the next
   write to the account, when the policy rewrites the account again.
 - **Never tag the resource group.** The policy honours a resource group tag for every account in the group. The script
   never tags it; do not do it by hand.
@@ -260,10 +281,12 @@ observed value, writes no backend file and never falls back to local Terraform s
   expiring policy exemption, granted by the policy owner, is the governed alternative; this repository does not
   automate it.
 - **Compensating controls.** The data plane accepts Entra ID only (`backend.hcl` has no key), shared-key access is off,
-  the firewall default action is Deny with one operator address, blob versioning and soft delete are on, and RBAC
+  the firewall default action is Deny with only the operator addresses, blob versioning and soft delete are on, and RBAC
   limits who can read or write the state.
-- **Residual risk.** The operator address is a /32 on a public network path: anyone who reaches Azure from the same
-  egress address passes the firewall, though they still need Entra ID and a role on the account.
+- **Residual risk.** Each operator address is a /32 on a public network path: anyone who reaches Azure from the same
+  egress address passes the firewall, though they still need Entra ID and a role on the account. The egress addresses
+  of a shared service such as the Global Secure Access client are probably used by other organizations' traffic as well,
+  so list only the addresses you need.
 - **Teardown.** Deleting the state resource group deletes the account and its tag.
 
 ## Wave 1: foundation and compute
@@ -334,7 +357,7 @@ alert rules, all disabled. It creates no agent, no runtime job and no backup pro
   it lists three computers.
 
   ```powershell
-  az monitor log-analytics query --workspace $Ctx.log_analytics.customer_id --analytics-query "Heartbeat | where TimeGenerated > ago(15m) | summarize LastSeen=max(TimeGenerated) by Computer" --output table
+  az monitor log-analytics query --workspace $Ctx.log_analytics.customer_id --subscription $SubscriptionId --analytics-query "Heartbeat | where TimeGenerated > ago(15m) | summarize LastSeen=max(TimeGenerated) by Computer" --output table
   ```
 
 - Each guest passes the baseline recheck, a read-only script that runs inside the VM through Run Command. It checks
@@ -532,7 +555,7 @@ of the on-demand work.
 - The agent is `Succeeded`, in Review mode with access level Low, and its endpoint ends in `.azuresre.ai`.
 
   ```powershell
-  $Agent = az resource show --ids $Ctx.agent.resource_id --api-version 2026-01-01 --output json | ConvertFrom-Json
+  $Agent = az resource show --ids $Ctx.agent.resource_id --api-version 2026-01-01 --subscription $SubscriptionId --output json | ConvertFrom-Json
   $Agent.properties.provisioningState
   $Agent.properties.actionConfiguration.mode
   $Agent.properties.actionConfiguration.accessLevel
@@ -684,7 +707,7 @@ portal to confirm what exists.
    reports a deletion, stop and review the plan by hand before you use `terraform state rm`.
 
    ```powershell
-   az resource delete --ids $Ctx.agent.resource_id --api-version 2026-01-01
+   az resource delete --ids $Ctx.agent.resource_id --api-version 2026-01-01 --subscription $SubscriptionId
    Set-TfVar -Name 'deploy_managed_agent' -Value 'false'
    ```
 
@@ -701,10 +724,10 @@ portal to confirm what exists.
 
    ```powershell
    $ControlScope = "/subscriptions/$SubscriptionId/resourceGroups/$($Ctx.resource_groups.control)"
-   az role definition list --custom-role-only true --scope $ControlScope --output json | ConvertFrom-Json | Where-Object { $_.roleName -like 'ASRE*' } | Select-Object roleName, name
+   az role definition list --custom-role-only true --scope $ControlScope --subscription $SubscriptionId --output json | ConvertFrom-Json | Where-Object { $_.roleName -like 'ASRE*' } | Select-Object roleName, name
    ```
 
-   Delete the one that is listed with `az role definition delete --name <name> --scope $ControlScope`.
+   Delete the one that is listed with `az role definition delete --name <name> --scope $ControlScope --subscription $SubscriptionId`.
 
 5. Delete the resource groups in dependency order: the three VM groups first, then the control group, then
    `AzureBackupRG_centralus_1` once the vault holds no items, and the state group `rg-asre-state-cus` last. Delete a
@@ -718,18 +741,18 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | Symptom | Cause and action |
 |---|---|
 | The preflight reports `AllowBringYourOwnPublicIpAddress` as not registered | Run the two registration commands in Wave 0 and repeat the preflight |
-| A plan or apply fails with 403 on the state account | Your public address changed. Run `Initialize-TerraformState.ps1` again with the new `-OperatorIp` (and `-ApplyPolicyExclusionTag` in a tenant with the Wave 0 policy note) |
+| A plan or apply fails with 403 on the state account, or `Initialize-TerraformState.ps1` ends with "not yet reachable with the operator identity" and `AuthorizationFailure` | Azure sees your traffic from an address that is not in the state firewall. Either your address changed, or you are behind a VPN, a proxy or the Global Secure Access client, whose egress addresses differ from the one a "what is my IP" service reports (Wave 0, step 6 shows how to read them). Run `Initialize-TerraformState.ps1` again with every current address in `-OperatorIp` (and `-ApplyPolicyExclusionTag` in a tenant with the Wave 0 policy note) |
 | `Initialize-TerraformState.ps1` stops after its writes: public network access is not `Enabled`, or the tag `SecurityControl` is not `Ignore` | A tenant policy forces public network access off (see the Wave 0 note). No backend file was written. Without the switch: run again with `-ApplyPolicyExclusionTag` (after the policy owner's sign-off). With the switch and the tag present: another policy parameter, a network perimeter or propagation applies; wait and run again, then ask the policy owner. Local Terraform state is not a workaround. With the switch and the tag missing: the tag was not applied or was removed; check your tag permissions and the Activity Log |
 | "The source tree has uncommitted changes" | Commit or stash the changes in `autonomous-sre-ops/`. `-AllowDirty` exists for experiments; a plan made with it cannot feed `Build-RuntimeImages.ps1` |
 | "The saved plan has expired" | The four-hour limit passed. Make a new plan and apply that; never replan inside an apply |
 | "The baseline rejects every deletion or replacement" | Do not work around it. Find why the plan wants to delete (drift or a renamed resource) and fix the cause. An intended deletion is manual (see Teardown) |
 | A role assignment, or a job creation after one, fails | The assignment had not propagated. Make a new plan and apply again |
 | An apply stops partway | Terraform records what exists. Make a new plan, review it and apply |
-| `Build-RuntimeImages.ps1` reports "An unlocked source-revision image already exists" | The tag for this commit exists but is not locked, so this script did not finish it. Delete it with `az acr repository delete --name <registry> --image asre-operations:<commit> --yes` and run the script again. If the delete is refused, first run `az acr repository update --name <registry> --image asre-operations:<commit> --delete-enabled true` |
+| `Build-RuntimeImages.ps1` reports "An unlocked source-revision image already exists" | The tag for this commit exists but is not locked, so this script did not finish it. Delete it with `az acr repository delete --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --yes` and run the script again. If the delete is refused, first run `az acr repository update --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --delete-enabled true` |
 | `Build-RuntimeImages.ps1` reports "The actual ACR source build failed" | Read the `az acr build` output above the message. If it says that ACR Tasks is not permitted for the subscription or registry, stop: do not substitute a local build. Otherwise fix the cause and run the script again |
 | A script hangs on its first `az` call | It ran in a nested `pwsh -File`. Run it in the session with `&` |
 | `terraform` run by hand fails with "Too many command line arguments" | In PowerShell, quote each flag whole, for example `"-var-file=demo.tfvars"` |
-| An `az` command fails with "was unexpected" after `--query` | PowerShell mis-parses a JMESPath expression with parentheses. Use `--output json`, then `ConvertFrom-Json` and filter in PowerShell |
+| An `az` command fails with "was unexpected" after `--query` | `az` is a batch file (`az.cmd`), so cmd.exe splits an argument that has no space but contains an ampersand, a pipe, parentheses, angle brackets or a caret, for example `"[?starts_with(name,'x')].name"`. Put a space in the expression (after a comma) or avoid those characters: use `--output json`, then `ConvertFrom-Json` and filter in PowerShell |
 | The VMs are deallocated in the morning | The platform may deallocate lab VMs overnight. Start them as described in the checks above |
 | `Publish-ObserveWorkflow.ps1 -Mode Bind` times out | The agent is not ready. Run it again with `-ReadinessTimeoutSeconds 900` |
 | Agent calls return 401 or 403 right after Wave 5 | The `SRE Agent Administrator` assignment has not propagated. Wait a few minutes and run the step again |
@@ -737,8 +760,8 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) equals the target resource id on the alert, letter for letter. The alert may carry the workspace id in lower case. A difference in case alone is a publisher defect, because the publisher writes the context id as it is: report it and do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |
 | A script rejects the subscription or tenant id | Both must be lowercase GUIDs |
 | A second deployment in the same tenant fails on a custom role name | Custom role names are unique per tenant; see [implementation.md](implementation.md) |
-| A redeployment fails on the Key Vault name | The vault is soft-deleted and purge protection blocks a purge. Recover it with `az keyvault recover --name kv-asre-<suffix> --location centralus` (not exercised) |
-| A redeployment fails on the workspace name | The deleted workspace is in its recovery period. Delete it permanently first with `az monitor log-analytics workspace delete --force true --yes` (not exercised) |
+| A redeployment fails on the Key Vault name | The vault is soft-deleted and purge protection blocks a purge. Recover it with `az keyvault recover --name kv-asre-<suffix> --location centralus --subscription $SubscriptionId` (not exercised) |
+| A redeployment fails on the workspace name | The deleted workspace is in its recovery period. Delete it permanently first with `az monitor log-analytics workspace delete --workspace-name law-asre-cus --resource-group rg-asre-control-cus --subscription $SubscriptionId --force true --yes` (not exercised) |
 
 ## Deferred
 

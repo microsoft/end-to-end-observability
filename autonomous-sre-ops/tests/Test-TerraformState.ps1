@@ -9,6 +9,7 @@ $OtherSub = '00000901-000a-4000-8000-000000000901'
 $OtherTenant = '00000902-000a-4000-8000-000000000902'
 $OperatorOid = '00000003-000a-4000-9000-000000000003'
 $OperatorIp = '203.0.113.7'
+$SecondIp = '203.0.113.8'
 $StaleIp = '198.51.100.9'
 $RealSub = 'c0ffee00-1234-4abc-8def-0123456789ab'
 $RealTenant = 'deadbeef-4321-4cba-9fed-ba9876543210'
@@ -121,6 +122,40 @@ $AzVerbFlags = @{
     'tag update' = @('--acquire-policy-token', '--change-reference', '--operation', '--resource-id', '--tags')
 }
 
+# The enumerated values ("Allowed values") of the flags the scripts pass, captured from the same offline help. Real az rejects
+# any other value while it parses the command, before it calls Azure, and compares case-insensitively: `--public-access none`
+# fails with "'none' is not a valid value for '--public-access'. Allowed values: off, blob, container." A flag that is not
+# listed here is not value-checked; add the flag and its allowed values here when a script starts passing an enumerated flag.
+$AzBoolValues = @('false', 'true')
+$AzStorageAccountValues = @{
+    '--allow-blob-public-access' = $AzBoolValues
+    '--allow-shared-key-access' = $AzBoolValues
+    '--bypass' = @('AzureServices', 'Logging', 'Metrics', 'None')
+    '--default-action' = @('Allow', 'Deny')
+    '--https-only' = $AzBoolValues
+    '--min-tls-version' = @('TLS1_0', 'TLS1_1', 'TLS1_2', 'TLS1_3')
+    '--public-network-access' = @('Disabled', 'Enabled', 'SecuredByPerimeter')
+}
+$AzVerbValues = @{
+    'role assignment create' = @{ '--assignee-principal-type' = @('ForeignGroup', 'Group', 'ServicePrincipal', 'User') }
+    'storage account blob-service-properties update' = @{
+        '--enable-container-delete-retention' = $AzBoolValues
+        '--enable-delete-retention' = $AzBoolValues
+        '--enable-versioning' = $AzBoolValues
+    }
+    'storage account create' = $AzStorageAccountValues + @{
+        '--kind' = @('BlobStorage', 'BlockBlobStorage', 'FileStorage', 'Storage', 'StorageV2')
+        '--sku' = @('PremiumV2_LRS', 'PremiumV2_ZRS', 'Premium_LRS', 'Premium_ZRS', 'StandardV2_GRS', 'StandardV2_GZRS',
+            'StandardV2_LRS', 'StandardV2_ZRS', 'Standard_GRS', 'Standard_GZRS', 'Standard_LRS', 'Standard_RAGRS',
+            'Standard_RAGZRS', 'Standard_ZRS')
+    }
+    'storage account update' = $AzStorageAccountValues
+    'storage blob list' = @{ '--auth-mode' = @('key', 'login') }
+    'storage container-rm create' = @{ '--public-access' = @('blob', 'container', 'off') }
+    'tag update' = @{ '--operation' = @('Delete', 'Merge', 'Replace') }
+}
+$AzGlobalValues = @{ '--output' = @('json', 'jsonc', 'none', 'table', 'tsv', 'yaml', 'yamlc') }
+
 function Reset-Fake {
     $global:Fake = @{
         Calls = [System.Collections.Generic.List[string]]::new()
@@ -147,6 +182,7 @@ function Reset-Fake {
         PolicyHonorsTag = $true
         DropTags = $false
         PnaLocked = $false
+        RulesLocked = $false
         ShowTagsNullOnce = $false
         TagCalls = [System.Collections.Generic.List[string]]::new()
         Warnings = @()
@@ -187,6 +223,17 @@ function global:az {
     $allowedFlags = @($AzVerbFlags[$verbText]) + @($AzGlobalFlags | Where-Object { $_ -cne '--subscription' -or $verbText -cnotmatch '^ad ' })
     foreach ($flag in $options.Keys) {
         if ($allowedFlags -cnotcontains $flag) { throw "The fixture refused $flag, which 'az $verbText --help' does not list: $text" }
+    }
+    foreach ($flag in $options.Keys) {
+        $allowedValues = $null
+        if ($AzVerbValues.ContainsKey($verbText) -and $AzVerbValues[$verbText].ContainsKey($flag)) { $allowedValues = $AzVerbValues[$verbText][$flag] }
+        elseif ($AzGlobalValues.ContainsKey($flag)) { $allowedValues = $AzGlobalValues[$flag] }
+        if ($null -eq $allowedValues) { continue }
+        if ($null -eq $options[$flag]) { throw "The fixture, like real az, refused $flag without a value (expected one argument): $text" }
+        # -notcontains compares case-insensitively, as real az does for its choices.
+        if ($allowedValues -notcontains $options[$flag]) {
+            throw "The fixture, like real az, refused 'az ${verbText}': '$($options[$flag])' is not a valid value for '$flag'. Allowed values: $($allowedValues -join ', ')."
+        }
     }
     if ($fake.FailVerb -ceq $verbText) { $global:LASTEXITCODE = 1; return 'ERROR: fixture failure' }
     $mutating = @('group create', 'storage account create', 'storage account update', 'storage account network-rule add',
@@ -293,12 +340,13 @@ function global:az {
         }
         'storage account network-rule add' {
             if ($options['--account-name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus') { throw "The fixture refused the rule target: $text" }
-            if (-not $fake.Account.Ips.Contains($options['--ip-address'])) { $fake.Account.Ips.Add($options['--ip-address']) }
+            # RulesLocked: the call succeeds but the rule set does not change (a policy or a propagation delay).
+            if (-not $fake.RulesLocked -and -not $fake.Account.Ips.Contains($options['--ip-address'])) { $fake.Account.Ips.Add($options['--ip-address']) }
             & $applyPolicy
         }
         'storage account network-rule remove' {
             if ($options['--account-name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus') { throw "The fixture refused the rule target: $text" }
-            $null = $fake.Account.Ips.Remove($options['--ip-address'])
+            if (-not $fake.RulesLocked) { $null = $fake.Account.Ips.Remove($options['--ip-address']) }
             & $applyPolicy
         }
         'tag update' {
@@ -340,7 +388,7 @@ function global:az {
             return (ConvertTo-Json -InputObject @($fake.Containers | Where-Object { $_ -ceq 'tfstate' }) -Compress)
         }
         'storage container-rm create' {
-            if ($options['--storage-account'] -cne $accountName -or $options['--name'] -cne 'tfstate' -or $options['--public-access'] -cne 'none') { throw "The fixture refused the container: $text" }
+            if ($options['--storage-account'] -cne $accountName -or $options['--name'] -cne 'tfstate' -or $options['--public-access'] -cne 'off') { throw "The fixture refused the container: $text" }
             $fake.Containers.Add($options['--name'])
         }
         'role assignment list' {
@@ -378,7 +426,7 @@ function Set-Compliant {
 }
 
 function Invoke-State {
-    param([hashtable]$Extra = @{}, [switch]$WhatIf, [switch]$ApplyTag, [string]$Backend = $BackendPath, [string]$Ip = $OperatorIp)
+    param([hashtable]$Extra = @{}, [switch]$WhatIf, [switch]$ApplyTag, [string]$Backend = $BackendPath, [string[]]$Ip = @($OperatorIp))
     $fake = $global:Fake
     $fake.Calls.Clear(); $fake.Mutations.Clear(); $fake.MutationCalls.Clear(); $fake.Sleeps.Clear(); $fake.PollBackendPresent.Clear()
     $fake.TagCalls.Clear()
@@ -427,6 +475,7 @@ $StateAst = [System.Management.Automation.Language.Parser]::ParseFile($StateScri
 $StateParameters = @($StateAst.ParamBlock.Parameters)
 Assert-Test ((@($StateParameters | ForEach-Object { $_.Name.VariablePath.UserPath }) -join ',') -ceq 'SubscriptionId,TenantId,OperatorIp,OperatorObjectId,BackendFile,ApplyPolicyExclusionTag') 'The state script parameters are not the approved six.'
 Assert-Test ($StateParameters[-1].StaticType -eq [switch] -and $null -eq $StateParameters[-1].DefaultValue) 'ApplyPolicyExclusionTag is not an opt-in switch without a default.'
+Assert-Test ($StateParameters[2].StaticType -eq [string[]] -and $StateText -match '\$MaxOperatorAddresses = 8') 'OperatorIp is not a string array bounded at eight addresses.'
 Assert-Test ($StateText -cmatch "\`$PolicyExclusionTagName = 'SecurityControl'" -and $StateText -cmatch "\`$PolicyExclusionTagValue = 'Ignore'") 'The exclusion tag name and value are not the SecurityControl and Ignore constants.'
 Assert-Test ([regex]::Matches($StateText, "'--tags'").Count -eq 2 -and [regex]::Matches($StateText, "'tag', 'update'").Count -eq 1 -and [regex]::Matches($StateText, 'Write-Warning').Count -eq 1) 'The state script tags in more or fewer places than the account create and one Merge tag update, or warns more than once.'
 Assert-Test ($StateText -cnotmatch "'(?:resource|group)', 'tag'|az resource tag" -and $StateText -cmatch "'--operation', 'Merge'") 'The tag step is not a Merge tag update.'
@@ -468,6 +517,23 @@ try {
         $null = Invoke-State -Ip $address -WhatIf
         Assert-Test ($global:Fake.Mutations.Count -eq 0) "The public address '$address' was refused or caused a write."
     }
+    # A list is one to eight distinct public addresses; anything else is refused before Azure is called.
+    $rejectedLists = @(
+        @{ Name = 'a duplicate'; Ip = @($OperatorIp, $OperatorIp) },
+        @{ Name = 'a private address among good ones'; Ip = @($OperatorIp, '10.1.2.3') },
+        @{ Name = 'a CIDR range among good ones'; Ip = @($OperatorIp, '198.51.100.0/24') },
+        @{ Name = 'a blank entry among good ones'; Ip = @($OperatorIp, ' ') },
+        @{ Name = 'nine addresses'; Ip = @(11..19 | ForEach-Object { "203.0.113.$_" }) },
+        @{ Name = 'one comma-joined value'; Ip = @("$OperatorIp,$StaleIp") })
+    foreach ($case in $rejectedLists) {
+        Reset-Fake
+        $global:AllCalls.Clear()
+        Assert-Fails { $null = Invoke-State -Ip $case.Ip } 'OperatorIp' "The operator list with $($case.Name) was accepted."
+        Assert-Test ($global:AllCalls.Count -eq 0) "The operator list with $($case.Name) reached Azure."
+    }
+    Reset-Fake
+    $null = Invoke-State -Ip @(11..18 | ForEach-Object { "203.0.113.$_" }) -WhatIf
+    Assert-Test ($global:Fake.Mutations.Count -eq 0) 'Eight distinct public addresses were refused or caused a write.'
 
     # ---- first run on an empty subscription ------------------------------------------------------------------------------
     Reset-Fake
@@ -623,7 +689,7 @@ try {
     Set-Compliant
     [IO.File]::WriteAllText($BackendPath, "previous backend`n", [Text.UTF8Encoding]::new($false))
     $global:Fake.PollFailures = 1000
-    Assert-Fails { $null = Invoke-State } 'not yet reachable with the operator identity' 'An unreachable state container was accepted.'
+    Assert-Fails { $null = Invoke-State } 'not yet reachable with the operator identity.*AuthorizationFailure.*AuthorizationPermissionMismatch.*-OperatorIp.*Global Secure Access.*Wave 0, step 6' 'An unreachable state container was accepted, or its message lacks the network-address hint.'
     Assert-Test ($global:Fake.PollCalls -eq 24 -and @($global:Fake.Sleeps).Count -eq 23) 'The wait was not bounded to 24 probes with 23 pauses.'
     Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq "previous backend`n" -and @(Get-ChildItem -LiteralPath $Work -Force | Where-Object { $_.Name -match '\.tmp-' }).Count -eq 0) 'An unreachable state container changed the previous backend.hcl or left a temporary file.'
 
@@ -636,13 +702,13 @@ try {
     function Assert-FailsClosed {
         # The run must fail with $Pattern, before the data-plane poll and the blob service, container and role steps, with the
         # previous backend file byte-identical (or still absent) and no temporary file.
-        param([string]$Name, [scriptblock]$Setup, [string]$Pattern, [switch]$ApplyTag)
+        param([string]$Name, [scriptblock]$Setup, [string]$Pattern, [switch]$ApplyTag, [string[]]$Ip = @($OperatorIp))
         foreach ($previous in $false, $true) {
             Reset-Fake
             & $Setup
             $label = "$Name ($(if ($previous) { 'with' } else { 'without' }) a previous backend file)"
             if ($previous) { [IO.File]::WriteAllText($BackendPath, "previous backend`n", [Text.UTF8Encoding]::new($false)) } else { Remove-Backend }
-            Assert-Fails { $null = Invoke-State -ApplyTag:$ApplyTag } $Pattern "$label did not fail with the expected message."
+            Assert-Fails { $null = Invoke-State -ApplyTag:$ApplyTag -Ip $Ip } $Pattern "$label did not fail with the expected message."
             Assert-Test ($global:Fake.PollCalls -eq 0 -and (Get-PollProbes).Count -eq 0) "$label reached the data-plane poll."
             Assert-Test ($(if ($previous) { [IO.File]::ReadAllText($BackendPath) -ceq "previous backend`n" } else { -not [IO.File]::Exists($BackendPath) })) "$label changed or wrote the backend file."
             Assert-Test (Test-NoTemporaryFile) "$label left a temporary file."
@@ -840,6 +906,40 @@ try {
     }
     Remove-Backend
 
+    # S11: several operator addresses (the addresses Azure sees behind a VPN, a proxy or the Global Secure Access client).
+    $TwoIps = @($OperatorIp, $SecondIp)
+    Reset-Fake
+    Remove-Backend
+    $output = Invoke-State -Ip $TwoIps
+    Assert-Test ((Get-Mutations) -ceq 'group create|storage account create|storage account network-rule add|storage account network-rule add|storage account blob-service-properties update|storage container-rm create|role assignment create') "S11: a first run with two addresses did not add one rule per address: $(Get-Mutations)"
+    $ruleCalls = @($global:Fake.MutationCalls | Where-Object { $_ -cmatch '^storage account network-rule add ' })
+    Assert-Test ($ruleCalls.Count -eq 2 -and (Test-Flag $ruleCalls[0] '--ip-address' $OperatorIp) -and (Test-Flag $ruleCalls[1] '--ip-address' $SecondIp)) 'S11: the rules were not added one per address, in the given order.'
+    Assert-Test ($global:Fake.Account.Ips.Count -eq 2 -and ($global:Fake.Account.Ips -ccontains $OperatorIp) -and ($global:Fake.Account.Ips -ccontains $SecondIp)) 'S11: the account does not admit exactly the two addresses.'
+    Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend -and ($output -join "`n") -match '2 operator address rule\(s\)') 'S11: the first run did not write the backend file or report two address rules.'
+    foreach ($order in @($TwoIps, @($SecondIp, $OperatorIp))) {
+        $null = Invoke-State -Ip $order
+        Assert-Test ($global:Fake.Mutations.Count -eq 0) 'S11: a re-run with the same two addresses (in any order) wrote.'
+    }
+    # Reconcile as a set: {operator, stale} becomes {operator, second}; then {operator, second} shrinks to {operator}.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Account.Ips.Add($StaleIp)
+    Remove-Backend
+    $null = Invoke-State -Ip $TwoIps
+    Assert-Test ((Get-Mutations) -ceq 'storage account network-rule remove|storage account network-rule add') "S11: the stale rule was not swapped for the second address: $(Get-Mutations)"
+    Assert-Test ($global:Fake.Account.Ips.Count -eq 2 -and ($global:Fake.Account.Ips -ccontains $OperatorIp) -and ($global:Fake.Account.Ips -ccontains $SecondIp)) 'S11: the reconciled rule set is not the two addresses.'
+    $null = Invoke-State
+    Assert-Test ((Get-Mutations) -ceq 'storage account network-rule remove' -and (Test-Flag $global:Fake.MutationCalls[0] '--ip-address' $SecondIp) -and $global:Fake.Account.Ips.Count -eq 1 -and $global:Fake.Account.Ips[0] -ceq $OperatorIp) 'S11: shrinking to one address did not remove just the other rule.'
+    # -WhatIf with two addresses changes nothing.
+    Remove-Backend
+    $null = Invoke-State -Ip $TwoIps -WhatIf
+    Assert-Test ($global:Fake.Mutations.Count -eq 0 -and $global:Fake.Account.Ips.Count -eq 1 -and (Get-PollProbes).Count -eq 0 -and -not [IO.File]::Exists($BackendPath)) 'S11: -WhatIf with two addresses wrote, polled or wrote the backend file.'
+    # The read-back compares the whole rule set: a write that does not take effect, an added or a removed rule, fails closed.
+    $RulePattern = 'does not admit exactly the -OperatorIp addresses.*No backend file was written'
+    Assert-FailsClosed -Name 'S11 rule add that does not take effect (new account)' -Setup { $global:Fake.RulesLocked = $true } -Pattern $RulePattern
+    Assert-FailsClosed -Name 'S11 stale rule that is not removed' -Setup { Set-Compliant; $global:Fake.Account.Ips.Add($StaleIp); $global:Fake.RulesLocked = $true } -Pattern $RulePattern
+    Assert-FailsClosed -Name 'S11 second address that is not added' -Setup { Set-Compliant; $global:Fake.RulesLocked = $true } -Pattern $RulePattern -Ip $TwoIps
+
     # ---- no credential or destructive command anywhere ---------------------------------------------------------------------
     Assert-Test ($global:AllCalls.Count -gt 50) 'The recorded Azure calls look incomplete.'
     Assert-Test (@($global:AllCalls | Where-Object { $_ -match '(?i)list-keys|account-key|--sas-token|generate-sas|\bsas\b|connection-string|--auth-mode key|\bkeys\b|^login\b|--expiry|--permissions' }).Count -eq 0) 'A key, SAS, connection string or login command was issued.'
@@ -855,8 +955,14 @@ try {
     Assert-Fails { $null = az storage account show --name $Account --resource-group $ResourceGroup --no-such-flag x @guardArguments } 'does not list' 'The fixture accepted an unknown flag.'
     Assert-Fails { $null = az storage blob list --account-name $Account --container-name tfstate --auth-mode login --num-results 1 --account-key x @guardArguments } 'does not list' 'The fixture accepted a credential flag.'
     Assert-Fails { $null = az group exists --name $ResourceGroup --only-show-errors --output json } 'explicit deployment subscription' 'The fixture accepted a call without --subscription.'
+    # Enumerated values: real az refuses a value outside the help's "Allowed values" before it calls Azure (the Wave 0 defect: --public-access none).
+    Assert-Fails { $null = az storage container-rm create --storage-account $Account --resource-group $ResourceGroup --name tfstate --public-access none @guardArguments --output none } "'none' is not a valid value for '--public-access'" 'The fixture accepted --public-access none, which real az rejects.'
+    Assert-Fails { $null = az storage account update --name $Account --resource-group $ResourceGroup --public-network-access Maybe @guardArguments --output none } "'Maybe' is not a valid value for '--public-network-access'" 'The fixture accepted an unknown enumerated value.'
+    Assert-Fails { $null = az storage account update --name $Account --resource-group $ResourceGroup --public-network-access @guardArguments --output none } 'expected one argument' 'The fixture accepted an enumerated flag without a value.'
+    Assert-Fails { $null = az storage blob list --account-name $Account --container-name tfstate --auth-mode none --num-results 1 @guardArguments --output none } "'none' is not a valid value for '--auth-mode'" 'The fixture accepted an unknown --auth-mode.'
+    Assert-Fails { $null = az group exists --name $ResourceGroup @guardArguments --output text } "'text' is not a valid value for '--output'" 'The fixture accepted an unknown global --output value.'
     Assert-Fails { $null = az tag update --resource-id "/subscriptions/$Sub/resourceGroups/$ResourceGroup" --operation Merge --tags a=b @guardArguments --output none } 'refused tagging anything but the state storage account' 'The fixture accepted tagging the resource group.'
-    Assert-Fails { $null = az tag update --resource-id $AccountId --operation Upsert --tags a=b @guardArguments --output none } 'refused the tag operation' 'The fixture accepted an unknown tag operation.'
+    Assert-Fails { $null = az tag update --resource-id $AccountId --operation Upsert --tags a=b @guardArguments --output none } "'Upsert' is not a valid value for '--operation'" 'The fixture accepted an unknown tag operation.'
     # Tag semantics: Merge adds and updates, Replace replaces the set, Delete removes by name or exact name=value; an update --tags replaces.
     $null = az tag update --resource-id $AccountId --operation Merge --tags owner=a @guardArguments --output none
     $null = az tag update --resource-id $AccountId --operation Merge --tags SecurityControl=Ignore @guardArguments --output none

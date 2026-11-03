@@ -6,7 +6,7 @@ Creates (or corrects) the Entra-only Terraform state storage account for one sub
 .DESCRIPTION
 Idempotent. In centralus it ensures the resource group rg-asre-state-cus, the storage account stasrestate<suffix>
 (shared-key access off, no public blob access, TLS 1.2, blob versioning, blob and container soft delete, default
-network action Deny with exactly one rule for the operator's public IPv4 address), the private container tfstate, and the
+network action Deny with exactly one rule per operator public IPv4 address), the private container tfstate, and the
 operator's Storage Blob Data Contributor assignment. It then waits, bounded, for data-plane access with the operator's
 Entra identity and only then writes the backend file. Drift on an existing account is corrected in place; nothing is
 recreated or deleted. Keys, SAS tokens and connection strings are never requested. -WhatIf makes no mutating call.
@@ -15,6 +15,11 @@ After the last account-level write, every real run reads the account back and fa
 and before any backend file is written, unless public network access is Enabled (with -ApplyPolicyExclusionTag the
 exclusion tag must also be present). A tenant policy that forces public network access off therefore stops the run with
 a message instead of ending in a misleading propagation timeout. -WhatIf cannot show this; only the real run's read-back can.
+
+.PARAMETER OperatorIp
+One to eight distinct plain public IPv4 addresses (an array) that the account firewall admits; every other rule is removed.
+Use the address or addresses that Azure sees for your traffic, which a web service does not always report: behind a VPN, a
+proxy or the Global Secure Access client they differ. See docs\deployment.md, Wave 0, step 6.
 
 .PARAMETER ApplyPolicyExclusionTag
 Opt-in, for a tenant whose Azure Policy rewrites a storage account's public network access to Disabled unless the account
@@ -32,7 +37,7 @@ param(
     [Parameter(Mandatory)]
     [ValidateScript({ [regex]::IsMatch($_, '\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z') },
         ErrorMessage = 'TenantId must be a lowercase GUID.')][string]$TenantId,
-    [Parameter(Mandatory)][string]$OperatorIp,
+    [Parameter(Mandatory)][string[]]$OperatorIp,
     [ValidateScript({ [regex]::IsMatch($_, '\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z') },
         ErrorMessage = 'OperatorObjectId must be a lowercase GUID.')][string]$OperatorObjectId,
     [string]$BackendFile,
@@ -70,8 +75,12 @@ function Test-PublicIpv4 {
     if ($o[0] -eq 198 -and $o[1] -in @(18, 19)) { return $false }
     return $true
 }
-if (-not (Test-PublicIpv4 -Address $OperatorIp)) {
-    throw 'OperatorIp must be one plain public IPv4 address (no CIDR range, private, loopback, link-local, shared or multicast address).'
+$MaxOperatorAddresses = 8
+$OperatorAddresses = @($OperatorIp)
+if ($OperatorAddresses.Count -gt $MaxOperatorAddresses -or
+    @($OperatorAddresses | Select-Object -Unique).Count -ne $OperatorAddresses.Count -or
+    @($OperatorAddresses | Where-Object { -not (Test-PublicIpv4 -Address $_) }).Count -gt 0) {
+    throw "OperatorIp must be one to $MaxOperatorAddresses distinct plain public IPv4 addresses (no CIDR range, private, loopback, link-local, shared or multicast address)."
 }
 if ([string]::IsNullOrWhiteSpace($BackendFile)) { $BackendFile = Join-Path $Repo 'infra\environments\backend.hcl' }
 $BackendFile = [IO.Path]::GetFullPath($BackendFile)
@@ -177,13 +186,13 @@ if ($AccountKnown) {
             '--https-only', 'true', '--default-action', 'Deny', '--bypass', 'None', '--public-network-access', 'Enabled')
     }
     $Existing = @(@(Get-Field $Rules @('ipRules')) | ForEach-Object { Get-Field $_ @('ipAddressOrRange') } | Where-Object { $null -ne $_ })
-    foreach ($Stale in @($Existing | Where-Object { $_ -cne $OperatorIp })) {
+    foreach ($Stale in @($Existing | Where-Object { $OperatorAddresses -cnotcontains $_ })) {
         Invoke-AzWrite -Target $Account -Arguments @('storage', 'account', 'network-rule', 'remove',
             '--account-name', $Account, '--resource-group', $ResourceGroup, '--ip-address', $Stale)
     }
-    if ($Existing -cnotcontains $OperatorIp) {
+    foreach ($Missing in @($OperatorAddresses | Where-Object { $Existing -cnotcontains $_ })) {
         Invoke-AzWrite -Target $Account -Arguments @('storage', 'account', 'network-rule', 'add',
-            '--account-name', $Account, '--resource-group', $ResourceGroup, '--ip-address', $OperatorIp)
+            '--account-name', $Account, '--resource-group', $ResourceGroup, '--ip-address', $Missing)
     }
     # Fail closed on a tenant policy that rewrites public network access: read the account back fresh after the last
     # account-level write and before the data-plane wait, the blob service, the container, the role and the backend file.
@@ -211,6 +220,12 @@ if ($AccountKnown) {
                 'StorageAccount_PublicNetwork_Modify). Re-run with -ApplyPolicyExclusionTag; see docs\deployment.md, ' +
                 'Wave 0. No backend file was written.')
         }
+        $FinalRules = Get-Field (Get-Field $Final @('networkRuleSet')) @('ipRules')
+        $Admitted = @(@($FinalRules) | ForEach-Object { Get-Field $_ @('ipAddressOrRange') } | Where-Object { $null -ne $_ })
+        if ((@($Admitted | Sort-Object) -join ',') -cne (@($OperatorAddresses | Sort-Object) -join ',')) {
+            throw ('The state storage account firewall does not admit exactly the -OperatorIp addresses after the writes (a ' +
+                'policy or a propagation delay may have changed the rules). No backend file was written. Run this script again.')
+        }
     }
     $Service = Invoke-AzRead -Arguments @('storage', 'account', 'blob-service-properties', 'show',
         '--account-name', $Account, '--resource-group', $ResourceGroup)
@@ -236,7 +251,7 @@ if ($AccountKnown) {
 }
 if ($Containers -cnotcontains $Container) {
     Invoke-AzWrite -Target $Container -Arguments @('storage', 'container-rm', 'create', '--storage-account', $Account,
-        '--resource-group', $ResourceGroup, '--name', $Container, '--public-access', 'none')
+        '--resource-group', $ResourceGroup, '--name', $Container, '--public-access', 'off')
 }
 $Assigned = @()
 if ($AccountKnown) {
@@ -261,7 +276,11 @@ for ($Attempt = 1; $Attempt -le $PollAttempts -and -not $Ready; $Attempt++) {
     elseif ($Attempt -lt $PollAttempts) { Start-Sleep -Seconds $PollSeconds }
 }
 if (-not $Ready) {
-    throw 'The state container is not yet reachable with the operator identity (role or network propagation). Re-run this script in a few minutes.'
+    throw ('The state container is not yet reachable with the operator identity. A role or a network rule can take a few ' +
+        'minutes to propagate: re-run this script. If the Azure CLI reported ErrorCode AuthorizationFailure on every attempt ' +
+        '(a firewall denial; a missing role reports AuthorizationPermissionMismatch), Azure sees your traffic from an address ' +
+        'that is not in -OperatorIp, for example behind a VPN, a proxy or the Global Secure Access client: add that address. ' +
+        'See docs\deployment.md, Wave 0, step 6.')
 }
 $Lines = @(
     "resource_group_name  = `"$ResourceGroup`"",
@@ -278,6 +297,6 @@ try {
     [IO.File]::Move($Temporary, $BackendFile, $true)
 }
 finally { if (Test-Path -LiteralPath $Temporary) { Remove-Item -LiteralPath $Temporary -Force } }
-Write-Output "State backend ready: account $Account, container $Container (Entra-only, operator address rule)."
+Write-Output "State backend ready: account $Account, container $Container (Entra-only, $($OperatorAddresses.Count) operator address rule(s))."
 Write-Output "Backend file written: $BackendFile"
 Write-Output "Operator object id for operator_object_id: $OperatorObjectId"
