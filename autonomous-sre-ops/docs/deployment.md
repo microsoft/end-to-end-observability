@@ -157,8 +157,11 @@ foreach ($name in 'containerapp', 'scheduled-query', 'log-analytics') {
 ## Wave 0: preflight, SSH keys and state
 
 Creates the resource group `rg-asre-state-cus` and the storage account `stasrestate<suffix>`: shared-key access off,
-public access denied except to your address, blob versioning and soft delete on, and a private `tfstate` container. It
-gives you Storage Blob Data Contributor on the account and writes `infra\environments\backend.hcl`. Nothing else changes.
+public network access enabled with the firewall default action Deny and exactly one rule (your address), blob
+versioning and soft delete on, and a private `tfstate` container. It gives you Storage Blob Data Contributor on the
+account and writes `infra\environments\backend.hcl`. Nothing else changes. After its writes the script reads the account
+back; if the tenant forces public network access off, it stops with an error and writes no backend file (see the note
+after the gate, for a tenant with a storage public-network Modify policy).
 
 1. Sign in, and confirm that the session targets the right subscription.
 
@@ -215,13 +218,15 @@ gives you Storage Blob Data Contributor on the account and writes `infra\environ
    ```
 
 6. Record your public address and your Entra object id, then create the state backend. The first run is a rehearsal.
-   If your public address changes later, run the script again with the new address.
+   Both calls pass the object id. If your public address changes later, run the script again with the new address.
+   In a tenant with a storage public-network Modify policy, read the note after the gate first and add
+   `-ApplyPolicyExclusionTag` to both calls.
 
    ```powershell
    $OperatorIp = '<operator-ip>'
    $OperatorObjectId = (az ad signed-in-user show --query id --output tsv).Trim().ToLowerInvariant()
-   & .\scripts\Initialize-TerraformState.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -OperatorIp $OperatorIp -WhatIf
-   & .\scripts\Initialize-TerraformState.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -OperatorIp $OperatorIp
+   & .\scripts\Initialize-TerraformState.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -OperatorIp $OperatorIp -OperatorObjectId $OperatorObjectId -WhatIf
+   & .\scripts\Initialize-TerraformState.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -OperatorIp $OperatorIp -OperatorObjectId $OperatorObjectId
    ```
 
 **Gate.** The delivery check adds `backend.hcl` and access to the state to the preflight. It must exit 0.
@@ -229,6 +234,37 @@ gives you Storage Blob Data Contributor on the account and writes `infra\environ
 ```powershell
 & .\scripts\Test-DemoReadiness.ps1 -Phase Delivery -SubscriptionId $SubscriptionId -TenantId $TenantId
 ```
+
+**Note: a tenant with a storage public-network Modify policy.** Some tenants assign a policy that rewrites
+`publicNetworkAccess` to `Disabled` whenever a storage account is created or updated, unless the account (or its resource
+group) carries the tag `SecurityControl=Ignore`. The SFI network-security policy `StorageAccount_PublicNetwork_Modify`
+(effect Modify) is one. The state account is reached through its firewall from one operator address, so it cannot work
+with public network access off. `-WhatIf` writes nothing and cannot show this policy behaviour; only the read-back of the
+real run can. The script reads the account back after its last account write (every run) and fails closed: it names the
+observed value, writes no backend file and never falls back to local Terraform state.
+
+- **Use the switch from the first run.** In such a tenant run both calls of step 6 with `-ApplyPolicyExclusionTag`. A
+  switchless re-run on an untagged account can be rewritten back to `Disabled` and break a working account (the policy
+  acts on the next write, for example after your address changed). The read-back reports that, and a re-run with the
+  switch repairs it. The switch is never on by default and nothing enables it automatically.
+- **What the tag does.** With the switch, the script sets `SecurityControl=Ignore` on the state storage account only:
+  in the create call for a new account, or by a merge that keeps the other tags on an existing one. It prints one
+  warning per run. It then requires public network access to read back as `Enabled` and the tag to read back as `Ignore`.
+- **What the tag does not do.** It does not touch any other resource, change any policy, grant any access or open the
+  firewall (the default action stays Deny with one operator address). Removing the tag changes nothing until the next
+  write to the account, when the policy rewrites the account again.
+- **Never tag the resource group.** The policy honours a resource group tag for every account in the group. The script
+  never tags it; do not do it by hand.
+- **It is a self-service bypass.** Any principal with tag or storage account write rights can add or remove the tag, so
+  the only controls are RBAC and the Activity Log. Obtain the policy owner's sign-off before you use the switch. An
+  expiring policy exemption, granted by the policy owner, is the governed alternative; this repository does not
+  automate it.
+- **Compensating controls.** The data plane accepts Entra ID only (`backend.hcl` has no key), shared-key access is off,
+  the firewall default action is Deny with one operator address, blob versioning and soft delete are on, and RBAC
+  limits who can read or write the state.
+- **Residual risk.** The operator address is a /32 on a public network path: anyone who reaches Azure from the same
+  egress address passes the firewall, though they still need Entra ID and a role on the account.
+- **Teardown.** Deleting the state resource group deletes the account and its tag.
 
 ## Wave 1: foundation and compute
 
@@ -682,7 +718,8 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | Symptom | Cause and action |
 |---|---|
 | The preflight reports `AllowBringYourOwnPublicIpAddress` as not registered | Run the two registration commands in Wave 0 and repeat the preflight |
-| A plan or apply fails with 403 on the state account | Your public address changed. Run `Initialize-TerraformState.ps1` again with the new `-OperatorIp` |
+| A plan or apply fails with 403 on the state account | Your public address changed. Run `Initialize-TerraformState.ps1` again with the new `-OperatorIp` (and `-ApplyPolicyExclusionTag` in a tenant with the Wave 0 policy note) |
+| `Initialize-TerraformState.ps1` stops after its writes: public network access is not `Enabled`, or the tag `SecurityControl` is not `Ignore` | A tenant policy forces public network access off (see the Wave 0 note). No backend file was written. Without the switch: run again with `-ApplyPolicyExclusionTag` (after the policy owner's sign-off). With the switch and the tag present: another policy parameter, a network perimeter or propagation applies; wait and run again, then ask the policy owner. Local Terraform state is not a workaround. With the switch and the tag missing: the tag was not applied or was removed; check your tag permissions and the Activity Log |
 | "The source tree has uncommitted changes" | Commit or stash the changes in `autonomous-sre-ops/`. `-AllowDirty` exists for experiments; a plan made with it cannot feed `Build-RuntimeImages.ps1` |
 | "The saved plan has expired" | The four-hour limit passed. Make a new plan and apply that; never replan inside an apply |
 | "The baseline rejects every deletion or replacement" | Do not work around it. Find why the plan wants to delete (drift or a renamed resource) and fix the cause. An intended deletion is manual (see Teardown) |

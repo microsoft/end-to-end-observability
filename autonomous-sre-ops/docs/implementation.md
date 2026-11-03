@@ -54,7 +54,9 @@ Remote state is an Entra-only storage account created by `scripts/Initialize-Ter
 off, versioning and soft delete on, and a default-deny firewall that admits only the operator address. The backend is
 partial: copy `infra/environments/backend.hcl.example` to the git-ignored `infra/environments/backend.hcl`. Its state
 key is `autonomous-sre-ops/demo.tfstate` and it sets `use_azuread_auth = true`. `-backend=false` is for local schema
-validation only; local state or a fresh workspace is never a way around inaccessible remote state.
+validation only; local state or a fresh workspace is never a way around inaccessible remote state. The script reads the
+account back after its writes and fails closed if public network access is not `Enabled`; a tenant whose Modify policy
+forces it off needs the opt-in `-ApplyPolicyExclusionTag` (state account only), see D13 and `docs/deployment.md`, Wave 0.
 
 After a provider change, regenerate the lock file with hashes for both platforms and commit the hidden
 `infra/.terraform.lock.hcl`. Do not remove `-lockfile=readonly` to hide a mismatch:

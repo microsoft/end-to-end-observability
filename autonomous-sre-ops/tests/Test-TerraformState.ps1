@@ -54,6 +54,73 @@ $Account = "stasrestate$Suffix"
 $AccountId = "/subscriptions/$Sub/resourceGroups/$ResourceGroup/providers/Microsoft.Storage/storageAccounts/$Account"
 
 # ---- the stateful Azure CLI fixture -------------------------------------------------------------------------------------
+# Flag allow-lists captured from offline `az <verb> --help` of Azure CLI 2.92.0 (long names only). The fixture rejects any
+# flag that is not listed for the verb or global. `ad` verbs do not take --subscription. The credential flags of
+# `storage blob list` (account key, SAS token, connection string) are left out on purpose, so the fixture rejects them.
+$AzGlobalFlags = @('--debug', '--help', '--only-show-errors', '--output', '--query', '--subscription', '--verbose')
+$AzVerbFlags = @{
+    'account show' = @('--name')
+    'ad signed-in-user show' = @()
+    'group create' = @('--acquire-policy-token', '--change-reference', '--location', '--managed-by', '--name', '--resource-group', '--tags')
+    'group exists' = @('--acquire-policy-token', '--change-reference', '--name', '--resource-group')
+    'role assignment create' = @('--acquire-policy-token', '--assignee', '--assignee-object-id', '--assignee-principal-type',
+        '--change-reference', '--condition', '--condition-version', '--description', '--name', '--role', '--scope')
+    'role assignment list' = @('--all', '--assignee', '--assignee-object-id', '--fill-principal-name', '--fill-role-definition-name',
+        '--include-groups', '--include-inherited', '--resource-group', '--role', '--scope')
+    'storage account blob-service-properties show' = @('--account-name', '--resource-group')
+    'storage account blob-service-properties update' = @('--404-document', '--account-name', '--acquire-policy-token', '--add',
+        '--change-feed-days', '--change-feed-retention-days', '--change-reference', '--container-days',
+        '--container-delete-retention-days', '--container-retention', '--default-index', '--default-index-document-path',
+        '--default-service-version', '--delete-retention-days', '--enable-change-feed', '--enable-container-delete-retention',
+        '--enable-delete-retention', '--enable-last-access-tracking', '--enable-restore-policy', '--enable-static-website',
+        '--enable-versioning', '--error-document-404-path', '--force-string', '--index-document', '--remove', '--resource-group',
+        '--restore-days', '--set')
+    'storage account check-name' = @('--acquire-policy-token', '--change-reference', '--name')
+    'storage account create' = @('--access-tier', '--account-type', '--acquire-policy-token', '--action', '--allow-append',
+        '--allow-blob-public-access', '--allow-cross-tenant-replication', '--allow-protected-append-writes',
+        '--allow-shared-key-access', '--allowed-copy-scope', '--assign-identity', '--azure-storage-sid', '--blob-geo-sla', '--bypass',
+        '--change-reference', '--custom-domain', '--default-action', '--default-share-permission', '--dns-endpoint-type',
+        '--domain-guid', '--domain-name', '--domain-sid', '--edge-zone', '--enable-alw', '--enable-blob-geo-priority-replication',
+        '--enable-files-aadds', '--enable-files-aadkerb', '--enable-files-adds', '--enable-hierarchical-namespace',
+        '--enable-large-file-share', '--enable-local-user', '--enable-nfs-v3', '--enable-sftp', '--enable-smb-oauth',
+        '--encryption-key-name', '--encryption-key-source', '--encryption-key-type-for-queue', '--encryption-key-type-for-table',
+        '--encryption-key-vault', '--encryption-key-version', '--encryption-services', '--endpoint', '--forest-name', '--hns',
+        '--https-only', '--identity-type', '--immutability-period', '--immutability-period-in-days', '--immutability-state',
+        '--key-exp-days', '--key-expiration-period-in-days', '--key-vault-federated-client-id', '--key-vault-user-identity-id',
+        '--kind', '--location', '--min-tls-version', '--name', '--net-bios-domain-name', '--public-network-access',
+        '--publish-internet-endpoints', '--publish-ipv6-endpoint', '--publish-microsoft-endpoints',
+        '--require-infrastructure-encryption', '--resource-group', '--routing-choice', '--sam-account-name', '--sas-exp',
+        '--sas-exp-action', '--sas-expiration-action', '--sas-expiration-period', '--sku', '--subnet', '--tags',
+        '--user-identity-id', '--vnet-name', '--zone-placement-policy', '--zones')
+    'storage account list' = @('--resource-group')
+    'storage account network-rule add' = @('--account-name', '--acquire-policy-token', '--action', '--change-reference',
+        '--ip-address', '--ipv6-address', '--resource-group', '--resource-id', '--subnet', '--tenant-id', '--vnet-name')
+    'storage account network-rule remove' = @('--account-name', '--acquire-policy-token', '--change-reference', '--ip-address',
+        '--ipv6-address', '--resource-group', '--resource-id', '--subnet', '--tenant-id', '--vnet-name')
+    'storage account show' = @('--expand', '--ids', '--name', '--resource-group')
+    'storage account update' = @('--access-tier', '--account-type', '--acquire-policy-token', '--add', '--allow-append',
+        '--allow-blob-public-access', '--allow-cross-tenant-replication', '--allow-protected-append-writes',
+        '--allow-shared-key-access', '--allowed-copy-scope', '--assign-identity', '--azure-storage-sid', '--blob-geo-sla', '--bypass',
+        '--change-reference', '--custom-domain', '--default-action', '--default-share-permission', '--domain-guid', '--domain-name',
+        '--domain-sid', '--enable-blob-geo-priority-replication', '--enable-files-aadds', '--enable-files-aadkerb',
+        '--enable-files-adds', '--enable-large-file-share', '--enable-local-user', '--enable-sftp', '--enable-smb-oauth',
+        '--encryption-key-name', '--encryption-key-source', '--encryption-key-vault', '--encryption-key-version',
+        '--encryption-services', '--force-string', '--forest-name', '--https-only', '--identity-type', '--ids',
+        '--immutability-period', '--immutability-period-in-days', '--immutability-state', '--key-exp-days',
+        '--key-expiration-period-in-days', '--key-vault-federated-client-id', '--key-vault-user-identity-id', '--min-tls-version',
+        '--name', '--net-bios-domain-name', '--public-network-access', '--publish-internet-endpoints', '--publish-ipv6-endpoint',
+        '--publish-microsoft-endpoints', '--remove', '--resource-group', '--routing-choice', '--sam-account-name', '--sas-exp',
+        '--sas-exp-action', '--sas-expiration-action', '--sas-expiration-period', '--set', '--sku', '--tags',
+        '--upgrade-to-storagev2', '--use-subdomain', '--user-identity-id', '--yes', '--zone-placement-policy', '--zones')
+    'storage blob list' = @('--account-name', '--auth-mode', '--blob-endpoint', '--container-name', '--delimiter', '--include',
+        '--marker', '--num-results', '--prefix', '--show-next-marker', '--timeout')
+    'storage container-rm create' = @('--acquire-policy-token', '--change-reference', '--default-encryption-scope',
+        '--deny-encryption-scope-override', '--deny-override', '--enable-vlw', '--fail-on-exist', '--metadata', '--name',
+        '--public-access', '--resource-group', '--root-squash', '--storage-account')
+    'storage container-rm list' = @('--include-deleted', '--resource-group', '--storage-account')
+    'tag update' = @('--acquire-policy-token', '--change-reference', '--operation', '--resource-id', '--tags')
+}
+
 function Reset-Fake {
     $global:Fake = @{
         Calls = [System.Collections.Generic.List[string]]::new()
@@ -76,6 +143,13 @@ function Reset-Fake {
         PollFailures = 0
         PollCalls = 0
         FailVerb = ''
+        Policy = $false
+        PolicyHonorsTag = $true
+        DropTags = $false
+        PnaLocked = $false
+        ShowTagsNullOnce = $false
+        TagCalls = [System.Collections.Generic.List[string]]::new()
+        Warnings = @()
     }
 }
 
@@ -101,15 +175,23 @@ function global:az {
         if ($index + 1 -lt $all.Count -and -not $all[$index + 1].StartsWith('--')) { $options[$name] = $all[$index + 1]; $index += 2 }
         else { $options[$name] = $null; $index++ }
     }
-    if (-not $options.ContainsKey('--subscription') -or $options['--subscription'] -cne $fake.ExpectedSub) {
-        throw "The fixture requires the explicit deployment subscription on every az call: $text"
+    $verbText = $verb -join ' '
+    if ($verbText -cmatch '^ad ') {
+        if ($options.ContainsKey('--subscription')) { throw "The fixture, like real az, rejects --subscription on an ad verb: $text" }
+    }
+    elseif (-not $options.ContainsKey('--subscription') -or $options['--subscription'] -cne $fake.ExpectedSub) {
+        throw "The fixture requires the explicit deployment subscription on every az call except ad verbs: $text"
     }
     if (-not $options.ContainsKey('--only-show-errors')) { throw "The fixture requires --only-show-errors: $text" }
-    $verbText = $verb -join ' '
+    if (-not $AzVerbFlags.ContainsKey($verbText)) { throw "The fixture has no flag allow-list for: $verbText" }
+    $allowedFlags = @($AzVerbFlags[$verbText]) + @($AzGlobalFlags | Where-Object { $_ -cne '--subscription' -or $verbText -cnotmatch '^ad ' })
+    foreach ($flag in $options.Keys) {
+        if ($allowedFlags -cnotcontains $flag) { throw "The fixture refused $flag, which 'az $verbText --help' does not list: $text" }
+    }
     if ($fake.FailVerb -ceq $verbText) { $global:LASTEXITCODE = 1; return 'ERROR: fixture failure' }
     $mutating = @('group create', 'storage account create', 'storage account update', 'storage account network-rule add',
         'storage account network-rule remove', 'storage account blob-service-properties update', 'storage container-rm create',
-        'role assignment create')
+        'role assignment create', 'tag update')
     if ($mutating -ccontains $verbText) {
         if ($options['--output'] -cne 'none') { throw "The fixture requires --output none on a mutating call: $text" }
         $fake.Mutations.Add($verbText)
@@ -118,6 +200,23 @@ function global:az {
     $accountName = "stasrestate$(Get-DerivedSuffix $fake.ExpectedSub)"
     $accountId = "/subscriptions/$($fake.ExpectedSub)/resourceGroups/rg-asre-state-cus/providers/Microsoft.Storage/storageAccounts/$accountName"
     $toBool = { param($value) $value -ceq 'true' }
+    $parseTags = {
+        # One key[=value] tag, as `--tags` takes it; no value (or no argument) means an empty value (an empty set).
+        param($value)
+        $result = @{}
+        if ([string]::IsNullOrEmpty($value)) { return $result }
+        $at = $value.IndexOf('=')
+        if ($at -lt 0) { $result[$value] = '' } else { $result[$value.Substring(0, $at)] = $value.Substring($at + 1) }
+        return $result
+    }
+    $applyPolicy = {
+        # The tenant Modify policy: on a write, public network access is rewritten to Disabled unless it is already Disabled or
+        # SecuredByPerimeter, or the PERSISTED tags carry SecurityControl=Ignore (Azure Policy compares strings case-insensitively).
+        $account = $fake.Account
+        if (-not $fake.Policy -or $null -eq $account) { return }
+        $excluded = $fake.PolicyHonorsTag -and $account.Tags.ContainsKey('SecurityControl') -and $account.Tags['SecurityControl'] -ieq 'Ignore'
+        if (-not $excluded -and $account.Pna -cne 'SecuredByPerimeter') { $account.Pna = 'Disabled' }
+    }
     switch -CaseSensitive ($verbText) {
         'account show' {
             if ($fake.AccountFails) { $global:LASTEXITCODE = 1; return 'ERROR: Please run az login' }
@@ -148,6 +247,8 @@ function global:az {
         'storage account create' {
             if (-not $fake.GroupExists -or $null -ne $fake.Account) { throw "The fixture refused creating an account in this state: $text" }
             if ($options['--name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus' -or $options['--location'] -cne 'centralus') { throw "The fixture refused the account identity: $text" }
+            $persistedTags = @{}
+            if ($options.ContainsKey('--tags') -and -not $fake.DropTags) { $persistedTags = & $parseTags $options['--tags'] }
             $fake.Account = @{
                 Id = $accountId
                 PublicBlob = $(if ($options.ContainsKey('--allow-blob-public-access')) { & $toBool $options['--allow-blob-public-access'] } else { $true })
@@ -156,19 +257,23 @@ function global:az {
                 Https = $(if ($options.ContainsKey('--https-only')) { & $toBool $options['--https-only'] } else { $true })
                 Default = $(if ($options.ContainsKey('--default-action')) { $options['--default-action'] } else { 'Allow' })
                 Bypass = $(if ($options.ContainsKey('--bypass')) { $options['--bypass'] } else { 'AzureServices' })
-                Pna = 'Enabled'
+                Pna = $(if ($options.ContainsKey('--public-network-access')) { $options['--public-network-access'] } else { 'Enabled' })
+                Tags = $persistedTags
                 Ips = [System.Collections.Generic.List[string]]::new()
             }
             $fake.Service = @{ Versioning = $false; DeleteEnabled = $false; DeleteDays = $null; ContainerEnabled = $false; ContainerDays = $null }
+            & $applyPolicy
         }
         'storage account show' {
             if ($options['--name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus') { throw "The fixture refused the account show: $text" }
             if ($null -eq $fake.Account) { $global:LASTEXITCODE = 1; return 'ERROR: ResourceNotFound' }
             $a = $fake.Account
             $rules = @($a.Ips | ForEach-Object { @{ ipAddressOrRange = $_; action = 'Allow' } })
+            $shownTags = $a.Tags
+            if ($fake.ShowTagsNullOnce) { $shownTags = $null; $fake.ShowTagsNullOnce = $false }
             return (ConvertTo-Json -Compress -Depth 6 -InputObject @{
                     id = $a.Id; allowBlobPublicAccess = $a.PublicBlob; allowSharedKeyAccess = $a.SharedKey; minimumTlsVersion = $a.Tls
-                    enableHttpsTrafficOnly = $a.Https; publicNetworkAccess = $a.Pna
+                    enableHttpsTrafficOnly = $a.Https; publicNetworkAccess = $a.Pna; tags = $shownTags
                     networkRuleSet = @{ defaultAction = $a.Default; bypass = $a.Bypass; ipRules = $rules }
                 })
         }
@@ -181,15 +286,37 @@ function global:az {
             if ($options.ContainsKey('--https-only')) { $a.Https = & $toBool $options['--https-only'] }
             if ($options.ContainsKey('--default-action')) { $a.Default = $options['--default-action'] }
             if ($options.ContainsKey('--bypass')) { $a.Bypass = $options['--bypass'] }
-            if ($options.ContainsKey('--public-network-access')) { $a.Pna = $options['--public-network-access'] }
+            if ($options.ContainsKey('--public-network-access') -and -not $fake.PnaLocked) { $a.Pna = $options['--public-network-access'] }
+            # As real az: --tags on an update REPLACES the whole tag set.
+            if ($options.ContainsKey('--tags') -and -not $fake.DropTags) { $a.Tags = & $parseTags $options['--tags'] }
+            & $applyPolicy
         }
         'storage account network-rule add' {
             if ($options['--account-name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus') { throw "The fixture refused the rule target: $text" }
             if (-not $fake.Account.Ips.Contains($options['--ip-address'])) { $fake.Account.Ips.Add($options['--ip-address']) }
+            & $applyPolicy
         }
         'storage account network-rule remove' {
             if ($options['--account-name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus') { throw "The fixture refused the rule target: $text" }
             $null = $fake.Account.Ips.Remove($options['--ip-address'])
+            & $applyPolicy
+        }
+        'tag update' {
+            # Only the state storage account may be tagged (never the resource group); Merge keeps other tags, Replace and Delete as real az.
+            if ($options['--resource-id'] -cne $accountId) { throw "The fixture refused tagging anything but the state storage account: $text" }
+            if ($null -eq $fake.Account) { $global:LASTEXITCODE = 1; return 'ERROR: ResourceNotFound' }
+            $operation = ([string]$options['--operation']).ToLowerInvariant()
+            if ($operation -cnotin @('merge', 'replace', 'delete')) { throw "The fixture refused the tag operation: $text" }
+            $fake.TagCalls.Add("$($options['--operation'])|$($options['--tags'])")
+            $given = & $parseTags $options['--tags']
+            if (-not $fake.DropTags) {
+                $current = $fake.Account.Tags
+                switch -CaseSensitive ($operation) {
+                    'merge' { foreach ($key in @($given.Keys)) { $current[$key] = $given[$key] } }
+                    'replace' { $fake.Account.Tags = $given }
+                    'delete' { foreach ($key in @($given.Keys)) { if ($current.ContainsKey($key) -and ($given[$key] -ceq '' -or $current[$key] -ceq $given[$key])) { $current.Remove($key) } } }
+                }
+            }
         }
         'storage account blob-service-properties show' {
             if ($options['--account-name'] -cne $accountName -or $options['--resource-group'] -cne 'rg-asre-state-cus') { throw "The fixture refused the blob service target: $text" }
@@ -229,6 +356,8 @@ function global:az {
             if ($options['--auth-mode'] -cne 'login' -or $options['--container-name'] -cne 'tfstate' -or $options['--account-name'] -cne $accountName -or $options['--num-results'] -cne '1') { throw "The fixture refused the data-plane probe: $text" }
             $fake.PollCalls++
             $fake.PollBackendPresent.Add([IO.File]::Exists($BackendPath))
+            # The data plane is unreachable while public network access is Disabled (the account firewall cannot admit the operator).
+            if ($null -ne $fake.Account -and $fake.Account.Pna -ceq 'Disabled') { $global:LASTEXITCODE = 1; return 'ERROR: This request is not authorized to perform this operation.' }
             if ($fake.PollFailures -gt 0) { $fake.PollFailures--; $global:LASTEXITCODE = 1; return 'ERROR: AuthorizationPermissionMismatch' }
         }
         default { throw "The fixture refused: $verbText" }
@@ -239,6 +368,7 @@ function Set-Compliant {
     $global:Fake.GroupExists = $true
     $global:Fake.Account = @{
         Id = $AccountId; PublicBlob = $false; SharedKey = $false; Tls = 'TLS1_2'; Https = $true; Default = 'Deny'; Bypass = 'None'; Pna = 'Enabled'
+        Tags = @{}
         Ips = [System.Collections.Generic.List[string]]::new()
     }
     $global:Fake.Account.Ips.Add($OperatorIp)
@@ -248,15 +378,22 @@ function Set-Compliant {
 }
 
 function Invoke-State {
-    param([hashtable]$Extra = @{}, [switch]$WhatIf, [string]$Backend = $BackendPath, [string]$Ip = $OperatorIp)
+    param([hashtable]$Extra = @{}, [switch]$WhatIf, [switch]$ApplyTag, [string]$Backend = $BackendPath, [string]$Ip = $OperatorIp)
     $fake = $global:Fake
     $fake.Calls.Clear(); $fake.Mutations.Clear(); $fake.MutationCalls.Clear(); $fake.Sleeps.Clear(); $fake.PollBackendPresent.Clear()
+    $fake.TagCalls.Clear()
     $fake.PollCalls = 0
     $parameters = @{ SubscriptionId = $Sub; TenantId = $Tenant; OperatorIp = $Ip; BackendFile = $Backend }
     foreach ($key in $Extra.Keys) { $parameters[$key] = $Extra[$key] }
     if ($WhatIf) { $parameters.WhatIf = $true }
+    if ($ApplyTag) { $parameters.ApplyPolicyExclusionTag = $true }
+    # The warnings of the run are captured (and not shown) so that tests can count and read them, even when the run fails.
+    $parameters.WarningVariable = 'stateWarnings'
+    $parameters.WarningAction = 'SilentlyContinue'
+    $stateWarnings = $null
     $global:LASTEXITCODE = 0
-    @(& $StateScript @parameters) | ForEach-Object { [string]$_ }
+    try { @(& $StateScript @parameters) | ForEach-Object { [string]$_ } }
+    finally { $fake.Warnings = @($stateWarnings | ForEach-Object { [string]$_ }) }
 }
 
 function Get-Mutations { $global:Fake.Mutations -join '|' }
@@ -285,6 +422,15 @@ Assert-Test ($StateText -match 'SupportsShouldProcess' -and $StateText -match '\
 Assert-Test ($StateText -match '\$PollAttempts = 24' -and $StateText -match '\$PollSeconds = 10') 'The data-plane wait is no longer bounded at 24 x 10 seconds.'
 Assert-Test ($StateText -match "Join-Path \`$Repo 'infra\\environments\\backend\.hcl'") 'The default backend file is not infra\environments\backend.hcl.'
 Assert-Test ([regex]::Matches($StateText, '&\s*az\b').Count -eq 3) 'The state script calls az outside the read, write and probe wrappers.'
+$StateTokens = $null; $StateErrors = $null
+$StateAst = [System.Management.Automation.Language.Parser]::ParseFile($StateScript, [ref]$StateTokens, [ref]$StateErrors)
+$StateParameters = @($StateAst.ParamBlock.Parameters)
+Assert-Test ((@($StateParameters | ForEach-Object { $_.Name.VariablePath.UserPath }) -join ',') -ceq 'SubscriptionId,TenantId,OperatorIp,OperatorObjectId,BackendFile,ApplyPolicyExclusionTag') 'The state script parameters are not the approved six.'
+Assert-Test ($StateParameters[-1].StaticType -eq [switch] -and $null -eq $StateParameters[-1].DefaultValue) 'ApplyPolicyExclusionTag is not an opt-in switch without a default.'
+Assert-Test ($StateText -cmatch "\`$PolicyExclusionTagName = 'SecurityControl'" -and $StateText -cmatch "\`$PolicyExclusionTagValue = 'Ignore'") 'The exclusion tag name and value are not the SecurityControl and Ignore constants.'
+Assert-Test ([regex]::Matches($StateText, "'--tags'").Count -eq 2 -and [regex]::Matches($StateText, "'tag', 'update'").Count -eq 1 -and [regex]::Matches($StateText, 'Write-Warning').Count -eq 1) 'The state script tags in more or fewer places than the account create and one Merge tag update, or warns more than once.'
+Assert-Test ($StateText -cnotmatch "'(?:resource|group)', 'tag'|az resource tag" -and $StateText -cmatch "'--operation', 'Merge'") 'The tag step is not a Merge tag update.'
+Assert-Test ($StateText -cnotmatch '(?i)\$env:|GetEnvironmentVariable|\[Environment\]') 'The state script reads the environment (a possible implicit trigger).'
 $ExportText = [IO.File]::ReadAllText($ExportScript)
 Assert-Test ($ExportText -match "Join-Path \`$Repo 'infra\\environments\\context\.generated\.json'") 'The default context file is not infra\environments\context.generated.json.'
 Assert-Test ($ExportText -cnotmatch 'AllowSynthetic|Invoke-Expression|terraform[^\r\n]*\b(apply|destroy|import)\b|az login') 'The export script allows synthetic contexts or runs a mutating command.'
@@ -481,11 +627,264 @@ try {
     Assert-Test ($global:Fake.PollCalls -eq 24 -and @($global:Fake.Sleeps).Count -eq 23) 'The wait was not bounded to 24 probes with 23 pauses.'
     Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq "previous backend`n" -and @(Get-ChildItem -LiteralPath $Work -Force | Where-Object { $_.Name -match '\.tmp-' }).Count -eq 0) 'An unreachable state container changed the previous backend.hcl or left a temporary file.'
 
+    # ---- F-A and F-B: operator resolution without a directory --subscription, and the policy exclusion tag --------------------
+    # The tenant Modify policy and its realistic fixture behaviour are in the az fixture above (Fake.Policy).
+    function Get-TagUpdates { , @($global:Fake.MutationCalls | Where-Object { $_ -cmatch '^tag update ' }) }
+    function Get-TagArguments { , @($global:Fake.Calls | Where-Object { $_ -cmatch '(?:\A| )--tags(?: |\z)|^tag ' }) }
+    function Get-PollProbes { , @($global:Fake.Calls | Where-Object { $_ -cmatch '^storage blob list ' }) }
+    function Test-NoTemporaryFile { @(Get-ChildItem -LiteralPath $Work -Force | Where-Object { $_.Name -match '\.tmp-' }).Count -eq 0 }
+    function Assert-FailsClosed {
+        # The run must fail with $Pattern, before the data-plane poll and the blob service, container and role steps, with the
+        # previous backend file byte-identical (or still absent) and no temporary file.
+        param([string]$Name, [scriptblock]$Setup, [string]$Pattern, [switch]$ApplyTag)
+        foreach ($previous in $false, $true) {
+            Reset-Fake
+            & $Setup
+            $label = "$Name ($(if ($previous) { 'with' } else { 'without' }) a previous backend file)"
+            if ($previous) { [IO.File]::WriteAllText($BackendPath, "previous backend`n", [Text.UTF8Encoding]::new($false)) } else { Remove-Backend }
+            Assert-Fails { $null = Invoke-State -ApplyTag:$ApplyTag } $Pattern "$label did not fail with the expected message."
+            Assert-Test ($global:Fake.PollCalls -eq 0 -and (Get-PollProbes).Count -eq 0) "$label reached the data-plane poll."
+            Assert-Test ($(if ($previous) { [IO.File]::ReadAllText($BackendPath) -ceq "previous backend`n" } else { -not [IO.File]::Exists($BackendPath) })) "$label changed or wrote the backend file."
+            Assert-Test (Test-NoTemporaryFile) "$label left a temporary file."
+            Assert-Test (@($global:Fake.Mutations | Where-Object { $_ -cin @('storage account blob-service-properties update', 'storage container-rm create', 'role assignment create') }).Count -eq 0) "$label ran the blob service, container or role steps."
+        }
+        Remove-Backend
+    }
+
+    # S1: default operator resolution (no -OperatorObjectId) against a fixture that, like real az, rejects --subscription on ad verbs.
+    Reset-Fake
+    Set-Compliant
+    Remove-Backend
+    $output = Invoke-State
+    $directoryCalls = @($global:Fake.Calls | Where-Object { $_ -cmatch '^ad ' })
+    Assert-Test ($directoryCalls.Count -eq 1 -and $directoryCalls[0] -ceq 'ad signed-in-user show --query id --only-show-errors --output json') 'S1: the signed-in operator was not resolved by exactly one ad signed-in-user show call.'
+    Assert-Test ($directoryCalls[0] -cnotmatch '--subscription') 'S1: the ad signed-in-user show call carried --subscription, which real az rejects on ad verbs.'
+    Assert-Test (@($global:Fake.Calls | Where-Object { $_ -cnotmatch '^ad ' -and $_ -cnotmatch '--subscription ' }).Count -eq 0) 'S1: a call other than the ad verb was not scoped with --subscription.'
+    Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend -and ($output -join "`n") -match [regex]::Escape($OperatorOid)) 'S1: the default path did not succeed and report the resolved operator object id.'
+
+    # S2: the tenant policy is on and the switch is not given, new account: error 5a, nothing tagged, nothing warned.
+    $Pattern5a = "public network access is 'Disabled', not 'Enabled'\. Most likely a tenant policy forces it to Disabled.*StorageAccount_PublicNetwork_Modify.*Re-run with -ApplyPolicyExclusionTag.*docs\\deployment\.md, Wave 0.*No backend file was written"
+    Assert-FailsClosed -Name 'S2 policy on, no switch, new account' -Setup { $global:Fake.Policy = $true } -Pattern $Pattern5a
+    Assert-Test ((Get-TagArguments).Count -eq 0 -and $global:Fake.TagCalls.Count -eq 0) 'S2: without the switch a tag argument or tag update was issued.'
+    Assert-Test ($global:Fake.Warnings.Count -eq 0) 'S2: without the switch a warning was issued.'
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Disabled' -and $global:Fake.Account.Tags.Count -eq 0) 'S2: the fixture policy did not leave the new account Disabled and untagged.'
+
+    # S3: policy on, switch, new account: the tag travels in the create call; no tag update; one warning; success.
+    Reset-Fake
+    $global:Fake.Policy = $true
+    Remove-Backend
+    $output = Invoke-State -ApplyTag
+    $create = @($global:Fake.MutationCalls | Where-Object { $_ -match '^storage account create ' })[0]
+    Assert-Test (Test-Flag $create '--tags' 'SecurityControl=Ignore') 'S3: the account create call does not carry --tags SecurityControl=Ignore.'
+    Assert-Test ((Get-TagUpdates).Count -eq 0) 'S3: a separate tag update was issued for a new account.'
+    Assert-Test (@($global:Fake.Calls | Where-Object { $_ -cmatch '^group create ' -and $_ -cmatch '--tags' }).Count -eq 0 -and $global:Fake.TagCalls.Count -eq 0) 'S3: the resource group was tagged.'
+    Assert-Test ($global:Fake.Warnings.Count -eq 1) "S3: expected exactly one warning, got $($global:Fake.Warnings.Count)."
+    $warning = [string]$global:Fake.Warnings[0]
+    Assert-Test ($warning.Contains($Account) -and $warning.Contains('SecurityControl=Ignore') -and $warning -cmatch 'resource group is never tagged' -and $warning -cmatch 'docs\\deployment\.md, Wave 0' -and -not $warning.Contains($Sub) -and -not $warning.Contains($Tenant)) 'S3: the warning does not name only the account, the tag, the resource group rule and the documentation.'
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Enabled' -and $global:Fake.Account.Tags['SecurityControl'] -ceq 'Ignore' -and $global:Fake.Account.Tags.Count -eq 1) 'S3: the account does not end Enabled and tagged.'
+    Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend -and $global:Fake.PollCalls -eq 1) 'S3: the backend file was not written after the data-plane probe.'
+    Assert-Test ((Get-Mutations) -ceq 'group create|storage account create|storage account network-rule add|storage account blob-service-properties update|storage container-rm create|role assignment create') "S3: unexpected mutations: $(Get-Mutations)"
+
+    # S4: policy on, switch, existing account that is Disabled, untagged, has another tag and a stale rule: Merge first.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    $global:Fake.Account.Pna = 'Disabled'
+    $global:Fake.Account.Tags['owner'] = 'platform'
+    $global:Fake.Account.Ips.Clear(); $global:Fake.Account.Ips.Add($StaleIp)
+    Remove-Backend
+    $null = Invoke-State -ApplyTag
+    $writes = @($global:Fake.Mutations)
+    Assert-Test ($writes.Count -ge 1 -and $writes[0] -ceq 'tag update' -and @($writes | Where-Object { $_ -ceq 'tag update' }).Count -eq 1) "S4: the Merge tag update is not the first and only tag write: $(Get-Mutations)"
+    Assert-Test ((Get-Mutations) -ceq 'tag update|storage account update|storage account network-rule remove|storage account network-rule add') "S4: unexpected mutations: $(Get-Mutations)"
+    $tagUpdate = (Get-TagUpdates)[0]
+    Assert-Test ((Test-Flag $tagUpdate '--operation' 'Merge') -and (Test-Flag $tagUpdate '--resource-id' $AccountId) -and (Test-Flag $tagUpdate '--tags' 'SecurityControl=Ignore')) 'S4: the tag update is not a Merge of SecurityControl=Ignore on the state account id.'
+    Assert-Test ($global:Fake.Account.Tags['owner'] -ceq 'platform' -and $global:Fake.Account.Tags['SecurityControl'] -ceq 'Ignore') 'S4: the other tag did not survive the Merge, or the exclusion tag is missing.'
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Enabled' -and $global:Fake.Account.Ips.Count -eq 1 -and $global:Fake.Account.Ips[0] -ceq $OperatorIp) 'S4: the account does not end Enabled with exactly the operator rule.'
+    Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend -and $global:Fake.Warnings.Count -eq 1) 'S4: the backend file was not written, or the warning count is not one.'
+    Assert-Test (@($global:Fake.Calls | Where-Object { $_ -cmatch '^storage account update ' -and $_ -cmatch '--tags' }).Count -eq 0) 'S4: an account update carried --tags (it would replace the whole tag set).'
+
+    # S5: policy on, switch, existing account already tagged and compliant: nothing is written.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    $global:Fake.Account.Tags['SecurityControl'] = 'Ignore'
+    Remove-Backend
+    $null = Invoke-State -ApplyTag
+    Assert-Test ($global:Fake.Mutations.Count -eq 0 -and (Get-TagArguments).Count -eq 0) "S5: an already tagged, compliant account was written to: $(Get-Mutations)"
+    Assert-Test ($global:Fake.Warnings.Count -eq 1 -and [IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend) 'S5: expected one warning and the backend file.'
+
+    # S6: policy on, switch, tagged account with a stale rule: only the network-rule remove/add, no tag call.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    $global:Fake.Account.Tags['SecurityControl'] = 'Ignore'
+    $global:Fake.Account.Ips.Clear(); $global:Fake.Account.Ips.Add($StaleIp)
+    Remove-Backend
+    $null = Invoke-State -ApplyTag
+    Assert-Test ((Get-Mutations) -ceq 'storage account network-rule remove|storage account network-rule add' -and (Get-TagArguments).Count -eq 0) "S6: unexpected mutations for a stale rule: $(Get-Mutations)"
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Enabled' -and $global:Fake.Account.Ips.Count -eq 1 -and $global:Fake.Account.Ips[0] -ceq $OperatorIp -and [IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend) 'S6: the account did not stay Enabled with the operator rule, or no backend file was written.'
+
+    # S7: tag failure modes with the switch.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    $global:Fake.Account.Pna = 'Disabled'
+    $global:Fake.Account.Ips.Clear(); $global:Fake.Account.Ips.Add($StaleIp)
+    $global:Fake.FailVerb = 'tag update'
+    [IO.File]::WriteAllText($BackendPath, "previous backend`n", [Text.UTF8Encoding]::new($false))
+    Assert-Fails { $null = Invoke-State -ApplyTag } 'Azure CLI failed: tag update' 'S7: a failing tag update was ignored.'
+    Assert-Test ($global:Fake.Mutations.Count -eq 0 -and @($global:Fake.Calls | Where-Object { $_ -cmatch '^storage account (update|network-rule)' }).Count -eq 0) 'S7: an account write followed a failed tag update.'
+    Assert-Test ($global:Fake.PollCalls -eq 0 -and [IO.File]::ReadAllText($BackendPath) -ceq "previous backend`n" -and (Test-NoTemporaryFile)) 'S7: a failed tag update still polled or changed the backend file.'
+    $Pattern5c = "tag SecurityControl on the state storage account is '<absent>' after the writes, not 'Ignore'\. The tag was not applied or was removed.*Activity Log.*No backend file was written"
+    Assert-FailsClosed -Name 'S7 tag silently dropped on a new account' -ApplyTag -Setup { $global:Fake.Policy = $true; $global:Fake.DropTags = $true } -Pattern $Pattern5c
+    Assert-Test (@($global:Fake.MutationCalls | Where-Object { $_ -match '^storage account create ' -and (Test-Flag $_ '--tags' 'SecurityControl=Ignore') }).Count -eq 1 -and $global:Fake.TagCalls.Count -eq 1) 'S7: the dropped-tag run did not ask for the tag in the create call and then try one Merge.'
+    Assert-FailsClosed -Name 'S7 tag merge is a no-op on an existing account' -ApplyTag -Setup {
+        Set-Compliant; $global:Fake.Policy = $true; $global:Fake.DropTags = $true
+    } -Pattern $Pattern5c
+    Assert-Test ($global:Fake.TagCalls.Count -eq 1 -and $global:Fake.TagCalls[0] -ceq 'Merge|SecurityControl=Ignore') 'S7: the no-op run did not try one Merge.'
+    # Another value is treated as untagged: it is merged to Ignore (and the other tag stays).
+    foreach ($other in 'ignore', 'Allow', 'IGNORE ') {
+        Reset-Fake
+        Set-Compliant
+        $global:Fake.Policy = $true
+        $global:Fake.Account.Tags['SecurityControl'] = $other
+        $global:Fake.Account.Tags['owner'] = 'platform'
+        Remove-Backend
+        $null = Invoke-State -ApplyTag
+        Assert-Test ((Get-Mutations) -ceq 'tag update' -and $global:Fake.Account.Tags['SecurityControl'] -ceq 'Ignore' -and $global:Fake.Account.Tags['owner'] -ceq 'platform') "S7: the tag value '$other' was not merged to Ignore as the only write."
+        Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend) "S7: the backend file was not written after the tag value '$other' was corrected."
+    }
+    $Pattern5cOther = "tag SecurityControl on the state storage account is 'ignore' after the writes, not 'Ignore'"
+    Assert-FailsClosed -Name 'S7 lowercase tag value and a no-op merge' -ApplyTag -Setup {
+        Set-Compliant; $global:Fake.Policy = $true; $global:Fake.DropTags = $true; $global:Fake.Account.Tags['SecurityControl'] = 'ignore'
+    } -Pattern $Pattern5cOther
+    # A read that reports the tags as null (not absent) is untagged, under StrictMode.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    $global:Fake.ShowTagsNullOnce = $true
+    Remove-Backend
+    $null = Invoke-State -ApplyTag
+    Assert-Test ((Get-Mutations) -ceq 'tag update' -and $global:Fake.Account.Tags['SecurityControl'] -ceq 'Ignore') 'S7: tags reported as null were not treated as untagged.'
+
+    # S8: switch given and the tag present, but the account is still not Enabled: error 5b (the tag did not help).
+    $Pattern5b = "^(?!.*Re-run with -ApplyPolicyExclusionTag).*public network access is '{0}', not 'Enabled', although the account carries the tag SecurityControl=Ignore\..*perimeter.*propagation.*Local Terraform state is not a workaround.*docs\\deployment\.md, Wave 0.*No backend file was written"
+    Assert-FailsClosed -Name 'S8 policy still forces Disabled' -ApplyTag -Setup {
+        Set-Compliant; $global:Fake.Policy = $true; $global:Fake.PolicyHonorsTag = $false; $global:Fake.Account.Pna = 'Disabled'
+    } -Pattern ($Pattern5b -f 'Disabled')
+    Assert-FailsClosed -Name 'S8 a network perimeter holds the account' -ApplyTag -Setup {
+        Set-Compliant; $global:Fake.PnaLocked = $true; $global:Fake.Account.Pna = 'SecuredByPerimeter'
+    } -Pattern ($Pattern5b -f 'SecuredByPerimeter')
+    Assert-FailsClosed -Name 'S8 public network access is not reported' -ApplyTag -Setup {
+        Set-Compliant; $global:Fake.PnaLocked = $true; $global:Fake.Account.Pna = $null
+    } -Pattern ($Pattern5b -f '<not reported>')
+    # The same read-back without the switch: SecuredByPerimeter and null are failures too (error 5a, naming the value).
+    Assert-FailsClosed -Name 'S8 no switch, SecuredByPerimeter' -Setup {
+        Set-Compliant; $global:Fake.PnaLocked = $true; $global:Fake.Account.Pna = 'SecuredByPerimeter'
+    } -Pattern "public network access is 'SecuredByPerimeter', not 'Enabled'\. Most likely a tenant policy.*Re-run with -ApplyPolicyExclusionTag"
+    Assert-FailsClosed -Name 'S8 no switch, public network access not reported' -Setup {
+        Set-Compliant; $global:Fake.PnaLocked = $true; $global:Fake.Account.Pna = $null
+    } -Pattern "public network access is '<not reported>', not 'Enabled'\. Most likely a tenant policy"
+    # An existing account that the policy rewrote to Disabled: a switchless re-run reports it and the switch repairs it.
+    # A switchless write on an untagged, working account (here a changed operator address) is rewritten back to Disabled.
+    Assert-FailsClosed -Name 'S8 no switch, untagged working account, changed operator address' -Setup {
+        Set-Compliant; $global:Fake.Policy = $true; $global:Fake.Account.Ips.Clear(); $global:Fake.Account.Ips.Add($StaleIp)
+    } -Pattern $Pattern5a
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Disabled' -and (Get-TagArguments).Count -eq 0 -and $global:Fake.Warnings.Count -eq 0) 'S8: the switchless rewrite was not reported with the account left Disabled and untagged.'
+    # A switchless run that makes no account write cannot trigger the policy.
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    Remove-Backend
+    $null = Invoke-State
+    Assert-Test ($global:Fake.Mutations.Count -eq 0 -and $global:Fake.Account.Pna -ceq 'Enabled' -and [IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend) 'S8: a switchless run with no account write failed.'
+    Reset-Fake
+    Set-Compliant
+    $global:Fake.Policy = $true
+    $global:Fake.Account.Pna = 'Disabled'
+    Remove-Backend
+    Assert-Fails { $null = Invoke-State } $Pattern5a 'S8: a switchless run on a Disabled, untagged account did not report the policy.'
+    $null = Invoke-State -ApplyTag
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Enabled' -and $global:Fake.Account.Tags['SecurityControl'] -ceq 'Ignore' -and [IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend) 'S8: a re-run with the switch did not repair the account.'
+
+    # S9: -WhatIf, with and without the switch, new and existing account: no write, no read-back failure, no backend file.
+    foreach ($withSwitch in $false, $true) {
+        $expectedWarnings = $(if ($withSwitch) { 1 } else { 0 })
+        Reset-Fake
+        $global:Fake.Policy = $true
+        Remove-Backend
+        $output = Invoke-State -WhatIf -ApplyTag:$withSwitch
+        Assert-Test ($global:Fake.Mutations.Count -eq 0 -and $global:Fake.TagCalls.Count -eq 0 -and $null -eq $global:Fake.Account) "S9: -WhatIf on a new account (switch $withSwitch) wrote."
+        Assert-Test (@($global:Fake.Calls | Where-Object { $_ -cmatch '^storage account show ' }).Count -eq 0 -and (Get-PollProbes).Count -eq 0 -and -not [IO.File]::Exists($BackendPath)) "S9: -WhatIf on a new account (switch $withSwitch) read back, polled or wrote the backend file."
+        Assert-Test ($global:Fake.Warnings.Count -eq $expectedWarnings -and (Get-TagArguments).Count -eq 0) "S9: -WhatIf on a new account (switch $withSwitch) has the wrong warning count or issued a tag."
+        Reset-Fake
+        Set-Compliant
+        $global:Fake.Policy = $true
+        $global:Fake.Account.Pna = 'Disabled'
+        Remove-Backend
+        $output = Invoke-State -WhatIf -ApplyTag:$withSwitch
+        Assert-Test ($global:Fake.Mutations.Count -eq 0 -and $global:Fake.TagCalls.Count -eq 0 -and $global:Fake.Account.Tags.Count -eq 0 -and $global:Fake.Account.Pna -ceq 'Disabled') "S9: -WhatIf on an existing account (switch $withSwitch) wrote."
+        Assert-Test (@($global:Fake.Calls | Where-Object { $_ -cmatch '^storage account show ' }).Count -eq 1 -and (Get-PollProbes).Count -eq 0 -and -not [IO.File]::Exists($BackendPath)) "S9: -WhatIf on an existing account (switch $withSwitch) read back, polled or wrote the backend file."
+        Assert-Test ($global:Fake.Warnings.Count -eq $expectedWarnings -and (Get-TagArguments).Count -eq 0) "S9: -WhatIf on an existing account (switch $withSwitch) has the wrong warning count or issued a tag."
+    }
+
+    # S10: no switch and no policy: no tag argument, no tag update, no warning (the whole suite above also runs this way).
+    foreach ($existing in $false, $true) {
+        Reset-Fake
+        if ($existing) { Set-Compliant; $global:Fake.Account.Ips.Clear(); $global:Fake.Account.Ips.Add($StaleIp); $global:Fake.Account.Pna = 'Disabled' }
+        Remove-Backend
+        $null = Invoke-State
+        Assert-Test ((Get-TagArguments).Count -eq 0 -and $global:Fake.TagCalls.Count -eq 0 -and $global:Fake.Warnings.Count -eq 0) "S10: without the switch (existing account $existing) a tag, tag update or warning appeared."
+        Assert-Test ([IO.File]::ReadAllText($BackendPath) -ceq $ExpectedBackend -and $global:Fake.Account.Tags.Count -eq 0 -and $global:Fake.Account.Pna -ceq 'Enabled') "S10: the default run (existing account $existing) failed or tagged the account."
+    }
+    Remove-Backend
+
     # ---- no credential or destructive command anywhere ---------------------------------------------------------------------
     Assert-Test ($global:AllCalls.Count -gt 50) 'The recorded Azure calls look incomplete.'
     Assert-Test (@($global:AllCalls | Where-Object { $_ -match '(?i)list-keys|account-key|--sas-token|generate-sas|\bsas\b|connection-string|--auth-mode key|\bkeys\b|^login\b|--expiry|--permissions' }).Count -eq 0) 'A key, SAS, connection string or login command was issued.'
     Assert-Test (@($global:AllCalls | Where-Object { (($_ -split ' ')[0..2] -join ' ') -match '\b(delete|purge)\b' }).Count -eq 0) 'A delete command was issued.'
-    Assert-Test (@($global:AllCalls | Where-Object { $_ -cnotmatch '--subscription ' }).Count -eq 0) 'An Azure call was not scoped with --subscription.'
+    Assert-Test (@($global:AllCalls | Where-Object { $_ -cnotmatch '^ad ' -and $_ -cnotmatch '--subscription ' }).Count -eq 0) 'An Azure call other than an ad verb was not scoped with --subscription.'
+    Assert-Test (@($global:AllCalls | Where-Object { $_ -cmatch '^ad ' -and $_ -cmatch '--subscription' }).Count -eq 0) 'An ad verb carried --subscription, which real az rejects.'
+
+    # ---- the fixture guards itself (it must reject what real az rejects, and behave as real az for tags and the policy) -------
+    Reset-Fake
+    Set-Compliant
+    $guardArguments = @('--subscription', $Sub, '--only-show-errors')
+    Assert-Fails { $null = az ad signed-in-user show --query id @guardArguments --output json } 'rejects --subscription on an ad verb' 'The fixture accepted --subscription on an ad verb.'
+    Assert-Fails { $null = az storage account show --name $Account --resource-group $ResourceGroup --no-such-flag x @guardArguments } 'does not list' 'The fixture accepted an unknown flag.'
+    Assert-Fails { $null = az storage blob list --account-name $Account --container-name tfstate --auth-mode login --num-results 1 --account-key x @guardArguments } 'does not list' 'The fixture accepted a credential flag.'
+    Assert-Fails { $null = az group exists --name $ResourceGroup --only-show-errors --output json } 'explicit deployment subscription' 'The fixture accepted a call without --subscription.'
+    Assert-Fails { $null = az tag update --resource-id "/subscriptions/$Sub/resourceGroups/$ResourceGroup" --operation Merge --tags a=b @guardArguments --output none } 'refused tagging anything but the state storage account' 'The fixture accepted tagging the resource group.'
+    Assert-Fails { $null = az tag update --resource-id $AccountId --operation Upsert --tags a=b @guardArguments --output none } 'refused the tag operation' 'The fixture accepted an unknown tag operation.'
+    # Tag semantics: Merge adds and updates, Replace replaces the set, Delete removes by name or exact name=value; an update --tags replaces.
+    $null = az tag update --resource-id $AccountId --operation Merge --tags owner=a @guardArguments --output none
+    $null = az tag update --resource-id $AccountId --operation Merge --tags SecurityControl=Ignore @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Tags.Count -eq 2 -and $global:Fake.Account.Tags['owner'] -ceq 'a') 'The fixture Merge did not keep the other tag.'
+    $null = az tag update --resource-id $AccountId --operation Delete --tags owner=b @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Tags.ContainsKey('owner')) 'The fixture Delete removed a tag whose value differs.'
+    $null = az tag update --resource-id $AccountId --operation Delete --tags owner @guardArguments --output none
+    Assert-Test (-not $global:Fake.Account.Tags.ContainsKey('owner') -and $global:Fake.Account.Tags.ContainsKey('SecurityControl')) 'The fixture Delete by name did not remove just that tag.'
+    $null = az tag update --resource-id $AccountId --operation Replace --tags team=x @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Tags.Count -eq 1 -and $global:Fake.Account.Tags['team'] -ceq 'x') 'The fixture Replace did not replace the set.'
+    $null = az storage account update --name $Account --resource-group $ResourceGroup --tags only=this @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Tags.Count -eq 1 -and $global:Fake.Account.Tags['only'] -ceq 'this') 'The fixture account update --tags did not replace the set.'
+    # The policy: a write is rewritten to Disabled unless the persisted tags carry SecurityControl=Ignore (case-insensitively).
+    $global:Fake.Policy = $true
+    $null = az storage account network-rule add --account-name $Account --resource-group $ResourceGroup --ip-address $StaleIp @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Disabled') 'The fixture policy did not rewrite an untagged account.'
+    $null = az tag update --resource-id $AccountId --operation Merge --tags SecurityControl=ignore @guardArguments --output none
+    $null = az storage account update --name $Account --resource-group $ResourceGroup --public-network-access Enabled @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Enabled') 'The fixture policy rewrote a tagged account.'
+    $null = az storage account network-rule remove --account-name $Account --resource-group $ResourceGroup --ip-address $StaleIp @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Enabled') 'The fixture policy rewrote a tagged account on a rule removal.'
+    $null = az tag update --resource-id $AccountId --operation Replace --tags other=1 @guardArguments --output none
+    $null = az storage account network-rule remove --account-name $Account --resource-group $ResourceGroup --ip-address $OperatorIp @guardArguments --output none
+    Assert-Test ($global:Fake.Account.Pna -ceq 'Disabled') 'The fixture policy did not rewrite after the tag was removed.'
+    $null = az storage blob list --account-name $Account --container-name tfstate --auth-mode login --num-results 1 @guardArguments --output none
+    Assert-Test ($global:LASTEXITCODE -ne 0) 'The fixture data-plane probe succeeded on a Disabled account.'
+    $global:LASTEXITCODE = 0
+    $global:AllCalls.Clear()
 
     # ---- Export-AsreContext --------------------------------------------------------------------------------------------------
     function New-RealGuid { param([int]$Number) ('{0:x8}-b2c3-4d5e-8f60-{0:x12}' -f (0xa1000000 + $Number)) }

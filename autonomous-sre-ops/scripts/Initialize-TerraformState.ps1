@@ -10,6 +10,19 @@ network action Deny with exactly one rule for the operator's public IPv4 address
 operator's Storage Blob Data Contributor assignment. It then waits, bounded, for data-plane access with the operator's
 Entra identity and only then writes the backend file. Drift on an existing account is corrected in place; nothing is
 recreated or deleted. Keys, SAS tokens and connection strings are never requested. -WhatIf makes no mutating call.
+
+After the last account-level write, every real run reads the account back and fails closed, before the data-plane wait
+and before any backend file is written, unless public network access is Enabled (with -ApplyPolicyExclusionTag the
+exclusion tag must also be present). A tenant policy that forces public network access off therefore stops the run with
+a message instead of ending in a misleading propagation timeout. -WhatIf cannot show this; only the real run's read-back can.
+
+.PARAMETER ApplyPolicyExclusionTag
+Opt-in, for a tenant whose Azure Policy rewrites a storage account's public network access to Disabled unless the account
+carries the tag SecurityControl=Ignore. Tags ONLY the state storage account, in the same create call for a new account, or
+with a Merge tag update before the first account write for an existing one (other tags are kept). The resource group is
+never tagged. The tag is a self-service bypass of that policy: see docs\deployment.md, Wave 0, for what it does, what it
+does not do and the compensating controls. Never on by default; there is no environment-variable or configuration trigger
+and no automatic retry with the tag. The run emits exactly one warning when the switch is given.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
@@ -22,7 +35,8 @@ param(
     [Parameter(Mandatory)][string]$OperatorIp,
     [ValidateScript({ [regex]::IsMatch($_, '\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z') },
         ErrorMessage = 'OperatorObjectId must be a lowercase GUID.')][string]$OperatorObjectId,
-    [string]$BackendFile
+    [string]$BackendFile,
+    [switch]$ApplyPolicyExclusionTag
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,6 +52,9 @@ $RoleName = 'Storage Blob Data Contributor'
 $RetentionDays = 14
 $PollAttempts = 24
 $PollSeconds = 10
+$PolicyExclusionTagName = 'SecurityControl'
+$PolicyExclusionTagValue = 'Ignore'
+$PolicyExclusionTag = "$PolicyExclusionTagName=$PolicyExclusionTagValue"
 
 function Test-PublicIpv4 {
     # A single, plain, globally routable-looking IPv4 address: no CIDR, no private/loopback/link-local/CGNAT/multicast.
@@ -67,9 +84,11 @@ $Account = "stasrestate$Suffix"
 $AccountId = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroup/providers/Microsoft.Storage/storageAccounts/$Account"
 
 function Invoke-AzRead {
-    # Read-only Azure CLI call; always scoped with --subscription; failures never echo output.
+    # Read-only Azure CLI call; scoped with --subscription except for directory (ad) verbs, which reject that flag;
+    # failures never echo output.
     param([string[]]$Arguments)
-    $json = & az @Arguments --subscription $SubscriptionId --only-show-errors --output json
+    $Scope = @(if ($Arguments[0] -cne 'ad') { '--subscription', $SubscriptionId })
+    $json = & az @Arguments @Scope --only-show-errors --output json
     if ($LASTEXITCODE -ne 0) { throw "Azure CLI failed: $($Arguments[0..2] -join ' ')." }
     $text = (@($json) -join "`n")
     if ([string]::IsNullOrWhiteSpace($text)) { return $null }
@@ -103,6 +122,11 @@ if ([string]::IsNullOrWhiteSpace($OperatorObjectId)) {
     }
     $OperatorObjectId = $Resolved
 }
+if ($ApplyPolicyExclusionTag) {
+    Write-Warning ("-ApplyPolicyExclusionTag: the state storage account $Account, and only that account, is tagged " +
+        "$PolicyExclusionTag so that a tenant policy cannot force its public network access off. The resource group is " +
+        'never tagged. See docs\deployment.md, Wave 0, for the compensating controls.')
+}
 
 # --- Resource group --------------------------------------------------------------------------------------------------
 $GroupExists = [bool](Invoke-AzRead -Arguments @('group', 'exists', '--name', $ResourceGroup))
@@ -120,16 +144,25 @@ $AccountKnown = $Present -ccontains $Account
 if (-not $AccountKnown) {
     $Check = Invoke-AzRead -Arguments @('storage', 'account', 'check-name', '--name', $Account)
     if ((Get-Field $Check @('nameAvailable')) -ne $true) { throw 'The derived state storage account name is not available to this subscription.' }
-    Invoke-AzWrite -Target $Account -Arguments @(
+    $CreateArguments = @(
         'storage', 'account', 'create', '--name', $Account, '--resource-group', $ResourceGroup, '--location', $Location,
         '--kind', 'StorageV2', '--sku', 'Standard_LRS', '--allow-blob-public-access', 'false',
         '--allow-shared-key-access', 'false', '--min-tls-version', 'TLS1_2', '--https-only', 'true',
         '--default-action', 'Deny', '--bypass', 'None')
+    # The tag travels in the same create call, so no write is ever made to an untagged new account.
+    if ($ApplyPolicyExclusionTag) { $CreateArguments += @('--tags', $PolicyExclusionTag) }
+    Invoke-AzWrite -Target $Account -Arguments $CreateArguments
     $AccountKnown = -not $WhatIfPreference
 }
 if ($AccountKnown) {
     $Properties = Invoke-AzRead -Arguments @('storage', 'account', 'show', '--name', $Account, '--resource-group', $ResourceGroup)
     if ((Get-Field $Properties @('id')) -cne $AccountId) { throw 'The state storage account is not the expected resource.' }
+    # Merge keeps the other tags (an account update --tags would replace the whole set). Before the first account-level
+    # write, so that no write can be rewritten by the tenant policy. A wrong value counts as untagged.
+    if ($ApplyPolicyExclusionTag -and (Get-Field $Properties @('tags', $PolicyExclusionTagName)) -cne $PolicyExclusionTagValue) {
+        Invoke-AzWrite -Target $Account -Arguments @('tag', 'update', '--resource-id', $AccountId, '--operation', 'Merge',
+            '--tags', $PolicyExclusionTag)
+    }
     $Rules = Get-Field $Properties @('networkRuleSet')
     $Drift = (Get-Field $Properties @('allowBlobPublicAccess')) -ne $false -or
         (Get-Field $Properties @('allowSharedKeyAccess')) -ne $false -or
@@ -151,6 +184,33 @@ if ($AccountKnown) {
     if ($Existing -cnotcontains $OperatorIp) {
         Invoke-AzWrite -Target $Account -Arguments @('storage', 'account', 'network-rule', 'add',
             '--account-name', $Account, '--resource-group', $ResourceGroup, '--ip-address', $OperatorIp)
+    }
+    # Fail closed on a tenant policy that rewrites public network access: read the account back fresh after the last
+    # account-level write and before the data-plane wait, the blob service, the container, the role and the backend file.
+    # -WhatIf wrote nothing, so there is nothing to read back.
+    if (-not $WhatIfPreference) {
+        $Final = Invoke-AzRead -Arguments @('storage', 'account', 'show', '--name', $Account, '--resource-group', $ResourceGroup)
+        $Access = Get-Field $Final @('publicNetworkAccess')
+        $AccessText = if ($null -eq $Access) { '<not reported>' } else { "$Access" }
+        $Tag = Get-Field $Final @('tags', $PolicyExclusionTagName)
+        $TagText = if ($null -eq $Tag) { '<absent>' } else { "$Tag" }
+        if ($ApplyPolicyExclusionTag -and $Tag -cne $PolicyExclusionTagValue) {
+            throw ("-ApplyPolicyExclusionTag was given, but the tag $PolicyExclusionTagName on the state storage account is " +
+                "'$TagText' after the writes, not '$PolicyExclusionTagValue'. The tag was not applied or was removed. Check " +
+                'your permissions to write tags and the Activity Log. No backend file was written.')
+        }
+        if ($Access -cne 'Enabled' -and $ApplyPolicyExclusionTag) {
+            throw ("The state storage account public network access is '$AccessText', not 'Enabled', although the account " +
+                "carries the tag $PolicyExclusionTag. The exclusion tag did not help: another policy parameter, a network " +
+                'perimeter, or propagation delay may apply (if it is propagation, wait and re-run). Local Terraform state ' +
+                'is not a workaround. See docs\deployment.md, Wave 0. No backend file was written.')
+        }
+        if ($Access -cne 'Enabled') {
+            throw ("The state storage account public network access is '$AccessText', not 'Enabled'. Most likely a tenant " +
+                'policy forces it to Disabled (for example the SFI network-security Modify policy ' +
+                'StorageAccount_PublicNetwork_Modify). Re-run with -ApplyPolicyExclusionTag; see docs\deployment.md, ' +
+                'Wave 0. No backend file was written.')
+        }
     }
     $Service = Invoke-AzRead -Arguments @('storage', 'account', 'blob-service-properties', 'show',
         '--account-name', $Account, '--resource-group', $ResourceGroup)
