@@ -162,8 +162,9 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "guest" {
   enabled                 = contains(var.enabled_native_alert_rules, each.key)
   auto_mitigation_enabled = true
   description             = each.key == "patch-installation" ? "ASRE fixed-target terminal Update Manager installation failure; native SRE Review intake." : contains(local.native_created_rules, each.key) ? "ASRE fixed-target native incident signal; native SRE Review intake." : "Disabled until the actual table schema, baseline and SRE intake have passed readiness."
-  skip_query_validation   = false
-  tags                    = local.tags
+  # A new workspace lacks the guest tables until data arrives, so the query cannot be validated at creation.
+  skip_query_validation = true
+  tags                  = local.tags
 
   dynamic "identity" {
     for_each = contains(["patch-installation", "backup-job"], each.key) ? [true] : []

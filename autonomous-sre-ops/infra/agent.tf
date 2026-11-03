@@ -3,7 +3,7 @@ resource "azapi_resource" "agent" {
   # The pinned embedded schema omits the networking fields in Microsoft's VNet example.
   schema_validation_enabled = false
   type                      = "Microsoft.App/agents@2026-01-01"
-  name                      = "asre-demo-cus"
+  name                      = local.agent_name
   parent_id                 = azurerm_resource_group.demo["control"].id
   location                  = var.location
   tags                      = local.tags
@@ -88,14 +88,6 @@ resource "azurerm_role_assignment" "agent_administrator" {
   count                = var.deploy_managed_agent ? 1 : 0
   scope                = azapi_resource.agent[0].id
   role_definition_name = "SRE Agent Administrator"
-  principal_id         = var.agent_administrator_object_id
+  principal_id         = var.operator_object_id
   principal_type       = "User"
-}
-
-resource "azurerm_role_assignment" "agent_delivery_administrator" {
-  count                = var.deploy_managed_agent && var.deploy_runtime ? 1 : 0
-  scope                = azapi_resource.agent[0].id
-  role_definition_name = "SRE Agent Administrator"
-  principal_id         = "00000051-000a-4000-a000-000000000051"
-  principal_type       = "ServicePrincipal"
 }

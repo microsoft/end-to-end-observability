@@ -20,12 +20,3 @@ resource "azurerm_role_assignment" "feedback_thread_sender" {
   principal_id       = azurerm_user_assigned_identity.demo["runner"].principal_id
   principal_type     = "ServicePrincipal"
 }
-
-# Reuse the existing single-action refresh role for this new secret-free job.
-resource "azurerm_role_assignment" "feedback_job_refresh" {
-  count              = var.enable_servicenow_feedback ? 1 : 0
-  scope              = azurerm_container_app_job.operations["feedback"].id
-  role_definition_id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/00000041-000a-4000-8000-000000000041"
-  principal_id       = "00000043-000a-4000-a000-000000000043"
-  principal_type     = "ServicePrincipal"
-}

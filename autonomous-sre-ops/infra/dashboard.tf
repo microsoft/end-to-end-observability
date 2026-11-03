@@ -1,22 +1,22 @@
 locals {
   dashboard_foundation = var.dashboard.phase != "disabled"
   dashboard_deployed   = contains(["private", "public"], var.dashboard.phase)
-  dashboard_group_id   = "00000042-000a-4000-8000-000000000042"
-  dashboard_name       = "ca-asre-dash-demo-4d79"
+  dashboard_group_id   = var.dashboard.viewer_group_id
+  dashboard_name       = "ca-asre-dash-${local.suffix}"
   dashboard_tags       = merge(local.tags, { component = "dashboard" })
   dashboard_origin     = local.dashboard_foundation ? "https://${local.dashboard_name}.${azurerm_container_app_environment.dashboard[0].default_domain}" : null
 }
 
 resource "azurerm_resource_group" "dashboard" {
   count    = local.dashboard_foundation ? 1 : 0
-  name     = "rg-asre-dash-demo-4d79"
+  name     = "rg-asre-dash-${local.suffix}"
   location = var.location
   tags     = local.dashboard_tags
 }
 
 resource "azurerm_container_app_environment" "dashboard" {
   count                      = local.dashboard_foundation ? 1 : 0
-  name                       = "cae-asre-dash-demo-4d79"
+  name                       = "cae-asre-dash-${local.suffix}"
   location                   = var.location
   resource_group_name        = azurerm_resource_group.dashboard[0].name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.demo.id
@@ -32,7 +32,7 @@ resource "azurerm_container_app_environment" "dashboard" {
 
 resource "azurerm_user_assigned_identity" "dashboard" {
   count               = local.dashboard_foundation ? 1 : 0
-  name                = "id-asre-dash-demo-4d79"
+  name                = "id-asre-dash-${local.suffix}"
   location            = var.location
   resource_group_name = azurerm_resource_group.dashboard[0].name
   tags                = local.dashboard_tags
@@ -48,7 +48,7 @@ resource "azurerm_role_assignment" "dashboard_pull" {
 
 resource "azurerm_key_vault" "dashboard" {
   count                         = local.dashboard_foundation ? 1 : 0
-  name                          = "kv-asre-dash-demo-4d79"
+  name                          = "kv-asre-dash-${local.suffix}"
   location                      = var.location
   resource_group_name           = azurerm_resource_group.dashboard[0].name
   tenant_id                     = var.tenant_id
@@ -76,7 +76,7 @@ resource "azurerm_role_assignment" "dashboard_credential_setter" {
   count              = local.dashboard_foundation ? 1 : 0
   scope              = azurerm_key_vault.dashboard[0].id
   role_definition_id = azurerm_role_definition.dashboard_credential_setter[0].role_definition_resource_id
-  principal_id       = "00000057-000a-4000-a000-000000000057"
+  principal_id       = var.operator_object_id
   principal_type     = "User"
 }
 
@@ -220,6 +220,7 @@ resource "azapi_resource" "dashboard" {
             memory = "0.5Gi"
           }
           env = [
+            { name = "ASRE_CONTEXT", value = jsonencode(local.context_core) },
             { name = "ASRE_DASHBOARD_HOST", value = "0.0.0.0" },
             { name = "ASRE_DASHBOARD_PUBLIC_ORIGIN", value = local.dashboard_origin },
             { name = "ASRE_DASHBOARD_MANAGED_IDENTITY_CLIENT_ID", value = azurerm_user_assigned_identity.dashboard[0].client_id },

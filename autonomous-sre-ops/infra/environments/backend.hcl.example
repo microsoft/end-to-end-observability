@@ -1,0 +1,9 @@
+# Normally written by scripts/Initialize-TerraformState.ps1 into the git-ignored backend.hcl; copy this file only to set the backend up by hand.
+# Usage: terraform -chdir=infra init -backend-config=environments/backend.hcl -lockfile=readonly
+resource_group_name  = "<state-resource-group>"
+storage_account_name = "<state-storage-account>"
+container_name       = "<state-container>"
+key                  = "autonomous-sre-ops/demo.tfstate"
+use_azuread_auth     = true
+subscription_id      = "<subscription-id>"
+tenant_id            = "<tenant-id>"

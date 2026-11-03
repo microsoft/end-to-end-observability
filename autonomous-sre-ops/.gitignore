@@ -12,6 +12,8 @@ crash.log
 infra/environments/backend.hcl
 infra/environments/context.generated.json
 infra/environments/keys/
+infra/environments/*.tfvars
+infra/environments/*.tfvars.json
 
 # Python
 .venv/

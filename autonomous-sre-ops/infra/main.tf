@@ -1,12 +1,14 @@
 locals {
   tags = {
-    project     = "asre-demo"
+    project     = "autonomous-sre-ops"
     environment = "demonstration"
     managed-by  = "terraform"
     fault-state = "disabled"
   }
   groups = toset(["control", "linux", "patch", "backup"])
   suffix = substr(sha256("${var.subscription_id}:asre-demo"), 0, 10)
+  # The context loaders fix this name; the agent resource and the context document share it.
+  agent_name = "asre-demo-cus"
   targets = {
     linux  = { name = "vm-asre-linux-cus", address = "10.42.0.10" }
     patch  = { name = "vm-asre-patch-cus", address = "10.42.0.11" }
@@ -17,6 +19,57 @@ locals {
     runner    = "10.42.1.0/26"
     endpoints = "10.42.2.0/27"
     agent     = "10.42.3.0/27"
+  }
+
+  # Deployment context (schema asre-context/v1) without the two values that cannot be static:
+  # the agent endpoint (known only after the agent exists) and the operator object id. It must
+  # never reference azapi_resource.agent; the runtime jobs and the dashboard receive it as the
+  # static ASRE_CONTEXT environment value, and the agent depends on neither.
+  context_core = {
+    schema          = "asre-context/v1"
+    subscription_id = var.subscription_id
+    tenant_id       = var.tenant_id
+    location        = var.location
+    name_suffix     = local.suffix
+    resource_groups = { for key, group in azurerm_resource_group.demo : key => group.name }
+    log_analytics = {
+      name        = azurerm_log_analytics_workspace.demo.name
+      customer_id = lower(azurerm_log_analytics_workspace.demo.workspace_id)
+    }
+    registry = {
+      name         = azurerm_container_registry.demo.name
+      login_server = azurerm_container_registry.demo.login_server
+    }
+    key_vault = {
+      name = azurerm_key_vault.operations.name
+      uri  = azurerm_key_vault.operations.vault_uri
+    }
+    storage = {
+      account_name   = azurerm_storage_account.operations.name
+      blob_endpoint  = trimsuffix(azurerm_storage_account.operations.primary_blob_endpoint, "/")
+      table_endpoint = trimsuffix(azurerm_storage_account.operations.primary_table_endpoint, "/")
+    }
+    recovery_vault = {
+      name           = azurerm_recovery_services_vault.demo.name
+      resource_group = azurerm_recovery_services_vault.demo.resource_group_name
+    }
+    identities = merge(
+      { for key, identity in azurerm_user_assigned_identity.demo : key => {
+        client_id    = lower(identity.client_id)
+        principal_id = lower(identity.principal_id)
+      } },
+      { for identity in azurerm_user_assigned_identity.bootstrap : "bootstrap" => {
+        client_id    = lower(identity.client_id)
+        principal_id = lower(identity.principal_id)
+      } },
+    )
+    targets = { for key, vm in azurerm_linux_virtual_machine.target : key => {
+      name           = vm.name
+      resource_group = vm.resource_group_name
+      address        = local.targets[key].address
+    } }
+    agent      = { name = local.agent_name }
+    servicenow = var.servicenow
   }
 }
 

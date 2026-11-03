@@ -2,6 +2,17 @@ output "resource_groups" {
   value = { for name, group in azurerm_resource_group.demo : name => group.name }
 }
 
+output "context" {
+  description = "Deployment context document (schema asre-context/v1). scripts/Export-AsreContext.ps1 saves it as infra/environments/context.generated.json. Identifiers only; no secret value."
+  value = merge(local.context_core, {
+    operator_object_id = var.operator_object_id
+    agent = {
+      name     = local.agent_name
+      endpoint = try(azapi_resource.agent[0].output.properties.agentEndpoint, null)
+    }
+  })
+}
+
 output "targets" {
   description = "Private addresses are not SSH trust anchors. Pin each host key through an authenticated bootstrap."
   value = {

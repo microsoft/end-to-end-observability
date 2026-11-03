@@ -165,10 +165,12 @@ resource "azurerm_container_app_job" "operations" {
       dynamic "env" {
         for_each = each.key == "bootstrap" ? {
           ASRE_BOOTSTRAP_CLIENT_ID = azurerm_user_assigned_identity.bootstrap[0].client_id
+          ASRE_CONTEXT             = jsonencode(local.context_core)
           } : merge({
             ASRE_RUNNER_CLIENT_ID    = azurerm_user_assigned_identity.demo["runner"].client_id
             ASRE_COLLECTOR_CLIENT_ID = azurerm_user_assigned_identity.demo["collector"].client_id
             ASRE_EXECUTION_MODE      = "Review"
+            ASRE_CONTEXT             = jsonencode(local.context_core)
             }, each.key == "feedback" ? {
             ASRE_SERVICENOW_FEEDBACK_ENABLED = "true"
         } : {})
