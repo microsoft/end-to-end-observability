@@ -1,0 +1,32 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Real environment values stay local; only *.example files are committed
+infra/environments/backend.hcl
+infra/environments/context.generated.json
+infra/environments/keys/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.coverage
+.pytest_cache/
+.ruff_cache/
+
+# Secrets, rendered output and local artifacts
+.delivery/
+.env
+*.pem
+*.key
+*.pfx
+artifacts/
+out/
+.azure/validate-status.json
