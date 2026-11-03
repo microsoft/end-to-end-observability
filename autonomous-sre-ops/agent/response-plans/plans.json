@@ -1,0 +1,18 @@
+{
+  "artifact_kind": "portal-configuration-checklist",
+  "version": "1.0",
+  "deployed": false,
+  "note": "Not an ARM or management API payload. Bind these settings through documented supported product configuration.",
+  "requirements": [
+    "Disable the quickstart response plan before enabling any custom plan",
+    "Bind exact Azure Monitor source, target IDs and user-owned ServiceNow tools",
+    "Prove authenticated private tool reachability; generic connector traffic does not use VNet integration",
+    "Enforce runner permissions, case audit and target/episode locks outside prompts"
+  ],
+  "plans": [
+    {"name": "asre-linux-review", "enabled": false, "mode": "Review", "signals": ["filesystem", "workload-memory"], "skills": ["asre-linux-rca", "asre-case-and-verification"], "gate": "D6 complete; disjoint scope from autonomous plan"},
+    {"name": "asre-linux-autonomous", "enabled": false, "mode": "Autonomous", "signals": ["filesystem", "workload-memory"], "skills": ["asre-linux-rca", "asre-case-and-verification"], "gate": "D7 bounded repair accepted"},
+    {"name": "asre-patch-recovery", "enabled": false, "mode": "Autonomous", "signals": ["patch-installation"], "skills": ["asre-patch-backup-recovery", "asre-case-and-verification"], "gate": "D5 real failed installation and successful retry proven"},
+    {"name": "asre-backup-recovery", "enabled": false, "mode": "Autonomous", "signals": ["backup-job"], "skills": ["asre-patch-backup-recovery", "asre-case-and-verification"], "gate": "D5 real failed backup and new recovery point proven"}
+  ]
+}

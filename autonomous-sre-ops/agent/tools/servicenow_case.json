@@ -1,0 +1,27 @@
+{
+  "kind": "tools",
+  "name": "asre-servicenow-case",
+  "type": "ExtendedAgentTool",
+  "source": "servicenow_case.py",
+  "buildScript": "scripts/Build-CaseTool.ps1",
+  "callable": "main",
+  "dependencies": [
+    "azure-identity==1.23.0",
+    "jsonschema==4.25.1",
+    "rfc3339-validator==0.1.4"
+  ],
+  "properties": {
+    "type": "PythonFunctionTool",
+    "description": "Fixed retained ServiceNow facade only. Fresh execution self-binds managed identity and the fixed authoritative Azure reader. Health checks exact-secret/OAuth/facade access only, not ticket readiness. Case writes require reviewed native provenance and protected commissioning, then freeze immutable intent before create and one initial internal findings note. Original-ID reconciliation governs retries. No repair, closure, feedback, shell or arbitrary HTTP.",
+    "timeoutSeconds": 240,
+    "parameters": [
+      {"name": "action", "type": "string", "required": true, "description": "Exactly health, read, create, note or reconcile. Before an intent exists, read returns bounded verified native alert/signal context without writes. create delivers the frozen create AND initial note; note retries that note or explicitly appends a verified recurrence update."},
+      {"name": "investigation_id", "type": "string", "required": false, "description": "Actual native investigation identity. On first read, omit both IDs: the reader independently resolves exactly one fresh matching native incident, rejecting none/ambiguity. Required for writes/reconcile. Never invent an ID or supply an episode UUID."},
+      {"name": "alert_id", "type": "string", "required": false, "description": "Actual ARM Monitor alert instance ID bound to the investigation. Omit on first read to resolve current structured native status. Required for writes/reconcile; never only a rule ID. Merged recurrence notes retain the original alert_id and use the additional alert as recurrence_id."},
+      {"name": "evidence_json", "type": "string", "required": false, "description": "For first create or explicit recurrence: complete existing servicenow-case evidence JSON with episode_id OMITTED (derived internally). Reference the actual ARM alert and the selected profile's independently read native telemetry/provider sample. Any referenced guest receipts must be complete and validated. Do not send fragments or secrets. Empty on read/reconcile or frozen-note retry."},
+      {"name": "findings_note", "type": "string", "required": false, "description": "Initial create or explicit recurrence only: bounded internal findings, at most 3200 characters. Frozen with evidence before POST. Empty on frozen-intent retries."},
+      {"name": "recurrence_id", "type": "string", "required": false, "description": "note/reconcile only: exact additional authoritative ARM alert instance ID within this owned investigation. Deterministically derives a create-only update intent; never creates another case or initial note. Empty for initial writes."},
+      {"name": "profile", "type": "string", "required": false, "description": "Exactly disk (default), patch-installation, alert-recurrence, capacity-growth or backup-job, matching the selected native rule. This is a discovery hint, not authorization: protected commissioning, native investigation, exact ARM rule, fixed VM and independent in-window telemetry or terminal provider evidence must all match. Retain the same profile for all operations."}
+    ]
+  }
+}

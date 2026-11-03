@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:asre-demo:servicenow-case-write:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transport_version", "write_request_id", "evidence"],
+  "properties": {
+    "transport_version": {"const": "1.0"},
+    "write_request_id": {"type": "string", "format": "uuid"},
+    "evidence": {"$ref": "urn:asre-demo:servicenow-case:1"},
+    "investigation_reference": {"type": "string", "maxLength": 1000}
+  }
+}

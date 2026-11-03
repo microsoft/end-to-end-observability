@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "platform": "ServiceNow",
+  "assignment_group": "ASRE Demo Operations",
+  "assignment_group_id": "0000000000000000000000000000007a",
+  "case_id": "0000000000000000000000000000010a",
+  "case_number": "INC0900001",
+  "ci_id": "0000000000000000000000000000014a",
+  "response_plan": {
+    "kind": "incidentFilters",
+    "name": "asre-servicenow-review-pilot",
+    "type": "IncidentFilter",
+    "properties": {
+      "incidentPlatform": "ServiceNow",
+      "isEnabled": false,
+      "agentMode": "Review",
+      "handlingAgent": "asre-incident-review",
+      "priorities": ["4"],
+      "impactedService": "",
+      "incidentType": "",
+      "titleContains": "[ASRE Demo] Synthetic readiness test (linux); no real Azure alert",
+      "maxAutomatedInvestigationAttempts": 1
+    }
+  },
+  "proactive_schedule": {
+    "kind": "scheduledtasks",
+    "name": "asre-proactive-review",
+    "type": "ScheduledTask",
+    "properties": {
+      "description": "Disabled ASRE read-only capacity/noise/patch/backup evidence review; no case write or repair authority.",
+      "cronExpression": "0 */6 * * *",
+      "agentPrompt": "Use approved ASRE knowledge and selected proactive skills. Collect fresh fixed evidence for the three approved targets, check baseline sufficiency and report risks/gaps without creating cases, changing settings or repairing anything.",
+      "agent": "asre-proactive-review",
+      "agentMode": "review",
+      "status": "Paused"
+    }
+  }
+}

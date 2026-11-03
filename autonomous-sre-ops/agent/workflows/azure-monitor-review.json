@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "phase": "Production",
+  "case_profiles": ["disk", "patch-installation", "alert-recurrence", "capacity-growth", "backup-job"],
+  "native_capture": {
+    "version": "asre-native-capture/v1",
+    "rule_api_version": "2023-12-01",
+    "maximum_window_seconds": 600
+  },
+  "platform_symbol": "Ss.AzMonitor",
+  "serialized_platform": "AzMonitor",
+  "commissioning": {
+    "version": "1.0",
+    "minimum_not_before": "2026-10-18T21:15:23.835Z"
+  },
+  "activation_authority": {
+    "tenant_id": "00000002-000a-4000-9000-000000000002",
+    "object_id": "00000057-000a-4000-a000-000000000057",
+    "client_id": "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
+  },
+  "response_plan": {
+    "kind": "incidentFilters",
+    "name": "asre-azure-monitor-review",
+    "type": "IncidentFilter",
+    "properties": {
+      "incidentPlatform": "AzMonitor",
+      "isEnabled": false,
+      "agentMode": "Review",
+      "handlingAgent": "asre-azure-monitor-review",
+      "priorities": ["Sev1", "Sev2"],
+      "titleContains": "asre-demo-",
+      "maxAutomatedInvestigationAttempts": 3,
+      "mergeEnabled": false,
+      "mergeWindowHours": 3,
+      "azMonitorFilterSettings": {
+        "targetResourceType": "Microsoft.OperationalInsights/workspaces",
+        "targetResource": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus"
+      }
+    }
+  },
+  "scope": {
+    "rule_id": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.Insights/scheduledQueryRules/asre-demo-disk",
+    "resource_id": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-linux-cus/providers/Microsoft.Compute/virtualMachines/vm-asre-linux-cus",
+    "workspace_resource_id": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus",
+    "object_name": "Logical Disk",
+    "counter_name": "% Used Space",
+    "instance_name": "/srv/asre-demo",
+    "threshold": 80,
+    "complete_receipts_required": false
+  }
+}
