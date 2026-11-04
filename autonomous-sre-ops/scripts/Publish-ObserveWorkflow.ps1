@@ -179,7 +179,12 @@ function ConvertTo-ObserveFailure {
         elseif ($status -eq 412) { $message += ' The resource changed concurrently, re-read it.' }
         elseif ($status -eq 403) { $message += " Check the operator's role on the agent and allow for propagation." }
         if ($method -cne 'Get') { $message += ' The outcome of the write is not confirmed: re-read before retrying.' }
-        return (New-ObserveError -Message $message)
+        $failure = New-ObserveError -Message $message
+        # A GET answered by a gateway or availability error is a candidate for waiting; callers decide whether to use it.
+        if ($category -ceq 'HttpFailure' -and $method -ceq 'Get' -and $status -is [int] -and $status -in 502, 503, 504) {
+            $failure.Data['AsreObserveTransientStatus'] = $status
+        }
+        return $failure
     }
     if ($data.Contains('AsreObserveSafe')) { return $exception }
     if ([regex]::IsMatch($exception.Message, $script:ObserveHelperMessage)) {
@@ -574,8 +579,17 @@ function Get-ObserveConnectivity {
 }
 
 function Test-ObserveBindingEqual {
+    # Strict, except that the service reads back default fields it was never sent (null or empty string).
     param($Configuration, [Parameter(Mandatory)][System.Collections.IDictionary]$Binding)
-    try { Assert-AsreExact -Expected $Binding -Actual $Configuration -Path 'incidentManagementConfiguration'; return $true }
+    if ($Configuration -isnot [System.Collections.IDictionary]) { return $false }
+    $actual = [ordered]@{}
+    foreach ($key in $Configuration.Keys) {
+        $value = $Configuration[$key]
+        $isDefault = $null -eq $value -or ($value -is [string] -and $value.Length -eq 0)
+        if ($isDefault -and @($Binding.Keys) -cnotcontains [string]$key) { continue }
+        $actual[[string]$key] = $value
+    }
+    try { Assert-AsreExact -Expected $Binding -Actual $actual -Path 'incidentManagementConfiguration'; return $true }
     catch { return $false }
 }
 
@@ -945,15 +959,30 @@ function Invoke-ObserveBind {
     $attempts = [int][math]::Ceiling($Run['TimeoutSeconds'] / 5)
     $lastStatus = 'unknown'
     $ready = $false
-    for ($attempt = 1; $attempt -le $attempts; $attempt++) {
-        $arm = Invoke-ObserveRequest -Run $Run -Step 'platform-read' -Service Arm -Path $path
-        $provisioning = Get-AsreMember -Value $arm['data'] -Path @('properties', 'provisioningState')
-        if ($provisioning -cne 'Succeeded' -and $provisioning -cne 'InProgress') { throw (New-ObserveError -Message 'Bind failed: the agent reported an unexpected provisioning state.') }
-        $connectivity = Get-ObserveConnectivity -Run $Run
-        $lastStatus = $connectivity['status']
-        $configuration = Get-AsreMember -Value $arm['data'] -Path @('properties', 'incidentManagementConfiguration')
-        if ($provisioning -ceq 'Succeeded' -and $connectivity['ready'] -and (Test-ObserveBindingEqual -Configuration $configuration -Binding $Run['Binding'])) { $ready = $true; break }
-        if ($attempt -lt $attempts) { Start-Sleep -Seconds 5 }
+    try {
+        for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+            $arm = Invoke-ObserveRequest -Run $Run -Step 'platform-read' -Service Arm -Path $path
+            $provisioning = Get-AsreMember -Value $arm['data'] -Path @('properties', 'provisioningState')
+            if ($provisioning -cne 'Succeeded' -and $provisioning -cne 'InProgress') { throw (New-ObserveError -Message 'Bind failed: the agent reported an unexpected provisioning state.') }
+            $connectivity = $null
+            try { $connectivity = Get-ObserveConnectivity -Run $Run }
+            catch {
+                # The data plane may answer 502, 503 or 504 while it reconfigures; any other failure is fatal.
+                if (-not $_.Exception.Data.Contains('AsreObserveTransientStatus')) { throw }
+                $lastStatus = Get-ObserveSafeName "unavailable HTTP $($_.Exception.Data['AsreObserveTransientStatus'])"
+            }
+            if ($null -ne $connectivity) {
+                $lastStatus = $connectivity['status']
+                $configuration = Get-AsreMember -Value $arm['data'] -Path @('properties', 'incidentManagementConfiguration')
+                if ($provisioning -ceq 'Succeeded' -and $connectivity['ready'] -and (Test-ObserveBindingEqual -Configuration $configuration -Binding $Run['Binding'])) { $ready = $true; break }
+            }
+            if ($attempt -lt $attempts) { Start-Sleep -Seconds 5 }
+        }
+    }
+    catch {
+        if ($Result['platform'] -cne 'bound') { throw }
+        $failure = ConvertTo-ObserveFailure -Step 'bind' -ErrorRecord $_
+        throw (New-ObserveError -Message "$($failure.Message) The platform binding was already sent; run -Mode Bind again to continue waiting.")
     }
     if (-not $ready) {
         throw (New-ObserveError -Message "Bind did not become ready within the timeout (last connection status: $lastStatus); run -Mode Bind again to keep waiting.")

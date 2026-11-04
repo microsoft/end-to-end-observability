@@ -592,7 +592,9 @@ of the on-demand work.
 
 3. Bind Azure Monitor as the agent's incident platform. `-Mode Validate` is an offline check of the declaration. `Bind`
    needs the agent name as a typed confirmation, waits until the agent is ready (add `-ReadinessTimeoutSeconds 900` for
-   a slow start) and changes only the agent's incident-management configuration.
+   a slow start) and changes only the agent's incident-management configuration. It is idempotent: an agent that is
+   already bound is not changed again, and the wait continues through a brief HTTP 502, 503 or 504 from the agent while
+   it reconfigures. After any failure or timeout, run the same command again; it is safe to repeat.
 
    ```powershell
    & .\scripts\Publish-ObserveWorkflow.ps1 -Mode Validate
@@ -858,7 +860,7 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | `terraform` run by hand fails with "Too many command line arguments" | In PowerShell, quote each flag whole, for example `"-var-file=demo.tfvars"` |
 | An `az` command fails with "was unexpected" after `--query` | `az` is a batch file (`az.cmd`), so cmd.exe splits an argument that has no space but contains an ampersand, a pipe, parentheses, angle brackets or a caret, for example `"[?starts_with(name,'x')].name"`. Put a space in the expression (after a comma) or avoid those characters: use `--output json`, then `ConvertFrom-Json` and filter in PowerShell |
 | The VMs are deallocated in the morning | The platform may deallocate lab VMs overnight. Start them as described in the checks above |
-| `Publish-ObserveWorkflow.ps1 -Mode Bind` times out | The agent is not ready. Run it again with `-ReadinessTimeoutSeconds 900` |
+| `Publish-ObserveWorkflow.ps1 -Mode Bind` times out | The agent is not ready. Run it again with `-ReadinessTimeoutSeconds 900`. It is safe to repeat: it waits through a brief HTTP 502, 503 or 504, and an error message that says the binding was already sent means the next run only continues waiting |
 | Agent calls return 401 or 403 right after Wave 5 | The `SRE Agent Administrator` assignment has not propagated. Wait a few minutes and run the step again |
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` refuses | Another incident filter on the agent is enabled. Do not enable two filters; settle the other one with its owner |
 | An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) equals the target resource id on the alert, letter for letter. The alert may carry the workspace id in lower case. A difference in case alone is a publisher defect, because the publisher writes the context id as it is: report it and do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |

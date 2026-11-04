@@ -91,6 +91,17 @@ $global:ObsTest.FilterDefaults = [ordered]@{
     assignmentGroups = @(); customFields = @(); incidentTypes = @(); titleContainsAll = @(); titleContainsAny = @()
     titleNotContains = @(); owningTeamIds = @(); handlingAgents = $null; icmFilterSettings = $null; configurationWarning = $null
 }
+# What the live service reads back in addition to the three sent keys of the platform binding.
+$global:ObsTest.IncidentDefaults = [ordered]@{ apiConnectionName = $null; connectionKey = ''; connectionUrl = $null }
+
+function New-ObsIncident {
+    # The bound platform as the service reads it back: what was sent plus its own default fields.
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Sent)
+    $incident = [ordered]@{}
+    foreach ($key in $Sent.Keys) { $incident[[string]$key] = $Sent[$key] }
+    foreach ($key in $global:ObsTest.IncidentDefaults.Keys) { if (-not $incident.Contains($key)) { $incident[$key] = $global:ObsTest.IncidentDefaults[$key] } }
+    return $incident
+}
 
 function New-ObsResource {
     # The service echoes what it was sent plus its own defaults and metadata.
@@ -127,7 +138,7 @@ function Invoke-ObsRoute {
                     }))
         }
         if ($m -ceq 'PATCH') {
-            $sim.Incident = Copy-ObsJson $Call.Body['properties']['incidentManagementConfiguration']
+            $sim.Incident = New-ObsIncident -Sent $Call.Body['properties']['incidentManagementConfiguration']
             $sim.Pending = [int]$sim.PendingAfterBind
             if ($sim.StayInProgress) { $sim.Provisioning = 'InProgress' }
             return (New-ObsResponse -Data @{ id = $sim.AgentId })
@@ -261,7 +272,7 @@ function New-ObsSim {
         Ctx = $Ctx; AgentId = [string]$Ctx['agent']['resource_id']; Endpoint = $endpoint; EndpointHost = ([System.Uri]$endpoint).Host
         Account = @{ id = [string]$Ctx['subscription_id']; tenantId = [string]$Ctx['tenant_id'] }
         Counter = 0; Provisioning = 'Succeeded'; Mode = 'Review'; Access = 'Low'
-        Incident = $(if ($Unbound) { $null } else { [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = '' } })
+        Incident = $(if ($Unbound) { $null } else { New-ObsIncident -Sent ([ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = '' }) })
         Pending = 0; PendingAfterBind = 0; StayInProgress = $false; ReportedId = $null
         GlobalPermissions = $null
         Connectivity = [ordered]@{ success = $true; incidentType = 'AzMonitor'; errorMessage = $null; observedConfigurationRevision = 'rev-1'; observedApiConnectionName = 'azmonitor'; observedConnectionStatus = 'Connected' }
@@ -591,6 +602,7 @@ try {
     $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
     Assert-ObsFail $r 'Bind (unknown DTO field)' 'unsupported connectivity DTO field'
     Assert-Observe ($r.Sleeps.Count -eq 0) 'A DTO violation must not be polled.'
+    Assert-Observe ($r.Error -cmatch 'The platform binding was already sent; run -Mode Bind again to continue waiting\.\z') 'A failure after the bind PATCH must say that the binding was already sent.'
     $s = New-ObsSim -Ctx $synCtx -Unbound; $s.Connectivity['errorMessage'] = 5
     $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
     Assert-ObsFail $r 'Bind (non-string DTO member)' 'unsupported connectivity DTO type'
@@ -600,11 +612,69 @@ try {
     $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
     Assert-ObsFail $r 'Bind (foreign platform)' 'another incident platform configuration.*OtherPlatform' 0
     Assert-Observe (-not $r.Text.Contains('secretish-connection')) 'A foreign platform refusal must report names only.'
+    Assert-Observe ($r.Error -cnotmatch 'already sent') 'A refusal before the bind PATCH must not claim that the binding was sent.'
     $s = New-ObsSim -Ctx $synCtx
+    Assert-Observe ($s.Incident.Count -eq 6 -and $null -eq $s.Incident['apiConnectionName'] -and $s.Incident['connectionKey'] -ceq '' -and $null -eq $s.Incident['connectionUrl']) 'The simulator must read the binding back with the live service defaults.'
     $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
     Assert-ObsOk $r 'Bind (already bound)'
     Assert-Observe ($r.Writes.Count -eq 0 -and $r.Result['platform'] -ceq 'unchanged' -and $r.Result['status'] -ceq 'bound') 'An already bound agent must be unchanged with zero writes.'
-    foreach ($shape in @($null, @{}, [ordered]@{ type = 'None'; connectionName = ''; oboUser = '' }, [ordered]@{ type = $null })) {
+    $s = New-ObsSim -Ctx $synCtx; $s.Incident = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = '' }
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-Observe ($r.Ok -and $r.Writes.Count -eq 0 -and $r.Result['platform'] -ceq 'unchanged') 'A binding read back without service defaults must also be unchanged.'
+    # The live sequence: bind, then run Bind again. The PATCH echo carries the service defaults and must count as bound.
+    $s = New-ObsSim -Ctx $synCtx -Unbound
+    Assert-ObsOk (Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s) 'Bind (first run)'
+    Assert-Observe ($s.Incident.Count -eq 6) 'The bind echo must carry the service defaults.'
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsOk $r 'Bind (second run)'
+    Assert-Observe ($r.Writes.Count -eq 0 -and $r.Result['platform'] -ceq 'unchanged' -and $r.Result['status'] -ceq 'bound') 'A second Bind must be unchanged with zero writes.'
+    # An extra field is tolerated only while it is null or empty; everything else stays another platform configuration.
+    foreach ($extra in @(
+            @{ Name = 'connectionKey'; Value = 'secretish-key' }, @{ Name = 'apiConnectionName'; Value = 'secretish-api' },
+            @{ Name = 'connectionUrl'; Value = 'secretish-url' }, @{ Name = 'connectionKey'; Value = ' ' },
+            @{ Name = 'surprise'; Value = $false }, @{ Name = 'surprise'; Value = 0 }, @{ Name = 'surprise'; Value = @() })) {
+        $s = New-ObsSim -Ctx $synCtx; $s.Incident[$extra.Name] = $extra.Value
+        $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+        Assert-ObsFail $r "Bind (extra field $($extra.Name))" 'another incident platform configuration.*type: AzMonitor' 0
+        Assert-Observe (-not $r.Text.Contains('secretish')) 'A refusal must report names only.'
+    }
+    foreach ($missing in 'type', 'connectionName', 'oboUser') {
+        $s = New-ObsSim -Ctx $synCtx; $s.Incident.Remove($missing)
+        Assert-ObsFail (Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s) "Bind (missing $missing)" 'another incident platform configuration' 0
+    }
+    $s = New-ObsSim -Ctx $synCtx; $s.Incident['oboUser'] = $null
+    Assert-ObsFail (Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s) 'Bind (oboUser changed type)' 'another incident platform configuration' 0
+    $equalCases = [ordered]@{
+        'exact three keys'      = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = '' }; Equal = $true }
+        'service defaults'      = @{ Actual = (New-ObsIncident -Sent $payload); Equal = $true }
+        'some defaults'         = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = ''; connectionUrl = $null }; Equal = $true }
+        'extra text'            = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = ''; connectionKey = 'x' }; Equal = $false }
+        'extra blank'           = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = ''; connectionKey = ' ' }; Equal = $false }
+        'extra false'           = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = ''; flag = $false }; Equal = $false }
+        'extra empty array'     = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = ''; list = @() }; Equal = $false }
+        'extra empty object'    = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = ''; bag = @{} }; Equal = $false }
+        'missing type'          = @{ Actual = [ordered]@{ connectionName = 'azmonitor'; oboUser = ''; connectionKey = '' }; Equal = $false }
+        'missing connection'    = @{ Actual = [ordered]@{ type = 'AzMonitor'; oboUser = ''; connectionKey = '' }; Equal = $false }
+        'missing oboUser'       = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; connectionKey = '' }; Equal = $false }
+        'changed type'          = @{ Actual = [ordered]@{ type = 'Other'; connectionName = 'azmonitor'; oboUser = ''; connectionKey = '' }; Equal = $false }
+        'changed case'          = @{ Actual = [ordered]@{ type = 'azmonitor'; connectionName = 'azmonitor'; oboUser = '' }; Equal = $false }
+        'changed connection'    = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'other'; oboUser = ''; connectionKey = '' }; Equal = $false }
+        'changed oboUser'       = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = 'someone' }; Equal = $false }
+        'oboUser null'          = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 'azmonitor'; oboUser = $null }; Equal = $false }
+        'connection number'     = @{ Actual = [ordered]@{ type = 'AzMonitor'; connectionName = 1; oboUser = '' }; Equal = $false }
+        'null configuration'    = @{ Actual = $null; Equal = $false }
+        'string configuration'  = @{ Actual = 'AzMonitor'; Equal = $false }
+        'array configuration'   = @{ Actual = @($payload); Equal = $false }
+        'empty configuration'   = @{ Actual = @{}; Equal = $false }
+    }
+    foreach ($label in $equalCases.Keys) {
+        $case = $equalCases[$label]
+        Assert-Observe ((Test-ObserveBindingEqual -Configuration $case.Actual -Binding $payload) -eq $case.Equal) "The binding comparison '$label' must be $($case.Equal)."
+    }
+    Assert-Observe ((Get-ObservePlatformKind -Configuration (New-ObsIncident -Sent $payload) -Binding $payload)['kind'] -ceq 'bound') 'The binding with service defaults must be classified as bound.'
+    Assert-Observe ((Get-ObservePlatformKind -Configuration (New-ObsIncident -Sent ([ordered]@{ type = 'None'; connectionName = ''; oboUser = '' })) -Binding $payload)['kind'] -ceq 'unbound') 'An empty platform with service defaults must be classified as unbound.'
+    Assert-Observe ((Get-ObservePlatformKind -Configuration (New-ObsIncident -Sent ([ordered]@{ type = 'AzMonitor'; connectionName = 'other'; oboUser = '' })) -Binding $payload)['kind'] -ceq 'foreign') 'Another connection must be classified as foreign.'
+    foreach ($shape in @($null, @{}, [ordered]@{ type = 'None'; connectionName = ''; oboUser = '' }, [ordered]@{ type = $null }, (New-ObsIncident -Sent ([ordered]@{ type = 'None'; connectionName = ''; oboUser = '' })))) {
         $s = New-ObsSim -Ctx $synCtx -Unbound; $s.Incident = $shape
         $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
         Assert-ObsOk $r 'Bind (unbound shape)'
@@ -644,6 +714,75 @@ try {
     Assert-Observe (@($others | Where-Object { $_['name'] -ceq 'quickstart-azmonitor' -and $_['enabled'] -eq $true }).Count -eq 1) 'An enabled filter must be reported as enabled.'
     Assert-Observe (@($others | Where-Object { $_['name'] -ceq '<unprintable>' -and $_['enabled'] -eq $false }).Count -eq 1) 'A filter name outside the safe set must be sanitised.'
     Assert-Observe (@($others | Where-Object { $_['name'] -ceq 'mystery' -and $_['enabled'] -ceq 'unknown' }).Count -eq 1) 'An unreadable filter state must be reported as unknown.'
+
+    # The data plane may answer 502, 503 or 504 on the first connectivity reads while it reconfigures after the bind PATCH.
+    function Get-ObsConnectivityReads { param($Run) return @($Run.Calls | Where-Object { $_.Method -ceq 'GET' -and $_.Path -ceq '/api/v2/incidentManagement/checkConnectivityDetailed' }).Count }
+    $boundHint = 'The platform binding was already sent; run -Mode Bind again to continue waiting\.\z'
+    foreach ($transient in 502, 503, 504) {
+        $s = New-ObsSim -Ctx $synCtx -Unbound
+        Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status $transient -Code 'Unavailable' -Remaining 2
+        $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+        Assert-ObsOk $r "Bind (connectivity HTTP $transient twice, then ready)"
+        Assert-Observe ($r.Result['status'] -ceq 'bound' -and $r.Result['platform'] -ceq 'bound') "Bind must complete after HTTP $transient."
+        Assert-Observe ($r.Writes.Count -eq 1 -and (Get-ObsKind $r.Writes[0]) -ceq 'PATCH agent') 'A transient connectivity failure must not repeat the bind PATCH.'
+        Assert-Observe ($r.Sleeps.Count -eq 2 -and @($r.Sleeps | Where-Object { $_ -ne 5 }).Count -eq 0) 'A transient connectivity failure must be polled every 5 seconds.'
+        Assert-Observe ((Get-ObsConnectivityReads $r) -eq 3) 'Two transient failures and the ready read are three connectivity reads.'
+    }
+    $s = New-ObsSim -Ctx $synCtx
+    Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status 502 -Code 'BadGateway' -Remaining 1
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-Observe ($r.Ok -and $r.Writes.Count -eq 0 -and $r.Sleeps.Count -eq 1 -and $r.Result['platform'] -ceq 'unchanged' -and $r.Result['status'] -ceq 'bound') 'A transient failure on an already bound agent must be waited out without a write.'
+    foreach ($transient in 502, 503, 504) {
+        $s = New-ObsSim -Ctx $synCtx -Unbound
+        Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status $transient -Code 'Unavailable'
+        $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName; ReadinessTimeoutSeconds = 30 } -Sim $s
+        Assert-ObsFail $r "Bind (HTTP $transient for the whole timeout)" "\ABind did not become ready within the timeout \(last connection status: unavailable HTTP $transient\); run -Mode Bind again to keep waiting\." 1
+        Assert-Observe ($r.Sleeps.Count -eq 5 -and (Get-ObsConnectivityReads $r) -eq 6) 'A 30 second timeout must poll the connectivity 6 times with 5 sleeps.'
+        Assert-Observe ($null -eq $r.Result -and -not $r.Text.Contains($global:ObsTest.Marker)) 'A timed-out bind must report neither a result nor a response body.'
+    }
+    $s = New-ObsSim -Ctx $synCtx -Unbound; $s.StayInProgress = $true; $s.Connectivity['observedConnectionStatus'] = 'Connecting'; $s.Connectivity['success'] = $false
+    Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status 502 -Code 'BadGateway' -Remaining 1
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName; ReadinessTimeoutSeconds = 30 } -Sim $s
+    Assert-ObsFail $r 'Bind (HTTP 502 then not ready)' 'last connection status: Connecting\)' 1
+    # Everything else about the connectivity read stays fatal at once, and says that the bind PATCH was already sent.
+    foreach ($fatal in 400, 401, 403, 404, 429, 500, 501) {
+        $s = New-ObsSim -Ctx $synCtx -Unbound
+        Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status $fatal -Code 'Failed'
+        $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+        Assert-ObsFail $r "Bind (connectivity HTTP $fatal)" "connectivity-read failed \(HttpFailure, HTTP $fatal, Failed\).*$boundHint" 1
+        Assert-Observe ($r.Sleeps.Count -eq 0 -and (Get-ObsConnectivityReads $r) -eq 1) "HTTP $fatal on the connectivity read must not be polled."
+        Assert-Observe ($null -eq $r.Result -and -not $r.Text.Contains($global:ObsTest.Marker)) 'A failed bind must report neither a result nor a response body.'
+    }
+    $s = New-ObsSim -Ctx $synCtx -Unbound
+    Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Transport
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsFail $r 'Bind (connectivity transport failure)' "connectivity-read failed \(TransportFailure\)\. Check the agent endpoint and network access\..*$boundHint" 1
+    Assert-Observe ($r.Sleeps.Count -eq 0 -and (Get-ObsConnectivityReads $r) -eq 1) 'A transport failure on the connectivity read must not be polled.'
+    # The ARM read of the wait loop keeps its behaviour: a 502 there is fatal (ARM reads 1 to 3 are the sign-in, the agent check and the platform check).
+    $s = New-ObsSim -Ctx $synCtx -Unbound
+    Add-ObsRule -Sim $s -Method 'GET' -Pattern '/agents/' -Skip 3 -Status 502 -Code 'BadGateway' -Remaining 1
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsFail $r 'Bind (ARM platform-read HTTP 502 after the PATCH)' "platform-read failed \(HttpFailure, HTTP 502, BadGateway\).*$boundHint" 1
+    Assert-Observe ($r.Sleeps.Count -eq 0 -and (Get-ObsConnectivityReads $r) -eq 0) 'An ARM read failure must not be polled.'
+    # Without a PATCH in this run there is nothing to hint at.
+    foreach ($fatal in 403, 404) {
+        $s = New-ObsSim -Ctx $synCtx
+        Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status $fatal -Code 'Failed'
+        $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+        Assert-ObsFail $r "Bind (already bound, connectivity HTTP $fatal)" "connectivity-read failed \(HttpFailure, HTTP $fatal, Failed\)" 0
+        Assert-Observe ($r.Error -cnotmatch 'already sent' -and (Get-ObsConnectivityReads $r) -eq 1 -and $r.Sleeps.Count -eq 0) 'A failure without a bind PATCH must not claim that the binding was sent.'
+    }
+    $s = New-ObsSim -Ctx $synCtx
+    Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Transport
+    $r = Invoke-Observe -Params @{ Mode = 'Bind'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsFail $r 'Bind (already bound, connectivity transport failure)' 'TransportFailure' 0
+    Assert-Observe ($r.Error -cnotmatch 'already sent') 'A transport failure without a bind PATCH must not claim that the binding was sent.'
+    # Only the Bind wait tolerates it: the checks of the other modes keep failing at once.
+    $s = New-PublishedSim
+    Add-ObsRule -Sim $s -Method 'GET' -Pattern 'checkConnectivityDetailed' -Status 502 -Code 'BadGateway'
+    $r = Invoke-Observe -Params @{ Mode = 'Verify' } -Sim $s
+    Assert-ObsFail $r 'Verify (connectivity HTTP 502)' 'connectivity-read failed \(HttpFailure, HTTP 502, BadGateway\)' 0
+    Assert-Observe ((Get-ObsConnectivityReads $r) -eq 1 -and $r.Sleeps.Count -eq 0 -and $r.Error -cnotmatch 'already sent') 'Verify must not wait for the connectivity.'
 
     # =========================================================================================================
     # Case 5 (P-2, P-3, P-4, P-10, P-15): PublishDisabled
@@ -726,6 +865,8 @@ try {
         'global unknown key'   = @{ Setup = { param($x) $x.GlobalPermissions = [ordered]@{ surprise = @() } }; Pattern = 'global permission policy' }
         'platform unbound'     = @{ Setup = { param($x) $x.Incident = $null }; Pattern = 'run -Mode Bind first' }
         'platform changed'     = @{ Setup = { param($x) $x.Incident['connectionName'] = 'other' }; Pattern = 'run -Mode Bind first' }
+        'platform extra field' = @{ Setup = { param($x) $x.Incident['connectionKey'] = 'x' }; Pattern = 'run -Mode Bind first' }
+        'platform missing key' = @{ Setup = { param($x) $x.Incident.Remove('oboUser') }; Pattern = 'run -Mode Bind first' }
         'not ready'            = @{ Setup = { param($x) $x.Connectivity['success'] = $false }; Pattern = 'connection is not ready' }
         'wrong incident type'  = @{ Setup = { param($x) $x.Connectivity['incidentType'] = 'Other' }; Pattern = 'connection is not ready' }
         'unknown DTO field'    = @{ Setup = { param($x) $x.Connectivity['surprise'] = 'x' }; Pattern = 'unsupported connectivity DTO field' }
@@ -821,6 +962,9 @@ try {
         'filter owner'        = @{ Mutate = { param($x) (Get-ObsFilterProps $x)['handlingAgent'] = 'someone-else' }; Pattern = 'not owned by this handler' }
         'filter state'        = @{ Mutate = { param($x) (Get-ObsFilterProps $x)['isEnabled'] = 'maybe' }; Pattern = 'not readable' }
         'platform changed'    = @{ Mutate = { param($x) $x.Incident['connectionName'] = 'other' }; Pattern = 'Platform check failed.*run -Mode Bind first' }
+        'platform extra field' = @{ Mutate = { param($x) $x.Incident['connectionKey'] = 'x' }; Pattern = 'Platform check failed.*run -Mode Bind first' }
+        'platform missing key' = @{ Mutate = { param($x) $x.Incident.Remove('oboUser') }; Pattern = 'Platform check failed.*run -Mode Bind first' }
+        'platform null user'  = @{ Mutate = { param($x) $x.Incident['oboUser'] = $null }; Pattern = 'Platform check failed.*run -Mode Bind first' }
         'platform unbound'    = @{ Mutate = { param($x) $x.Incident = $null }; Pattern = 'Platform check failed' }
         'not ready'           = @{ Mutate = { param($x) $x.Connectivity['success'] = $false }; Pattern = 'connection is not ready' }
         'tool missing'        = @{ Mutate = { param($x) $x.Tool = $null }; Pattern = 'publish the Common profile first' }
