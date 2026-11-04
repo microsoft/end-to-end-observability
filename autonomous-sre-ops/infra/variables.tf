@@ -26,6 +26,16 @@ variable "location" {
   }
 }
 
+variable "runner_location" {
+  description = "Optional region for the private runtime only (the Container Apps environment and its jobs). Null or centralus keeps it on the primary VNet; any other allowed region adds a runner-only VNet peered solely to the primary one. Effective only when deploy_runtime is true. Choose it before the first runtime apply: moving a live environment is a replacement, which scripts/Invoke-Terraform.ps1 refuses. Everything else stays in the primary region."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.runner_location == null ? true : contains(["centralus", "westcentralus", "southcentralus", "westus2"], var.runner_location)
+    error_message = "runner_location must be null or one of centralus, westcentralus, southcentralus or westus2."
+  }
+}
+
 variable "admin_ssh_public_key" {
   description = "An externally generated public key. Never pass a private key to Terraform."
   type        = string

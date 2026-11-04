@@ -36,7 +36,7 @@ Run every command from the `autonomous-sre-ops` folder in PowerShell 7.5 or late
 | 1 | Foundation and compute | none (every toggle stays off) | A new plan shows no changes; three VMs run and report a heartbeat |
 | 2 | Backup protection of the backup VM | `backup_protection_enabled` | The vault holds one protected item |
 | 3 | Runtime image, locked by digest | none | The digest is recorded |
-| 4 | Runtime jobs and the SSH path | `deploy_runtime`, `runtime_image_digest` | Worker and collector executions succeed; the runtime proof passes |
+| 4 | Runtime jobs and the SSH path | `deploy_runtime`, `runtime_image_digest` (optionally `runner_location`) | Worker and collector executions succeed; the runtime proof passes |
 | 5 | Managed agent, connectors, Review profile, handler (disabled) | `deploy_managed_agent`, `operator_object_id` | Agent state, connectors, one evidence request, handler disabled, no plan changes |
 | 6 | Alert rules one at a time, then the handler | `enabled_native_alert_rules` | Each rule verified; handler enabled and verified |
 
@@ -58,19 +58,59 @@ Waves 1, 4 and 5 take tens of minutes. The toggles live in `infra\environments\d
   accepts only a plan made from the committed source.
 - Python 3.13 only to run the tests ([implementation.md](implementation.md), Local checks). Deployment needs no Python.
 
+#### Optional preflight: Container Apps capacity in the target region
+
+Central US has refused to create the Container Apps environment (see Troubleshooting). Before Wave 4, prove the region
+you intend to use with a scratch probe that is separate from the deployment: a temporary resource group with a `/26`
+subnet delegated to `Microsoft.App/environments` and one internal-only workload-profile environment, deleted
+afterwards. Test `centralus`, or one of `westcentralus`, `southcentralus` and `westus2` if you plan to set
+`runner_location` (Wave 4). The probe uses the `containerapp` extension from Shell setup.
+
+```powershell
+$Region = 'southcentralus'
+$Probe = "rg-asre-probe-$Region"
+az group create --name $Probe --location $Region --subscription $SubscriptionId --output none
+az network vnet create --name vnet-probe --resource-group $Probe --location $Region --address-prefixes 10.99.0.0/24 --subnet-name snet-probe --subnet-prefixes 10.99.0.0/26 --subscription $SubscriptionId --output none
+az network vnet subnet update --name snet-probe --vnet-name vnet-probe --resource-group $Probe --delegations Microsoft.App/environments --subscription $SubscriptionId --output none
+$SubnetId = az network vnet subnet show --name snet-probe --vnet-name vnet-probe --resource-group $Probe --subscription $SubscriptionId --query id --output tsv
+az containerapp env create --name cae-probe --resource-group $Probe --location $Region --infrastructure-subnet-resource-id $SubnetId --internal-only true --enable-workload-profiles true --subscription $SubscriptionId
+```
+
+The region passes when the command succeeds. Delete the probe group afterwards, also after a failure, and wait for it
+to disappear before you probe the same region again (a failed environment takes a long time to delete; see
+Troubleshooting):
+
+```powershell
+az group delete --name $Probe --yes --no-wait --subscription $SubscriptionId
+az group exists --name $Probe --subscription $SubscriptionId
+```
+
+Also check that the VM size named in the capacity errors, `Standard_D4ds_v5`, is not restricted for the subscription in
+that region. Without `--all`, `az vm list-skus` hides sizes that are restricted, so always pass it and read the
+restrictions in PowerShell:
+
+```powershell
+az vm list-skus --location $Region --all --size Standard_D4ds_v5 --subscription $SubscriptionId --output json | ConvertFrom-Json | Where-Object { $_.resourceType -eq 'virtualMachines' -and $_.name -eq 'Standard_D4ds_v5' } | ForEach-Object { '{0}: {1} restriction(s): {2}' -f $_.name, @($_.restrictions).Count, (@($_.restrictions | ForEach-Object { $_.reasonCode }) -join ',') }
+```
+
+No line means the size is not offered in that region. `0 restriction(s)` passes; a reason code such as
+`NotAvailableForSubscription` means the region fails for this subscription. A passing probe shows capacity at that
+moment only; it is not a reservation.
+
 ### Resource names
 
 Every name is fixed except those that carry a suffix. `<suffix>` is the first 10 hexadecimal characters of the SHA-256
-of `<subscription-id>:asre-demo`; after Wave 1 it is `$Ctx.name_suffix`. The region is Central US (`cus`).
+of `<subscription-id>:asre-demo`; after Wave 1 it is `$Ctx.name_suffix`. The region is Central US (`cus`), except for the
+optional runner region in Wave 4.
 
 | Resource | Name |
 |---|---|
 | Resource groups | `rg-asre-control-cus`, `rg-asre-linux-cus`, `rg-asre-patch-cus`, `rg-asre-backup-cus`; for state, `rg-asre-state-cus` |
 | Virtual machines | `vm-asre-linux-cus` (10.42.0.10), `vm-asre-patch-cus` (10.42.0.11), `vm-asre-backup-cus` (10.42.0.12); administrator account `demoops`, runner account `asrerunner` |
-| Network | `vnet-asre-cus`; egress address `pip-asre-egress-cus` |
+| Network | `vnet-asre-cus`; egress address `pip-asre-egress-cus`; with `runner_location` also `vnet-asre-runner-<c>`, `nsg-asre-runner-<c>`, `nat-asre-<c>`, `pip-asre-egress-<c>` and the peerings `peer-asre-cus-to-<c>` and `peer-asre-<c>-to-cus` (`<c>` is `wcus`, `scus` or `wus2`) |
 | Monitoring | Workspace `law-asre-cus`; Application Insights `appi-asre-cus`; alert rules `asre-demo-<rule>` for `disk`, `workload-oom`, `patch-installation`, `heartbeat`, `noise-overlap`, `capacity-growth` and `backup-job` |
 | Backup | Vault `rsv-asre-cus`; policy `asre-daily`; the backup service creates the resource group `AzureBackupRG_centralus_1` when protection starts |
-| Runtime | Container Apps environment `cae-asre-operations-cus`; jobs `job-asre-worker-cus` (every minute), `job-asre-collector-cus` (every five minutes) and `job-asre-bootstrap-cus` (manual) |
+| Runtime | Container Apps environment `cae-asre-operations-cus`; jobs `job-asre-worker-cus` (every minute), `job-asre-collector-cus` (every five minutes) and `job-asre-bootstrap-cus` (manual); the names keep `cus` when `runner_location` moves them to another region |
 | Identities | `id-asre-agent-cus`, `id-asre-runner-cus`, `id-asre-collector-cus`, `id-asre-pull-cus`, `id-asre-bootstrap-cus` |
 | With suffix | Registry `acrasre<suffix>`; storage account `stasre<suffix>`; Key Vault `kv-asre-<suffix>`; state storage account `stasrestate<suffix>` |
 | Agent | `asre-demo-cus` |
@@ -423,12 +463,42 @@ $Digest
 
 ## Wave 4: runtime
 
-Creates the Container Apps environment on the runner subnet, the worker, collector and bootstrap jobs that pull the image
-by digest, the bootstrap identity and its custom role, the request queue and the matching role assignments. Then it
-bootstraps and verifies the private SSH path to the three VMs.
+Creates the Container Apps environment on the primary runner subnet (the satellite runner subnet with `runner_location`),
+the worker, collector and bootstrap jobs that pull the image by digest, the bootstrap identity and its custom role, the
+request queue and the matching role assignments. Then it bootstraps and verifies the private SSH path to the three VMs.
+
+**Optional: run the runtime in another region.** If Central US cannot create the environment (see Troubleshooting) or
+the preflight in Prerequisites fails for `centralus`, set `runner_location` before the first runtime apply. Only the
+environment and its three jobs move; the rest stays in Central US, joined by a runner-only VNet peered to the primary
+one ([runtime-networking.md](runtime-networking.md), Alternate runner region). Do not change it after the environment
+exists: that is a replacement, which the wrapper refuses. The example file does not list the variable and `Set-TfVar`
+replaces only an existing assignment, so add this line to `infra\environments\demo.tfvars` yourself:
+
+```hcl
+runner_location = "southcentralus"
+```
+
+Allowed values are `westcentralus`, `southcentralus` and `westus2` (`centralus` or no line keeps the default). It has
+an effect only when `deploy_runtime` is true. If the satellite environment create fails, retry in the same region (see
+Troubleshooting): another region would replace the satellite network, which the wrapper refuses.
+
+Before you plan, check that no environment of the runtime's name is left in the control group. The satellite environment
+keeps the name `cae-asre-operations-cus` in `rg-asre-control-cus`, and ARM does not allow one name in two regions in the
+same resource group, so a leftover Central US environment, failed or not, blocks the create. This check only reads:
+
+```powershell
+az containerapp env list --resource-group rg-asre-control-cus --subscription $SubscriptionId --output json | ConvertFrom-Json | ForEach-Object { '{0}: {1}' -f $_.name, $_.location }
+```
+
+Expect no `cae-asre-operations-cus`. If it is listed, remove it as the Troubleshooting row "A failed environment is still
+deleting" describes, and wait until it and its `ME_` group are gone before you plan. If Terraform already tracks it, the
+plan would replace it, which the wrapper refuses: stop and ask the owner.
 
 1. Set the toggles, plan and read the summary. The plan must create runtime resources only; it must not change the VMs,
-   the vault or the network.
+   the vault or the existing network. With `runner_location` set it also shows the satellite network: about 14 more
+   creates (the VNet, the subnet, the NSG and its association, the public IP, the NAT gateway and its two associations,
+   two peerings and four DNS links) and 2 in-place updates (the workloads NSG rules `AllowRunnerSSH` and
+   `AllowInternalWorkloadProbe`, which then name the satellite runner subnet), and still no deletion or replacement.
 
    ```powershell
    Set-TfVar -Name 'deploy_runtime' -Value 'true'
@@ -465,6 +535,33 @@ foreach ($job in 'job-asre-worker-cus', 'job-asre-collector-cus') {
     az containerapp job execution list --name $job --resource-group $Ctx.resource_groups.control --subscription $SubscriptionId --output json | ConvertFrom-Json | Sort-Object { $_.properties.startTime } -Descending | Select-Object -First 3 | ForEach-Object { '{0} {1}: {2}' -f $job, $_.name, $_.properties.status }
 }
 ```
+
+**Extra checks with `runner_location`.** The environment is in the runner region and both peerings are `Connected`
+(`<c>` is `wcus`, `scus` or `wus2`; the CLI may print the region's display name, such as `South Central US`):
+
+```powershell
+az containerapp env show --name cae-asre-operations-cus --resource-group $Ctx.resource_groups.control --subscription $SubscriptionId --output json | ConvertFrom-Json | ForEach-Object { '{0}: {1}' -f $_.name, $_.location }
+foreach ($vnet in 'vnet-asre-cus', 'vnet-asre-runner-<c>') {
+    az network vnet peering list --resource-group $Ctx.resource_groups.control --vnet-name $vnet --subscription $SubscriptionId --output json | ConvertFrom-Json | ForEach-Object { '{0} {1}: {2}' -f $vnet, $_.name, $_.peeringState }
+}
+```
+
+A job resolving the private zones is proved by the SSH step: the bootstrap job reads and writes the private Key Vault and
+the worker reads the private queue, so a `privatelink.*` name that does not resolve to the `endpoints` subnet fails
+them. If they fail, check the four `asre-runner` links on the zones and the peering state first.
+
+The SSH step also needs cross-region log ingestion. `Initialize-RuntimeSsh.ps1` reads the host-key and verification
+markers the jobs print from `ContainerAppConsoleLogs_CL` in the Central US workspace and waits up to 6 minutes for them,
+so with `runner_location` the ingestion decides whether this wave can pass. If the bootstrap and verification jobs ended
+`Succeeded` but the script ends with "The completed runtime execution has no ingested verification marker within the
+observation deadline.", check ingestion first, with the rows of the last hour:
+
+```powershell
+az monitor log-analytics query --workspace $Ctx.log_analytics.customer_id --subscription $SubscriptionId --analytics-query "ContainerAppConsoleLogs_CL | where TimeGenerated > ago(1h) | summarize Rows=count(), Latest=max(TimeGenerated)" --output table
+```
+
+No rows, or an error that the table does not exist, is the finding. Then stop and report. Do not run the script in a
+loop and do not widen any firewall.
 
 ## Wave 5: managed agent
 
@@ -748,6 +845,13 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | "The baseline rejects every deletion or replacement" | Do not work around it. Find why the plan wants to delete (drift or a renamed resource) and fix the cause. An intended deletion is manual (see Teardown) |
 | A role assignment, or a job creation after one, fails | The assignment had not propagated. Make a new plan and apply again |
 | An apply stops partway | Terraform records what exists. Make a new plan, review it and apply |
+| Creating the environment fails within 2 to 4 minutes with `ManagedEnvironmentCapacityHeavyUsageError` | The region has no capacity for the environment at the moment; this is a regional platform gate, not a configuration error. Retry later, or choose another region with `runner_location` (Wave 4) after the Prerequisites probe passes there. Make sure no failed environment is left behind first (see the deletion row). If `runner_location` is already applied, do not pick another region: see the row on a failed satellite create |
+| Creating the environment fails after about 15 minutes with `ManagedEnvironmentProvisioningError` or `InstallComponentsFailure` | The platform failed inside the provisioning. Read the full error, remove the failed environment as in the deletion row, and retry. If it repeats in the same region and `runner_location` is not applied yet, probe and use another region with `runner_location`. If it is applied, see the row on a failed satellite create |
+| The environment fails with "VM size Standard_D4ds_v5 is not allowed in your subscription in location centralus" | The subscription is restricted for that VM size in that region. Confirm with the `az vm list-skus ... --all` check in Prerequisites (restricted sizes are hidden without `--all`). A support request can lift the restriction; otherwise choose a region that passes both Prerequisites checks with `runner_location` |
+| A failed environment is still deleting, or a new environment cannot be created in the same subnet | Deleting a failed environment takes 13 to 25 minutes. Until the environment and its `ME_cae-asre-operations-cus_<control group>_<region>` resource group are both gone, the subnet stays blocked and the environment cannot be created again. A leftover environment of that name in another region blocks the satellite create too: ARM does not allow one name in two regions in the same resource group (read-only check in Wave 4, optional region). Delete the environment with `az containerapp env delete --name cae-asre-operations-cus --resource-group $Ctx.resource_groups.control --yes --subscription $SubscriptionId`, wait until `az group exists --name <ME group> --subscription $SubscriptionId` prints `false`, then plan again; a plan that proposes to replace the failed environment is refused by the wrapper (not exercised) |
+| An apply of a saved plan is rejected after an earlier apply created some resources | A saved plan describes the state it was made from. After a partial apply it is stale. Make a new plan into a new artifact directory (for example `$Artifacts\04-runtime-plan-2`) and apply that one |
+| The satellite environment create failed (`runner_location` is applied) and you want another region | The failed apply left the satellite network (the 14 resources of the plan) in state. Retry in the same region: delete the failed environment, wait until it and its `ME_` group are gone, then make a new plan. Another region would replace the satellite network, which `Invoke-Terraform.ps1` refuses: stop and ask the owner. Removing the satellite network is an intentional manual deletion (see Teardown) |
+| `Initialize-RuntimeSsh.ps1` ends with "The completed runtime execution has no ingested verification marker within the observation deadline." although the jobs ended `Succeeded` | The script reads its markers from `ContainerAppConsoleLogs_CL` in the Central US workspace and waits 6 minutes. With `runner_location` the cross-region log ingestion is the first suspect: run the log query in Wave 4 (Extra checks) for the rows of the last hour. Then stop and report; do not run the script in a loop and do not widen any firewall |
 | `Build-RuntimeImages.ps1` reports "An unlocked source-revision image already exists" | The tag for this commit exists but is not locked, so this script did not finish it. Delete it with `az acr repository delete --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --yes` and run the script again. If the delete is refused, first run `az acr repository update --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --delete-enabled true` |
 | `Build-RuntimeImages.ps1` reports "The actual ACR source build failed" | Read the `az acr build` output above the message. If it says that ACR Tasks is not permitted for the subscription or registry, stop: do not substitute a local build. Otherwise fix the cause and run the script again |
 | A script hangs on its first `az` call | It ran in a nested `pwsh -File`. Run it in the session with `&` |

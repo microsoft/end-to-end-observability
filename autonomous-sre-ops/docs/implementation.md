@@ -20,7 +20,7 @@ the subproject overview is in [../README.md](../README.md).
 
 | Path | Content |
 |---|---|
-| `infra/` | One typed Terraform root, separated by concern (see below), with `environments/` examples and `tests/context.tftest.hcl` |
+| `infra/` | One typed Terraform root, separated by concern (see below), with `environments/` examples and `tests/context.tftest.hcl` and `tests/runner_region.tftest.hcl` |
 | `workloads/linux-demo-service/` | Real disk-growth and cgroup-bounded memory workload, fixed guest operations over SSH stdin (`guest_control.py`), one owned and reversible APT installation failure, the systemd unit and `bootstrap.sh` |
 | `workloads/package-mirror/` | Unmodified Ubuntu vendor proxy with one exact, independently expiring artifact fault |
 | `operations/` | Python runtime package: `worker.py`, `protocol.py`, `cloud.py`, `ssh.py`, `patch_provider.py`, `patch_sensor.py`, `lifecycle.py`, `trends.py` and `context.py`; the deferred modules are `servicenow.py`, `agent_case.py`, `feedback.py`, `feedback_runtime.py` and `facade_demo.py` |
@@ -102,7 +102,7 @@ Rules of the contract:
 |---|---|
 | `versions.tf`, `providers.tf`, `backend.tf` | Terraform 1.11.2, AzureRM 4.51.0, AzAPI 2.13.0; `resource_provider_registrations = "none"`; partial backend |
 | `variables.tf`, `outputs.tf` | Typed inputs and the outputs listed below |
-| `main.tf`, `network.tf`, `data.tf` | Resource groups, identities, the workspace and the registry; the VNet, NSGs, NAT and private DNS; the operations storage account and Key Vault |
+| `main.tf`, `network.tf`, `data.tf` | Resource groups, identities, the workspace and the registry; the VNet, NSGs, NAT and private DNS (and, with `runner_location`, the runner-only satellite VNet, its NAT and the two peerings); the operations storage account and Key Vault |
 | `compute.tf`, `backup.tf` | The three VMs and their disks; the Recovery Services vault, policy and protected item |
 | `monitoring.tf` | The data collection rule and the alert rules |
 | `runtime.tf`, `agent.tf` | The Container Apps environment, jobs and role grants; the managed agent and its roles |
@@ -113,6 +113,7 @@ Main inputs (see `variables.tf` and `infra/environments/demo.tfvars.example` for
 | Variable | Meaning |
 |---|---|
 | `subscription_id`, `tenant_id`, `location` | Deployment target; `location` accepts only `centralus` |
+| `runner_location` | Optional (default null): region of the Container Apps environment and its jobs only; one of `centralus`, `westcentralus`, `southcentralus` or `westus2`. Null or `centralus` keeps the primary VNet; another region adds a runner-only VNet peered to it, and only when `deploy_runtime` is true. Choose it before the first runtime apply (D24) |
 | `admin_ssh_public_key`, `runner_ssh_public_key` | Two different public keys; the runner key is bound to a forced command |
 | `operator_object_id` | Required when the managed agent or the dashboard is deployed |
 | `deploy_managed_agent`, `agent_model` | Optional agent (default false); the model is required when it is deployed |
@@ -142,7 +143,9 @@ Facts worth knowing before changing the root:
 - **Jobs.** `job-asre-<key>-cus` for the worker (`mode=queue`, every minute), the collector (`mode=collect`, every five
   minutes) and a manual bootstrap job. The feedback job exists only with `enable_servicenow_feedback`. Each job has a
   300 second replica timeout, no retries, 0.25 CPU and 0.5 Gi, and runs `python -m operations.worker`. Environment
-  variables carry the identity client ids, `ASRE_EXECUTION_MODE=Review` and `ASRE_CONTEXT`.
+  variables carry the identity client ids, `ASRE_EXECUTION_MODE=Review` and `ASRE_CONTEXT`. The environment and the jobs
+  take their region from `local.runner_location` (the primary region unless `runner_location` selects a satellite) and
+  keep their `-cus` names in either case.
 - **Custom roles.** The module defines six `azurerm_role_definition` resources in total: `ASRE credential bootstrap`
   (with `deploy_runtime`), `ASRE correlated feedback sender` (with `enable_servicenow_feedback`) and four dashboard
   roles (with the dashboard). This release creates only one, `ASRE credential bootstrap`, which grants only
@@ -169,8 +172,9 @@ terraform -chdir=infra test
 
 - `unittest` needs `ASRE_CONTEXT_FILE` because it does not load `tests/conftest.py`. With pytest installed,
   `python -m pytest tests` sets it through `conftest.py`.
-- `terraform test` (`infra/tests/context.tftest.hcl`) mocks both providers and only plans. It proves that the root
-  emits the context document and hands the same static core to every runtime job.
+- `terraform test` (`infra/tests/context.tftest.hcl` and `infra/tests/runner_region.tftest.hcl`) mocks both providers
+  and only plans. It proves that the root emits the context document and hands the same static core to every runtime
+  job, and that `runner_location` leaves the default plan unchanged and builds the satellite network only when asked.
 - Each `tests/Test-*.ps1` is a plain PowerShell script (no Pester) that stops on its first failed assertion. Run the
   ones that cover the area you changed, for example `.\tests\Test-AgentAssets.ps1` or
   `.\tests\Test-RuntimeImageBuild.ps1`.

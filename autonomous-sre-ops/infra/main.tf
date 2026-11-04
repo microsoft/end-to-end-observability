@@ -21,6 +21,19 @@ locals {
     agent     = "10.42.3.0/27"
   }
 
+  # Optional runner-only satellite network (var.runner_location). Outside 10.42.0.0/16 so it can peer with the primary VNet.
+  runner_satellite    = var.deploy_runtime && var.runner_location != null && var.runner_location != var.location
+  runner_location     = local.runner_satellite ? var.runner_location : var.location
+  runner_region_codes = { westcentralus = "wcus", southcentralus = "scus", westus2 = "wus2" }
+  # The region code is read only when the satellite exists, so the primary region needs no entry in the map.
+  runner_region_code = local.runner_satellite ? local.runner_region_codes[local.runner_location] : "cus"
+  satellite_network = {
+    vnet   = "10.43.0.0/24"
+    runner = "10.43.0.0/26"
+  }
+  runner_cidr      = local.runner_satellite ? local.satellite_network.runner : local.subnets.runner
+  runner_subnet_id = local.runner_satellite ? azurerm_subnet.satellite_runner[0].id : azurerm_subnet.demo["runner"].id
+
   # Deployment context (schema asre-context/v1) without the two values that cannot be static:
   # the agent endpoint (known only after the agent exists) and the operator object id. It must
   # never reference azapi_resource.agent; the runtime jobs and the dashboard receive it as the

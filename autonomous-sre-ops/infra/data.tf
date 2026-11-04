@@ -108,6 +108,17 @@ resource "azurerm_private_dns_zone_virtual_network_link" "service" {
   tags                  = local.tags
 }
 
+# The satellite runner VNet resolves the same four zones to the primary-region private endpoints.
+resource "azurerm_private_dns_zone_virtual_network_link" "satellite" {
+  for_each              = local.runner_satellite ? local.private_services : {}
+  name                  = "asre-runner"
+  resource_group_name   = azurerm_resource_group.demo["control"].name
+  private_dns_zone_name = azurerm_private_dns_zone.service[each.key].name
+  virtual_network_id    = azurerm_virtual_network.satellite[0].id
+  registration_enabled  = false
+  tags                  = local.tags
+}
+
 resource "azurerm_private_endpoint" "service" {
   for_each            = local.private_services
   name                = "pe-asre-${each.key}-cus"

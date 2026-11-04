@@ -1,10 +1,10 @@
 resource "azurerm_container_app_environment" "operations" {
   count                              = var.deploy_runtime ? 1 : 0
   name                               = "cae-asre-operations-cus"
-  location                           = var.location
+  location                           = local.runner_location
   resource_group_name                = azurerm_resource_group.demo["control"].name
-  infrastructure_resource_group_name = "ME_cae-asre-operations-cus_${azurerm_resource_group.demo["control"].name}_${var.location}"
-  infrastructure_subnet_id           = azurerm_subnet.demo["runner"].id
+  infrastructure_resource_group_name = "ME_cae-asre-operations-cus_${azurerm_resource_group.demo["control"].name}_${local.runner_location}"
+  infrastructure_subnet_id           = local.runner_subnet_id
   internal_load_balancer_enabled     = true
   log_analytics_workspace_id         = azurerm_log_analytics_workspace.demo.id
   tags                               = local.tags
@@ -19,6 +19,11 @@ resource "azurerm_container_app_environment" "operations" {
   depends_on = [
     azurerm_subnet_nat_gateway_association.demo,
     azurerm_subnet_network_security_group_association.demo,
+    azurerm_subnet_nat_gateway_association.satellite_runner,
+    azurerm_subnet_network_security_group_association.satellite_runner,
+    azurerm_virtual_network_peering.primary_to_satellite,
+    azurerm_virtual_network_peering.satellite_to_primary,
+    azurerm_private_dns_zone_virtual_network_link.satellite,
   ]
 }
 
@@ -117,7 +122,7 @@ locals {
 resource "azurerm_container_app_job" "operations" {
   for_each                     = local.runtime_jobs
   name                         = "job-asre-${each.key}-cus"
-  location                     = var.location
+  location                     = local.runner_location
   resource_group_name          = azurerm_resource_group.demo["control"].name
   container_app_environment_id = azurerm_container_app_environment.operations[0].id
   workload_profile_name        = "Consumption"

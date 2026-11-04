@@ -4,7 +4,7 @@ A deployable demonstration of a managed **Azure SRE Agent** (Review mode, access
 investigating real Azure Monitor alerts in a small, self-contained Azure environment: three
 private Linux VMs, Azure Update Manager, Azure Backup, a Log Analytics workspace and a private
 runtime that collects immutable evidence for the agent. Resources use the prefix `asre` and live
-in **one subscription in `centralus`**.
+in **one subscription in `centralus`** (the private runtime alone can optionally run in another region; see below).
 
 > This is a standalone demonstration. It is **not** a phase of the client-onboarding pipeline
 > described in [`.github/copilot-instructions.md`](../.github/copilot-instructions.md), and it
@@ -33,8 +33,11 @@ Manager) investigation and a backup (Azure Backup) triage. Bounded, self-resetti
 ## Architecture
 
 - **Compute:** three `Standard_D2s_v3` Ubuntu VMs (`linux`, `patch`, `backup`) on static addresses in an
-  isolated VNet (`10.42.0.0/16`, no hub membership), each in its own resource group so one fault cannot
-  disable another's recovery or collection.
+  isolated VNet (`10.42.0.0/16`, no hub membership, no peering by default), each in its own resource group so one fault cannot
+  disable another's recovery or collection. If Central US cannot create the Container Apps environment, the optional
+  `runner_location` runs only the environment and its jobs in `westcentralus`, `southcentralus` or `westus2` on a
+  runner-only VNet (`10.43.0.0/24`) peered solely to the primary one; see
+  [`docs/runtime-networking.md`](docs/runtime-networking.md).
 - **Telemetry:** Log Analytics workspace (30-day retention, 1 GB/day cap), Application Insights, a data
   collection rule for the three VMs, and seven scheduled-query alert rules that are created disabled (five of
   them can be enabled through `enabled_native_alert_rules`).
@@ -110,7 +113,8 @@ terraform -chdir=infra test
 Indicative figures for Central US, pay-as-you-go, while everything runs: roughly **USD 600 per month** for the
 deployed resources, of which about 290 is the always-on managed agent (billed from creation until deletion;
 stopping it does not stop billing) and about 210 the three VMs. Subscription-level Defender plans, where enabled,
-add to that. The agent is created last and only when `deploy_managed_agent = true`; setting it back to `false`
+add to that. The optional `runner_location` (the runtime in another region) adds about 36 USD per month for its NAT
+gateway and public IP. The agent is created last and only when `deploy_managed_agent = true`; setting it back to `false`
 is the only lever that stops its charge. Investigations add token-based Azure Agent Unit (AAU) usage on top; set the
 agent's monthly AAU limit as the runbook describes (Wave 5) so a busy month cannot run past your budget. Confirm
 actuals in Cost Management filtered by the tag `project=autonomous-sre-ops`.
@@ -122,7 +126,8 @@ actuals in Cost Management filtered by the tag `project=autonomous-sre-ops`.
   the module defines six in total, the rest belonging to the deferred feedback and dashboard parts);
   parameterizing the role names is future work.
 - The platform may deallocate the VMs overnight; the runbook has a start-and-settle step before any trial.
-- Region is fixed to `centralus`; the agent runs in Review mode only.
+- Region is fixed to `centralus`, except that the optional `runner_location` can place the private runtime (the
+  environment and its jobs) in another allowed region; the agent runs in Review mode only.
 - The dashboard and ServiceNow paths are ported for later use and are guarded so they cannot be reached from
   this release's Terraform defaults.
 
