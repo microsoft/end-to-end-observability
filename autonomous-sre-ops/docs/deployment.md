@@ -362,6 +362,10 @@ alert rules, all disabled. It creates no agent, no runtime job and no backup pro
    & .\scripts\Invoke-Terraform.ps1 -Action Apply -ArtifactDirectory "$Artifacts\01-foundation-plan" -SubscriptionId $SubscriptionId -TenantId $TenantId
    ```
 
+   The apply asks for confirmation (`ConfirmImpact` is High). In a non-interactive session it stops with "PowerShell is
+   in NonInteractive mode" before it changes anything. After you have approved the exact plan, add `-Confirm:$false`.
+   The same holds for every later apply in this runbook.
+
 4. Export the deployment context from the apply outputs, and load it. Later scripts read it from
    `infra\environments\context.generated.json`.
 
@@ -863,6 +867,7 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | `Publish-ObserveWorkflow.ps1 -Mode Bind` times out | The agent is not ready. Run it again with `-ReadinessTimeoutSeconds 900`. It is safe to repeat: it waits through a brief HTTP 502, 503 or 504, and an error message that says the binding was already sent means the next run only continues waiting |
 | Agent calls return 401 or 403 right after Wave 5 | The `SRE Agent Administrator` assignment has not propagated. Wait a few minutes and run the step again |
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` refuses | Another incident filter on the agent is enabled. Do not enable two filters; settle the other one with its owner |
+| `Publish-ObserveWorkflow.ps1 -Mode Enable` or `-Mode Pause` refuses with "has no ETag" | The plane sends no ETag header for incident filters, so the script uses the `properties.etag` value in the filter body. If the refusal still appears, the plane returned neither and nothing was written. Run `-Mode Verify`, then change the filter in the portal |
 | An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) equals the target resource id on the alert, letter for letter. The alert may carry the workspace id in lower case. A difference in case alone is a publisher defect, because the publisher writes the context id as it is: report it and do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |
 | A script rejects the subscription or tenant id | Both must be lowercase GUIDs |
 | A second deployment in the same tenant fails on a custom role name | Custom role names are unique per tenant; see [implementation.md](implementation.md) |

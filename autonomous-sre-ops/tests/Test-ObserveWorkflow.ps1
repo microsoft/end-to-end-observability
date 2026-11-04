@@ -78,6 +78,12 @@ function Get-ObsEtag {
     return ('"v{0}"' -f $sim['Counter'])
 }
 
+function Get-ObsFilterEtag {
+    # A new token after every filter write: a quoted GUID (the live shape) when the token lives in the body, else the counter.
+    if ($global:ObsTest.Sim.FilterEtagInBody) { return ('"{0}"' -f [guid]::NewGuid().ToString()) }
+    return (Get-ObsEtag)
+}
+
 $global:ObsTest.HandlerDefaults = [ordered]@{
     connectors = $null; allowParallelToolCalls = $null; agentsAsTools = $null; maxReflectionCount = $null
     criticPromptPath = $null; criticOnHandOff = $null; customReflectionNote = $null; commonPrompts = $null
@@ -193,12 +199,18 @@ function Invoke-ObsRoute {
             $current = if ($sim.Filters.Contains($sim.FilterName)) { $sim.Filters[$sim.FilterName] } else { $null }
             if ($m -ceq 'GET') {
                 if ($null -eq $current) { return (New-ObsError -Status 404 -Code 'NotFound') }
-                return (New-ObsResponse -Data (Copy-ObsJson $current.resource) -Etag $current.etag)
+                $r = Copy-ObsJson $current.resource
+                if ($sim.FilterEtagInBody) {
+                    # Live behavior: no ETag header; the concurrency token is the body value properties.etag.
+                    if ($null -ne $current.etag) { $r['properties']['etag'] = $current.etag }
+                    return (New-ObsResponse -Data $r)
+                }
+                return (New-ObsResponse -Data $r -Etag $current.etag)
             }
             if ($m -ceq 'PUT') {
                 if ($null -ne $current -and $Call.IfMatch -cne $current.etag) { return (New-ObsError -Status 412 -Code 'PreconditionFailed') }
                 $res = New-ObsResource -Kind 'filter' -Body $Call.Body
-                $sim.Filters[$sim.FilterName] = @{ resource = $res; etag = (Get-ObsEtag) }
+                $sim.Filters[$sim.FilterName] = @{ resource = $res; etag = (Get-ObsFilterEtag) }
                 if ($rule -and $rule.After) { & $rule.After $res }
                 return (New-ObsResponse -Data $res -Etag $sim.Filters[$sim.FilterName].etag)
             }
@@ -208,7 +220,7 @@ function Invoke-ObsRoute {
                 $res = $current.resource
                 if ($sim.Sticky) { $res['properties']['isEnabled'] = $Call.Body['properties']['isEnabled'] }
                 else { foreach ($key in $Call.Body['properties'].Keys) { $res['properties'][[string]$key] = $Call.Body['properties'][$key] } }
-                $current.etag = (Get-ObsEtag)
+                $current.etag = (Get-ObsFilterEtag)
                 if ($rule -and $rule.After) { & $rule.After $res }
                 return (New-ObsResponse -Data $res -Etag $current.etag)
             }
@@ -278,7 +290,7 @@ function New-ObsSim {
         Connectivity = [ordered]@{ success = $true; incidentType = 'AzMonitor'; errorMessage = $null; observedConfigurationRevision = 'rev-1'; observedApiConnectionName = 'azmonitor'; observedConnectionStatus = 'Connected' }
         ConnectivityFalseFor = 0
         Tool = [ordered]@{ name = 'asre-review-evidence'; type = 'ExtendedAgentTool'; properties = [ordered]@{ type = 'PythonFunctionTool' } }
-        Handler = $null; Policy = $null; Filters = [ordered]@{}; NextLink = $null; Sticky = $false; NoPolicyEtag = $false
+        Handler = $null; Policy = $null; Filters = [ordered]@{}; NextLink = $null; Sticky = $false; NoPolicyEtag = $false; FilterEtagInBody = $false
         Rules = [System.Collections.Generic.List[object]]::new()
         HandlerName = $handlerName; FilterName = $filterName
     }
@@ -366,6 +378,13 @@ function New-PublishedSim {
     $s = New-BoundSim
     $r = Invoke-Observe -Params @{ Mode = 'PublishDisabled' } -Sim $s
     Assert-ObsOk $r 'baseline publish'
+    return $s
+}
+function New-BodyEtagSim {
+    # Published with the live filter behavior: the filter read has no ETag header, the token is in properties.etag.
+    $s = New-BoundSim
+    $s.FilterEtagInBody = $true
+    Assert-ObsOk (Invoke-Observe -Params @{ Mode = 'PublishDisabled' } -Sim $s) 'baseline publish (filter token in the body)'
     return $s
 }
 
@@ -1101,6 +1120,68 @@ try {
     $s.Filters[$filterName]['resource']['properties']['isEnabled'] = 'maybe'
     Assert-ObsFail (Invoke-Observe -Params @{ Mode = 'Pause' } -Sim $s) 'Pause (unreadable)' 'not readable; pause it in the portal' 0
 
+    # The live plane sends no ETag header for an incident filter; the token is the body value properties.etag.
+    $s = New-BodyEtagSim
+    $filterToken = $s.Filters[$filterName].etag
+    Assert-Observe ($filterToken -cmatch '\A"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"\z') 'The fake token must be a quoted GUID (38 characters).'
+    $r = Invoke-Observe -Params @{ Mode = 'Enable'; ConfirmAgentName = $agentName } -Sim $s -WithVerbose
+    Assert-ObsOk $r 'Enable (filter token in the body)'
+    Assert-Observe ($r.Writes.Count -eq 1 -and (Get-ObsKind $r.Writes[0]) -ceq 'PATCH filter' -and $r.Writes[0].IfMatch -ceq $filterToken) 'Enable must send one filter PATCH with the token from properties.etag.'
+    Assert-Observe ($r.Result['status'] -ceq 'enabled' -and (Get-ObsFilterProps $s)['isEnabled'] -eq $true -and $s.Filters[$filterName].etag -cne $filterToken) 'Enable must read the filter back as enabled, under a new token.'
+    Assert-Observe (-not $r.Text.Contains($filterToken)) 'The filter token must not appear in the output.'
+    $s = New-BodyEtagSim
+    (Get-ObsFilterProps $s)['isEnabled'] = $true
+    $filterToken = $s.Filters[$filterName].etag
+    $r = Invoke-Observe -Params @{ Mode = 'Pause' } -Sim $s
+    Assert-ObsOk $r 'Pause (filter token in the body)'
+    Assert-Observe ($r.Writes.Count -eq 1 -and (Get-ObsKind $r.Writes[0]) -ceq 'PATCH filter' -and $r.Writes[0].IfMatch -ceq $filterToken -and $r.Writes[0].Body['properties']['isEnabled'] -eq $false) 'Pause must send one filter PATCH with the token from properties.etag.'
+    Assert-Observe ($r.Result['status'] -ceq 'paused' -and (Get-ObsFilterProps $s)['isEnabled'] -eq $false) 'Pause must read the filter back as disabled.'
+    # The compensation reads the filter again, so its PATCH carries the token issued by the Enable PATCH.
+    $s = New-BodyEtagSim
+    $filterToken = $s.Filters[$filterName].etag
+    Add-ObsRule -Sim $s -Method 'PATCH' -Pattern '/incidentFilters/' -Remaining 1 -After { param($res) $res['properties']['priorities'] = @('Sev0') }
+    $r = Invoke-Observe -Params @{ Mode = 'Enable'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsFail $r 'Enable (readback drift, filter token in the body)' 'the filter was paused and verified' 2
+    Assert-Observe ($r.Writes[0].IfMatch -ceq $filterToken -and $r.Writes[1].IfMatch -cmatch '\A"[0-9a-f-]{36}"\z' -and $r.Writes[1].IfMatch -cne $filterToken) 'The compensation must carry the new token from properties.etag.'
+    Assert-Observe ($r.Writes[1].Body['properties']['isEnabled'] -eq $false -and (Get-ObsFilterProps $s)['isEnabled'] -eq $false) 'The compensation must pause the filter (the fake rejects a stale token with 412).'
+    # Neither a header nor a usable body token: fail closed before any write.
+    $unusable = [ordered]@{
+        'blank'        = { param($f) $f.etag = '' }
+        'whitespace'   = { param($f) $f.etag = '   ' }
+        'not a string' = { param($f) $f.etag = 5 }
+        'null'         = { param($f) $f.etag = $null; $f.resource['properties']['etag'] = $null }
+        'absent'       = { param($f) $f.etag = $null; $f.resource['properties'].Remove('etag') }
+    }
+    foreach ($label in $unusable.Keys) {
+        $s = New-BodyEtagSim
+        (Get-ObsFilterProps $s)['isEnabled'] = $true
+        & $unusable[$label] $s.Filters[$filterName]
+        $r = Invoke-Observe -Params @{ Mode = 'Pause' } -Sim $s
+        Assert-ObsFail $r "Pause (filter token $label)" 'The incident filter has no ETag; re-read before retrying' 0
+        Assert-Observe ((Get-ObsFilterProps $s)['isEnabled'] -eq $true) 'A refused Pause must leave the filter as it was.'
+    }
+    $s = New-BodyEtagSim
+    & $unusable['absent'] $s.Filters[$filterName]
+    $r = Invoke-Observe -Params @{ Mode = 'Enable'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsFail $r 'Enable (no filter token)' 'Enable refused: the incident filter has no ETag; nothing was written' 0
+    Assert-Observe ((Get-ObsFilterProps $s)['isEnabled'] -eq $false) 'A refused Enable must leave the filter disabled.'
+    # A present but blank or non-string token never reaches the ETag check: the strict readback of the verify step refuses it.
+    foreach ($label in 'blank', 'not a string') {
+        $s = New-BodyEtagSim
+        & $unusable[$label] $s.Filters[$filterName]
+        Assert-ObsFail (Invoke-Observe -Params @{ Mode = 'Enable'; ConfirmAgentName = $agentName } -Sim $s) "Enable (filter token $label)" 'differs from the declaration.*properties\.etag' 0
+    }
+    # A header wins over a different body token.
+    $s = New-PublishedSim
+    $bodyToken = '"' + [guid]::NewGuid().ToString() + '"'
+    $s.Filters[$filterName]['resource']['properties']['etag'] = $bodyToken
+    $headerToken = $s.Filters[$filterName].etag
+    $r = Invoke-Observe -Params @{ Mode = 'Enable'; ConfirmAgentName = $agentName } -Sim $s
+    Assert-ObsOk $r 'Enable (header and a different body token)'
+    Assert-Observe ($r.Writes.Count -eq 1 -and $r.Writes[0].IfMatch -ceq $headerToken -and $r.Writes[0].IfMatch -cne $bodyToken) 'The ETag header must win over properties.etag.'
+    # A blank header falls back to the body; a body without a dictionary has no token.
+    Assert-Observe ((Get-ObserveFilterEtag -Response @{ etag = '  '; data = @{ properties = @{ etag = '"abc"' } } }) -ceq '"abc"') 'A blank header must fall back to properties.etag.'
+    Assert-Observe ($null -eq (Get-ObserveFilterEtag -Response @{ etag = $null; data = 'text' })) 'A body that is not an object has no token.'
     # =========================================================================================================
     # Case 8 (P-10): identity is checked before any HTTP call
     # =========================================================================================================

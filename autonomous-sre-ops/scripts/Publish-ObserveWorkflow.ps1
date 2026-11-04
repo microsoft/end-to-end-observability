@@ -620,6 +620,16 @@ function Assert-ObserveEvidenceTool {
     }
 }
 
+function Get-ObserveFilterEtag {
+    # The incident filter read sends no ETag header on the live plane; its concurrency token is the body value
+    # properties.etag. The header wins when present. $null (never an empty string) keeps every caller failing closed.
+    param([Parameter(Mandatory)][System.Collections.IDictionary]$Response)
+    if (-not [string]::IsNullOrWhiteSpace($Response['etag'])) { return $Response['etag'] }
+    $bodyEtag = Get-AsreMember -Value $Response['data'] -Path @('properties', 'etag')
+    if ($bodyEtag -is [string] -and -not [string]::IsNullOrWhiteSpace($bodyEtag)) { return $bodyEtag }
+    return $null
+}
+
 function Get-ObserveFilterState {
     # Complete filter list plus a direct read of our filter. state is absent, owned or foreign.
     param([Parameter(Mandatory)][System.Collections.IDictionary]$Run)
@@ -654,7 +664,7 @@ function Get-ObserveFilterState {
         ((Get-AsreMember -Value $data -Path @('properties', 'handlingAgent')) -ceq $Run['HandlerName'])
     $state['state'] = $(if ($owned) { 'owned' } else { 'foreign' })
     $state['data'] = $data
-    $state['etag'] = $direct['etag']
+    $state['etag'] = Get-ObserveFilterEtag -Response $direct
     $enabledValue = Get-AsreMember -Value $data -Path @('properties', 'isEnabled')
     $state['enabled'] = $(if ($enabledValue -is [bool]) { $enabledValue } else { $null })
     return $state
