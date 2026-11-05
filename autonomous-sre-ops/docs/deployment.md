@@ -119,7 +119,8 @@ optional runner region in Wave 4.
 | Agent | `asre-demo-cus` |
 
 Every resource that accepts tags carries `project=autonomous-sre-ops`, `environment=demonstration`,
-`managed-by=terraform` and `fault-state=disabled`.
+`managed-by=terraform` and `fault-state=disabled`. The tag is a fixed label of the baseline: a controlled fault never
+changes it, and an investigation report may list it as a configuration note beside an enabled rule.
 
 ### Local files
 
@@ -777,6 +778,19 @@ $Evidence = Join-Path $Artifacts "fault-$ScenarioId"
 & .\scripts\Invoke-LinuxIncident.ps1 -Action Reset -ScenarioId $ScenarioId -EvidenceDirectory $Evidence
 ```
 
+What to expect, from the one run on this deployment (read the times as a guide). The `Perf` rows of the guest arrive
+about 2 minutes late. One `Disk` fault produces three alerts, because the rules are independent: `capacity-growth`
+(Sev2) fires about 5 minutes after the trigger, `disk` (Sev1) after about 7 minutes and `noise-overlap` (Sev2) after
+about 12 minutes. `noise-overlap` counts every sample at or above 80 percent, so it repeats the `disk` signal by design.
+The agent started one investigation thread per alert within about a minute, acknowledged the alert and wrote its
+Review-mode report after about 3 minutes. Three investigations use three times the agent units of one; to run the fault
+with a single investigation, enable only the `disk` rule first. The fault and `Reset` each restart `asre-demo.service`,
+and a report on a late alert may not be able to attribute that restart. The alerts resolve by themselves, but late:
+Azure Monitor resolves a rule that runs every minute only after its condition has stayed clear for 10 minutes.
+`capacity-growth` stops matching once the disk reaches 80 percent, so it resolved about 6 minutes after `Reset`. `disk`
+and `noise-overlap` match while the 10-minute window still holds a sample at or above 80 percent, so they resolved
+about 21 and 23 minutes after `Reset`. A resolved alert does not change an investigation that has finished.
+
 The patch and backup drivers follow the same pattern; see Fault controls in [implementation.md](implementation.md) for
 their bounds. The agent never repairs anything: it reports what it observed and the next steps for a human.
 
@@ -792,10 +806,18 @@ Run these checks when Wave 6 is complete, and again the next morning.
 
 - VM power state and size. The platform may deallocate lab VMs overnight. If it does, run
   `Initialize-RuntimeSsh.ps1 -ResumeTargets` with the outputs file of the last apply, or start each VM with `az vm start`,
-  wait for it to settle and verify the runtime again.
+  wait for it to settle and verify the runtime again. The script took 6 to 12 minutes in the runs of this deployment,
+  mostly in two waits of up to 6 minutes each for the console logs of its jobs to be ingested.
 
   ```powershell
   az vm list --subscription $SubscriptionId --show-details --output json | ConvertFrom-Json | Where-Object { $_.name -like 'vm-asre-*' } | Select-Object name, powerState, @{ Name = 'size'; Expression = { $_.hardwareProfile.vmSize } }
+  ```
+
+  Before a controlled fault, confirm that the Linux VM sends `Perf` rows for the incident disk again; the `disk` rule
+  evaluates these rows.
+
+  ```powershell
+  az monitor log-analytics query --workspace $Ctx.log_analytics.customer_id --subscription $SubscriptionId --analytics-query "Perf | where TimeGenerated > ago(15m) | where InstanceName == '/srv/asre-demo' | summarize Rows=count(), Latest=max(TimeGenerated) by CounterName" --output table
   ```
 
 - A final plan with no changes: make a new plan folder (`07-final-check`) as in the Wave 1 gate.
@@ -894,7 +916,7 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` or `-Mode Pause` refuses with "has no ETag" | The plane sends no ETag header for incident filters, so the script uses the `properties.etag` value in the filter body. If the refusal still appears, the plane returned neither and nothing was written. Run `-Mode Verify`, then change the filter in the portal |
 | `Publish-ObserveWorkflow.ps1 -Mode PublishDisabled` refuses with "The handler has no ETag; re-read before retrying." | This can happen only after the first publish, when the handler exists and its content differs from the declaration (for example after the declaration changed in a later commit). The script takes the handler's ETag from the response header only. The handler read carries no ETag, and unlike the incident filter (`properties.etag` in the body) the script has no fallback for it; the permission policy has a normal header ETag. The script therefore fails closed before its first write: nothing was written, and the permission policy and the filter were not touched. A handler that already matches the declaration needs no write, so repeating Wave 5, step 6 is not affected. Change the handler in the portal, then run `-Mode Verify` |
 | Every one-minute worker run prints `ASRE_PATCH_SENSOR_STATUS {"reason":"provider_or_archive_unavailable","status":"failed"}` on a fresh deployment | Expected until the first patch installation exists on the patch VM. Azure Update Manager runs an hourly assessment but has no installation summary yet, and an assessment is not installation evidence, so the sensor fails visibly by design instead of reporting a success-shaped empty observation. The generic reason text hides this cause. Nothing alerts on the line: only `ASRE_PATCH_FAILURE_V1` events feed the `patch-installation` alert rule. It clears after the first installation on the patch VM, from a scheduled maintenance run or a one-time installation |
-| An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) equals the target resource id on the alert, letter for letter. The alert may carry the workspace id in lower case. A difference in case alone is a publisher defect, because the publisher writes the context id as it is: report it and do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |
+| An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) is the workspace of the alert. A difference in case is not the cause: in the controlled fault the filter held the workspace id in mixed case and the alert instances carried it in lower case, yet every alert was routed, from rules whose scope is in mixed case (`disk`) and from rules whose scope is in lower case (`capacity-growth`, `noise-overlap`). Do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |
 | A script rejects the subscription or tenant id | Both must be lowercase GUIDs |
 | A second deployment in the same tenant fails on a custom role name | Custom role names are unique per tenant; see [implementation.md](implementation.md) |
 | A redeployment fails on the Key Vault name | The vault is soft-deleted and purge protection blocks a purge. Recover it with `az keyvault recover --name kv-asre-<suffix> --location centralus --subscription $SubscriptionId` (not exercised) |
