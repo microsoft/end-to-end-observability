@@ -8,6 +8,8 @@ The registry comes from the deployment context. The build refuses to run unless 
 exact source: same subscription/tenant, same Git commit as HEAD, clean source, and every build input matching its
 recorded SHA-256. The resulting tag and digest are locked (write and delete disabled) and image-provenance.json is
 written to a new output directory. Select the image with ASRE_RUNTIME_IMAGE_KIND (operations|dashboard).
+The ACR source build is queued without waiting; the result is the ACR run status (polled until final), never the build
+log stream. The log is shown after the status, best effort.
 #>
 [CmdletBinding()]
 param(
@@ -46,6 +48,11 @@ function Invoke-AzJson {
     if ($LASTEXITCODE -ne 0) { throw "An authenticated ACR operation failed: $($Arguments[0..2] -join ' ')." }
     return $result | ConvertFrom-Json
 }
+
+# The ACR run is polled every 10 seconds for at most 45 minutes (the run itself is capped at 30 minutes by --timeout).
+$RunPollSeconds = 10
+$RunMaxPolls = 270
+$FinalRunStatuses = @('Succeeded', 'Failed', 'Canceled', 'Error', 'Timeout')
 
 $Commit = (@(& git -C $Repo rev-parse HEAD) -join '').Trim()
 if ($LASTEXITCODE -ne 0 -or $Commit -notmatch '^[0-9a-f]{40}$') {
@@ -99,9 +106,37 @@ if ($existing) {
     Write-Output 'Reusing the existing locked exact-source image.'
 }
 else {
-    & az acr build --registry $Registry --subscription $SubscriptionId --image "${Repository}:$Commit" `
-        --platform linux/amd64 --build-arg "SOURCE_COMMIT=$Commit" --only-show-errors $BuildContext
-    if ($LASTEXITCODE -ne 0) { throw 'The actual ACR source build failed; no image provenance will be published.' }
+    # The build is queued without streaming its log, and its result is the ACR run status, never the exit code of a log
+    # stream: with redirected stdout on Windows the az log stream can crash (UnicodeEncodeError) after a successful run.
+    $queuedOutput = & az acr build --registry $Registry --subscription $SubscriptionId --image "${Repository}:$Commit" `
+        --platform linux/amd64 --build-arg "SOURCE_COMMIT=$Commit" --no-wait --timeout 1800 --output json --only-show-errors $BuildContext
+    if ($LASTEXITCODE -ne 0) { throw 'The ACR source build could not be queued; no image provenance will be published.' }
+    $queuedRun = $null
+    try { $queuedRun = ($queuedOutput -join "`n") | ConvertFrom-Json } catch { $queuedRun = $null }
+    $RunId = if ($null -ne $queuedRun -and $queuedRun.PSObject.Properties['runId']) { [string]$queuedRun.runId } else { '' }
+    if ($RunId -cnotmatch '\A[A-Za-z0-9]{1,32}\z') {
+        throw 'The ACR source build was queued without a usable run id; no image provenance will be published.'
+    }
+    $RunStatus = ''
+    for ($Poll = 1; $Poll -le $RunMaxPolls; $Poll++) {
+        $Run = Invoke-AzJson -Arguments @('acr', 'task', 'show-run', '--registry', $Registry, '--run-id', $RunId)
+        $RunStatus = if ($null -ne $Run -and $Run.PSObject.Properties['status']) { [string]$Run.status } else { '' }
+        if ($RunStatus -cin $FinalRunStatuses) { break }
+        if ($Poll -lt $RunMaxPolls) { Start-Sleep -Seconds $RunPollSeconds }
+    }
+    if ($RunStatus -cnotin $FinalRunStatuses) {
+        throw ("ACR run $RunId did not reach a final status within $($RunMaxPolls * $RunPollSeconds / 60) minutes (last status: " +
+            "'$RunStatus'). It may still be running and may leave an unlocked source-revision image; see Troubleshooting " +
+            'in docs/deployment.md. Nothing was locked and no image provenance was published.')
+    }
+    $LogsCommand = "az acr task logs --registry $Registry --run-id $RunId --subscription $SubscriptionId"
+    # Best effort and after the status only: a crash of the log display cannot change the result.
+    Write-Output "ACR run $RunId ended with status $RunStatus. The build log follows on a best-effort basis; if it is cut off, read it in an interactive console with: $LogsCommand"
+    try { & az acr task logs --registry $Registry --run-id $RunId --subscription $SubscriptionId --only-show-errors 2>$null } catch { $null = $_ }
+    $global:LASTEXITCODE = 0
+    if ($RunStatus -cne 'Succeeded') {
+        throw "The actual ACR source build failed; no image provenance will be published. ACR run $RunId ended with status $RunStatus; read its log with: $LogsCommand"
+    }
     $null = Invoke-AzJson -Arguments @(
         'acr', 'repository', 'update', '--name', $Registry, '--image', "${Repository}:$Commit",
         '--write-enabled', 'false', '--delete-enabled', 'false'

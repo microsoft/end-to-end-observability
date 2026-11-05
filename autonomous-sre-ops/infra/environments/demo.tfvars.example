@@ -16,6 +16,10 @@ backup_protection_enabled = false
 deploy_runtime       = false
 runtime_image_digest = ""
 
+# Optional: run the runtime (the Container Apps environment and its jobs) in westcentralus, southcentralus or westus2.
+# null or centralus keeps it in Central US. Choose it before the first runtime apply: a live environment cannot be moved.
+runner_location = null
+
 enable_servicenow_feedback = false
 enabled_native_alert_rules = []
 

@@ -57,6 +57,9 @@ Waves 1, 4 and 5 take tens of minutes. The toggles live in `infra\environments\d
 - A clean working tree in `autonomous-sre-ops/`. The plan script refuses uncommitted changes, and the image build
   accepts only a plan made from the committed source.
 - Python 3.13 only to run the tests ([implementation.md](implementation.md), Local checks). Deployment needs no Python.
+- Running VMs when you need them. Some lab and sandbox subscriptions run a platform policy that deallocates VMs every
+  night (about 05:46 UTC was observed in the reference deployment, and no start follows). Before any trial, fault run or
+  Wave 4 SSH step, check the VM power state and start the targets, as in the first check under After the deployment.
 
 #### Optional preflight: Container Apps capacity in the target region
 
@@ -366,6 +369,11 @@ alert rules, all disabled. It creates no agent, no runtime job and no backup pro
    in NonInteractive mode" before it changes anything. After you have approved the exact plan, add `-Confirm:$false`.
    The same holds for every later apply in this runbook.
 
+   If the apply stops on the `backup-job` alert rule with `400 BadRequest` and "insufficient access", it is a
+   propagation delay, not a defect: follow the Troubleshooting row on a failed role assignment. A new plan then shows
+   only the unfinished create, and the gate re-plan below shows any unfinished create too, so apply it before you read
+   the gate.
+
 4. Export the deployment context from the apply outputs, and load it. Later scripts read it from
    `infra\environments\context.generated.json`.
 
@@ -457,6 +465,11 @@ commit as `HEAD`, a clean tree and unchanged build inputs. The plan of Wave 2 qu
 and this build; if you do, make a new plan first. The image tag is the commit id: running the build again for the same
 commit reuses the locked image instead of building another, and the output directory must not exist yet.
 
+The script queues the build without streaming it and polls the ACR run every 10 seconds, for at most 45 minutes (the run
+is queued with a 30-minute timeout). The run status decides the result, never the log: unless the run `Succeeded`, nothing
+is locked and no provenance is written. After the final status the script shows the build log on a best-effort basis,
+and a failure while the log is displayed does not change the result.
+
 ```powershell
 & .\scripts\Build-RuntimeImages.ps1 -SubscriptionId $SubscriptionId -TenantId $TenantId -ValidatedPlanDirectory "$Artifacts\02-backup-plan" -OutputDirectory "$Artifacts\03-image"
 $Digest = (Get-Content -LiteralPath "$Artifacts\03-image\image-provenance.json" -Raw | ConvertFrom-Json).digest
@@ -475,14 +488,16 @@ request queue and the matching role assignments. Then it bootstraps and verifies
 the preflight in Prerequisites fails for `centralus`, set `runner_location` before the first runtime apply. Only the
 environment and its three jobs move; the rest stays in Central US, joined by a runner-only VNet peered to the primary
 one ([runtime-networking.md](runtime-networking.md), Alternate runner region). Do not change it after the environment
-exists: that is a replacement, which the wrapper refuses. The example file does not list the variable and `Set-TfVar`
-replaces only an existing assignment, so add this line to `infra\environments\demo.tfvars` yourself:
+exists: that is a replacement, which the wrapper refuses. The example file lists `runner_location = null`, so set it
+with `Set-TfVar`:
 
-```hcl
-runner_location = "southcentralus"
+```powershell
+Set-TfVar -Name 'runner_location' -Value '"southcentralus"'
 ```
 
-Allowed values are `westcentralus`, `southcentralus` and `westus2` (`centralus` or no line keeps the default). It has
+`Set-TfVar` throws "demo.tfvars has no top-level assignment" when your `demo.tfvars` was copied from an older example
+that lacks the line; then add `runner_location = "southcentralus"` to it by hand. Allowed values are `westcentralus`,
+`southcentralus` and `westus2` (`null`, `centralus` or no line keeps the default). It has
 an effect only when `deploy_runtime` is true. If the satellite environment create fails, retry in the same region (see
 Troubleshooting): another region would replace the satellite network, which the wrapper refuses.
 
@@ -652,6 +667,12 @@ of the on-demand work.
    to 1,000,000 units; an increase applies at once, a decrease from the next month). The limit bounds active work only;
    the always-on charge continues. At the limit the agent is unavailable for chat and actions until the next month. The
    [pricing and billing](https://learn.microsoft.com/azure/sre-agent/pricing-billing) page describes the rules.
+
+   The limit is a live setting of the agent. The Terraform plan does not carry it, so a plan stays at zero changes
+   whatever the limit is, and a re-created agent starts at the service default of 10,000 AAU (about USD 1,000 a month of
+   active work) until you set the cap again. Record the cap in your rollout checklist and set it again after any agent
+   re-creation. The service also accepts it as the writable agent property `monthlyAgentUnitLimit`, but the public CLI
+   model does not list that property, so the portal remains the documented path.
 
 **Gate.** All five must hold.
 
@@ -849,7 +870,7 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | "The source tree has uncommitted changes" | Commit or stash the changes in `autonomous-sre-ops/`. `-AllowDirty` exists for experiments; a plan made with it cannot feed `Build-RuntimeImages.ps1` |
 | "The saved plan has expired" | The four-hour limit passed. Make a new plan and apply that; never replan inside an apply |
 | "The baseline rejects every deletion or replacement" | Do not work around it. Find why the plan wants to delete (drift or a renamed resource) and fix the cause. An intended deletion is manual (see Teardown) |
-| A role assignment, or a job creation after one, fails | The assignment had not propagated. Make a new plan and apply again |
+| A role assignment, or a job creation after one, fails; or in Wave 1 the `backup-job` alert rule fails seconds after it starts with `400 BadRequest: The provided credentials have insufficient access to perform the requested operation` | The assignment had not propagated. The `backup-job` rule is the only scheduled-query rule that queries Azure Resource Graph with the agent identity: Resource Graph authorization lags the role assignments, and the alert service checks the rule identity's access when it creates the rule. Make a new plan and apply again. After the failure the new plan shows exactly one create and no drift; in the reference deployment the retry succeeded about eleven minutes after the role assignments |
 | An apply stops partway | Terraform records what exists. Make a new plan, review it and apply |
 | Creating the environment fails within 2 to 4 minutes with `ManagedEnvironmentCapacityHeavyUsageError` | The region has no capacity for the environment at the moment; this is a regional platform gate, not a configuration error. Retry later, or choose another region with `runner_location` (Wave 4) after the Prerequisites probe passes there. Make sure no failed environment is left behind first (see the deletion row). If `runner_location` is already applied, do not pick another region: see the row on a failed satellite create |
 | Creating the environment fails after about 15 minutes with `ManagedEnvironmentProvisioningError` or `InstallComponentsFailure` | The platform failed inside the provisioning. Read the full error, remove the failed environment as in the deletion row, and retry. If it repeats in the same region and `runner_location` is not applied yet, probe and use another region with `runner_location`. If it is applied, see the row on a failed satellite create |
@@ -858,8 +879,11 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | An apply of a saved plan is rejected after an earlier apply created some resources | A saved plan describes the state it was made from. After a partial apply it is stale. Make a new plan into a new artifact directory (for example `$Artifacts\04-runtime-plan-2`) and apply that one |
 | The satellite environment create failed (`runner_location` is applied) and you want another region | The failed apply left the satellite network (the 14 resources of the plan) in state. Retry in the same region: delete the failed environment, wait until it and its `ME_` group are gone, then make a new plan. Another region would replace the satellite network, which `Invoke-Terraform.ps1` refuses: stop and ask the owner. Removing the satellite network is an intentional manual deletion (see Teardown) |
 | `Initialize-RuntimeSsh.ps1` ends with "The completed runtime execution has no ingested verification marker within the observation deadline." although the jobs ended `Succeeded` | The script reads its markers from `ContainerAppConsoleLogs_CL` in the Central US workspace and waits 6 minutes. With `runner_location` the cross-region log ingestion is the first suspect: run the log query in Wave 4 (Extra checks) for the rows of the last hour. Then stop and report; do not run the script in a loop and do not widen any firewall |
-| `Build-RuntimeImages.ps1` reports "An unlocked source-revision image already exists" | The tag for this commit exists but is not locked, so this script did not finish it. Delete it with `az acr repository delete --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --yes` and run the script again. If the delete is refused, first run `az acr repository update --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --delete-enabled true` |
-| `Build-RuntimeImages.ps1` reports "The actual ACR source build failed" | Read the `az acr build` output above the message. If it says that ACR Tasks is not permitted for the subscription or registry, stop: do not substitute a local build. Otherwise fix the cause and run the script again |
+| `Build-RuntimeImages.ps1` reports "An unlocked source-revision image already exists" | The tag for this commit exists but is not locked, so this script did not finish it. An interrupted or timed-out run can also leave the unlocked tag: the registry may still have pushed the image after the script stopped. If the build's ACR run may still be going, wait until it has ended (`az acr task show-run --registry <registry> --run-id <run id> --subscription $SubscriptionId --query status --output tsv`). Delete the tag with `az acr repository delete --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --yes` and run the script again. If the delete is refused, first run `az acr repository update --name <registry> --image asre-operations:<commit> --subscription $SubscriptionId --delete-enabled true` |
+| `Build-RuntimeImages.ps1` reports "The actual ACR source build failed" | The message names the ACR run id and its final status (`Failed`, `Canceled`, `Error` or `Timeout`). Nothing was locked and no provenance was written. Read the build log with the `az acr task logs` command printed in the message. If `az` says that ACR Tasks is not permitted for the subscription or registry, stop: do not substitute a local build. Otherwise fix the cause and run the script again; if the failed run left an unlocked tag, see the row above |
+| `Build-RuntimeImages.ps1` reports "The ACR source build could not be queued" or "queued without a usable run id" | `az` prints its own error above the first message. If it says that ACR Tasks is not permitted for the subscription or registry, stop: do not substitute a local build. Otherwise fix the cause that `az` names and run the script again. After "could not be queued" nothing was built. After "no usable run id" a run may exist: check in the portal and wait for it to end, and see the row on an unlocked source-revision image if its tag exists, before you run the script again |
+| `Build-RuntimeImages.ps1` reports "did not reach a final status" | The script polled the ACR run for 45 minutes and it had not ended; the message names the run id. Nothing was locked and no provenance was written, but the run may still be going and may leave an unlocked tag. Read its status with the `az acr task show-run` command in the row on an unlocked source-revision image; when it has ended, delete the tag if it exists as described in that row, and run the script again |
+| The build log shown by `Build-RuntimeImages.ps1` is cut off, or `az` ends it with `UnicodeEncodeError: 'charmap' codec can't encode characters` | Harmless. The script reads only the ACR run status; the log display is best effort and its errors are ignored. On Windows with redirected output (an agent or CI shell) the `az` log display can end with `UnicodeEncodeError` while it prints pip progress bars. Read the full log in an interactive console with the `az acr task logs` command the script printed, or in the portal |
 | A script hangs on its first `az` call | It ran in a nested `pwsh -File`. Run it in the session with `&` |
 | `terraform` run by hand fails with "Too many command line arguments" | In PowerShell, quote each flag whole, for example `"-var-file=demo.tfvars"` |
 | An `az` command fails with "was unexpected" after `--query` | `az` is a batch file (`az.cmd`), so cmd.exe splits an argument that has no space but contains an ampersand, a pipe, parentheses, angle brackets or a caret, for example `"[?starts_with(name,'x')].name"`. Put a space in the expression (after a comma) or avoid those characters: use `--output json`, then `ConvertFrom-Json` and filter in PowerShell |
@@ -868,6 +892,8 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | Agent calls return 401 or 403 right after Wave 5 | The `SRE Agent Administrator` assignment has not propagated. Wait a few minutes and run the step again |
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` refuses | Another incident filter on the agent is enabled. Do not enable two filters; settle the other one with its owner |
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` or `-Mode Pause` refuses with "has no ETag" | The plane sends no ETag header for incident filters, so the script uses the `properties.etag` value in the filter body. If the refusal still appears, the plane returned neither and nothing was written. Run `-Mode Verify`, then change the filter in the portal |
+| `Publish-ObserveWorkflow.ps1 -Mode PublishDisabled` refuses with "The handler has no ETag; re-read before retrying." | This can happen only after the first publish, when the handler exists and its content differs from the declaration (for example after the declaration changed in a later commit). The script takes the handler's ETag from the response header only. The handler read carries no ETag, and unlike the incident filter (`properties.etag` in the body) the script has no fallback for it; the permission policy has a normal header ETag. The script therefore fails closed before its first write: nothing was written, and the permission policy and the filter were not touched. A handler that already matches the declaration needs no write, so repeating Wave 5, step 6 is not affected. Change the handler in the portal, then run `-Mode Verify` |
+| Every one-minute worker run prints `ASRE_PATCH_SENSOR_STATUS {"reason":"provider_or_archive_unavailable","status":"failed"}` on a fresh deployment | Expected until the first patch installation exists on the patch VM. Azure Update Manager runs an hourly assessment but has no installation summary yet, and an assessment is not installation evidence, so the sensor fails visibly by design instead of reporting a success-shaped empty observation. The generic reason text hides this cause. Nothing alerts on the line: only `ASRE_PATCH_FAILURE_V1` events feed the `patch-installation` alert rule. It clears after the first installation on the patch VM, from a scheduled maintenance run or a one-time installation |
 | An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) equals the target resource id on the alert, letter for letter. The alert may carry the workspace id in lower case. A difference in case alone is a publisher defect, because the publisher writes the context id as it is: report it and do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |
 | A script rejects the subscription or tenant id | Both must be lowercase GUIDs |
 | A second deployment in the same tenant fails on a custom role name | Custom role names are unique per tenant; see [implementation.md](implementation.md) |

@@ -67,7 +67,25 @@ class BuildRuntimeImagesTests(unittest.TestCase):
         source = script_source()
         self.assertIn("& az @Arguments --subscription $SubscriptionId --only-show-errors --output json", source)
         self.assertIn("& az acr build --registry $Registry --subscription $SubscriptionId", source)
-        self.assertEqual(len(re.findall(r"&\s+az\b", source)), 2)
+        self.assertIn(
+            "& az acr task logs --registry $Registry --run-id $RunId --subscription $SubscriptionId --only-show-errors",
+            source,
+        )
+        self.assertEqual(len(re.findall(r"&\s+az\b", source)), 3)
+
+    def test_the_build_result_is_the_acr_run_status_and_the_log_is_shown_after_it(self):
+        source = script_source()
+        # Queued without streaming or waiting: a crash of the log stream must not decide the result.
+        self.assertIn("--no-wait --timeout 1800", source)
+        self.assertIn("'acr', 'task', 'show-run'", source)
+        self.assertIn("@('Succeeded', 'Failed', 'Canceled', 'Error', 'Timeout')", source)
+        self.assertIn("The actual ACR source build failed; no image provenance will be published.", source)
+        # The status is polled first, the best-effort log is shown after it and the tag is locked last.
+        poll = source.index("'acr', 'task', 'show-run'")
+        logs = source.index("& az acr task logs")
+        lock = source.index("'--write-enabled', 'false'")
+        self.assertLess(poll, logs)
+        self.assertLess(logs, lock)
 
     def test_source_proof_is_complete_clean_and_bound_to_head_subscription_and_tenant(self):
         source = script_source()
