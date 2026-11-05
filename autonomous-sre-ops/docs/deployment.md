@@ -792,7 +792,29 @@ and `noise-overlap` match while the 10-minute window still holds a sample at or 
 about 21 and 23 minutes after `Reset`. A resolved alert does not change an investigation that has finished.
 
 The patch and backup drivers follow the same pattern; see Fault controls in [implementation.md](implementation.md) for
-their bounds. The agent never repairs anything: it reports what it observed and the next steps for a human.
+their bounds. Each ran once on this deployment, one at a time, with its own rule and the handler enabled. Read the
+times as a guide.
+
+The backup probe (`Invoke-BackupPolicyProbe.ps1 -Action Trigger`) took about 90 seconds in total. The denying policy was
+enforced 6 seconds after it was assigned and the one native backup failed 4 seconds after it was submitted, at the
+snapshot step with error 400211 (denied by policy). The assignment was removed within 10 seconds of the failure. The
+native Azure Backup `Backup Failure` alert fires within seconds, but it is not routed to the agent, which takes only
+`asre-demo-` alerts. The `backup-job` rule runs every 5 minutes: it fired 46 seconds after the failure here (allow up to
+about 6 minutes), the investigation thread started about 40 seconds later and the Review report was done about 2 minutes
+after that. The agent cannot name the denying policy, because the assignment is already removed and the backup resource
+group is outside its read scope. The alert resolved by itself about 22 minutes after the failure. The backup item stays
+`ActionRequired`, with a failed last backup, until the next scheduled backup succeeds.
+
+The patch fault (`Invoke-PatchIncident.ps1 -Action Trigger`) took about 15 minutes in total: the native assessment takes
+about 5.5 minutes and the installation about 6.5 minutes. The fault has to outlive the installation, so keep the default
+lifetime of 900 seconds. The installation ended `Failed` with `PACKAGE_MANAGER_FAILURE` for one package and nothing was
+installed (the pending upgrades stay pending). The worker logged the failure event 42 seconds later, the
+`patch-installation` alert (Sev1) fired about 4 minutes after the failure, the thread started about a minute later and
+the Review report was done about 2 minutes after that. The alert resolved by itself about 25 minutes after the failure.
+The guest watchdog restored the package configuration before the deadline, so `Reset` was not needed; `Status` confirms
+it.
+
+The agent never repairs anything: it reports what it observed and the next steps for a human.
 
 ## After the deployment
 
@@ -915,7 +937,7 @@ block a redeployment that reuses the same names; see Troubleshooting.
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` refuses | Another incident filter on the agent is enabled. Do not enable two filters; settle the other one with its owner |
 | `Publish-ObserveWorkflow.ps1 -Mode Enable` or `-Mode Pause` refuses with "has no ETag" | The plane sends no ETag header for incident filters, so the script uses the `properties.etag` value in the filter body. If the refusal still appears, the plane returned neither and nothing was written. Run `-Mode Verify`, then change the filter in the portal |
 | `Publish-ObserveWorkflow.ps1 -Mode PublishDisabled` refuses with "The handler has no ETag; re-read before retrying." | This can happen only after the first publish, when the handler exists and its content differs from the declaration (for example after the declaration changed in a later commit). The script takes the handler's ETag from the response header only. The handler read carries no ETag, and unlike the incident filter (`properties.etag` in the body) the script has no fallback for it; the permission policy has a normal header ETag. The script therefore fails closed before its first write: nothing was written, and the permission policy and the filter were not touched. A handler that already matches the declaration needs no write, so repeating Wave 5, step 6 is not affected. Change the handler in the portal, then run `-Mode Verify` |
-| Every one-minute worker run prints `ASRE_PATCH_SENSOR_STATUS {"reason":"provider_or_archive_unavailable","status":"failed"}` on a fresh deployment | Expected until the first patch installation exists on the patch VM. Azure Update Manager runs an hourly assessment but has no installation summary yet, and an assessment is not installation evidence, so the sensor fails visibly by design instead of reporting a success-shaped empty observation. The generic reason text hides this cause. Nothing alerts on the line: only `ASRE_PATCH_FAILURE_V1` events feed the `patch-installation` alert rule. It clears after the first installation on the patch VM, from a scheduled maintenance run or a one-time installation |
+| Every one-minute worker run prints `ASRE_PATCH_SENSOR_STATUS {"reason":"provider_or_archive_unavailable","status":"failed"}` | Expected whenever the patch VM has no installation summary from the last 10 minutes: on a fresh deployment (Azure Update Manager runs an hourly assessment, but an assessment is not installation evidence) and again 10 minutes after any installation. The sensor fails visibly by design instead of reporting a success-shaped empty observation. The generic reason text hides this cause. Nothing alerts on the line: only `ASRE_PATCH_FAILURE_V1` events feed the `patch-installation` alert rule. In the controlled patch fault the status was `no_qualifying_failure` while the installation ran, then `emitted` once a minute for the 10 minutes after the failed installation ended (the events the rule reads), then `provider_or_archive_unavailable` again |
 | An alert fired and the agent started no investigation | Check, in order: the handler verifies as `Enabled`; the alert has severity Sev1 or Sev2 and a title that starts with `asre-demo-`; no other agent's filter claims the alert (Wave 6, step 1); the filter's `targetResource` (the workspace id from the context) is the workspace of the alert. A difference in case is not the cause: in the controlled fault the filter held the workspace id in mixed case and the alert instances carried it in lower case, yet every alert was routed, from rules whose scope is in mixed case (`disk`) and from rules whose scope is in lower case (`capacity-growth`, `noise-overlap`). Do not edit the filter by hand. The filter fields are in [native-review-workflows.md](native-review-workflows.md) |
 | A script rejects the subscription or tenant id | Both must be lowercase GUIDs |
 | A second deployment in the same tenant fails on a custom role name | Custom role names are unique per tenant; see [implementation.md](implementation.md) |
