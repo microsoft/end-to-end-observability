@@ -1205,8 +1205,11 @@ def _secret_attempt(credential, *, timeout=20, context=None):
 
 def exact_secret(credential, *, context=None):
     if context is not None and context.active:
-        return context.request("secret", lambda timeout: _secret_attempt(
-            credential, timeout=timeout, context=context))
+        # Context.request returns every stage's result; keep the secret out of that shared channel.
+        box = []
+        context.request("secret", lambda timeout: box.append(_secret_attempt(
+            credential, timeout=timeout, context=context)))
+        return box[0]
     try:
         return _secret_attempt(credential)
     except Exception:
