@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:asre-demo:servicenow-feedback-ack:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transport_version", "write_request_id", "event_id"],
+  "properties": {
+    "transport_version": {"const": "1.0"},
+    "write_request_id": {"type": "string", "format": "uuid"},
+    "event_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+  }
+}

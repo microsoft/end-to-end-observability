@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Read-only ASRE Azure SRE Agent operations dashboard.">
+<title>ASRE operational evidence</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+:root { --cp-card-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14); }
+html[data-theme="dark"] { --cp-card-shadow: 0 0 2px rgba(0,0,0,0.24), 0 1px 2px rgba(0,0,0,0.28); }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 14px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+button, select { font: inherit; }
+button, select, a { -webkit-tap-highlight-color: var(--cp-accent-soft); }
+button, select { border: 1px solid var(--cp-border); border-radius: 0.625rem; background: var(--cp-surface); color: var(--cp-text); min-height: 40px; padding: 8px 12px; }
+button { cursor: pointer; }
+button:hover, select:hover { border-color: var(--cp-border-strong); }
+button:disabled { opacity: .6; cursor: wait; }
+button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 4px; }
+a { color: var(--cp-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: clamp(25px, 3vw, 36px); line-height: 1.2; letter-spacing: -.8px; font-weight: 650; }
+h2 { font-size: 18px; font-weight: 600; letter-spacing: -.2px; }
+h3 { font-size: 14px; font-weight: 600; }
+small, .small { font-size: 12px; }
+.muted { color: var(--cp-text-muted); }
+.mono { font-family: Consolas, "Courier New", Courier, monospace; }
+[hidden] { display: none !important; }
+.shell { display: grid; grid-template-columns: 216px minmax(0,1fr); min-height: 100vh; }
+.sidebar { background: var(--cp-bg-elevated); border-right: 1px solid var(--cp-border); padding: 28px 16px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 32px; }
+.brand { display: flex; gap: 12px; align-items: center; padding: 0 8px; }
+.brand-mark { background: var(--cp-accent); color: var(--cp-accent-fg); border-radius: 0.625rem; width: 36px; height: 36px; display: grid; place-items: center; font-size: 20px; font-weight: 700; }
+.brand strong { display: block; font-size: 15px; }
+.eyebrow { color: var(--cp-text-muted); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; }
+.nav-label { padding: 0 12px 8px; }
+nav { display: flex; flex-direction: column; gap: 4px; }
+nav a { display: flex; gap: 12px; color: var(--cp-text-muted); padding: 10px 12px; border-radius: 0.625rem; }
+nav a:first-child { background: var(--cp-accent-soft); color: var(--cp-accent); font-weight: 600; }
+nav a:hover { background: var(--cp-surface-soft); color: var(--cp-text); text-decoration: none; }
+.nav-number { font-size: 12px; font-family: Consolas, "Courier New", Courier, monospace; opacity: .8; }
+.sidebar-foot { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--cp-border); }
+.sidebar-foot p { margin-top: 8px; font-size: 12px; color: var(--cp-text-muted); }
+main { width: 100%; max-width: 1640px; margin: 0 auto; padding: 32px clamp(16px,3vw,48px); min-width: 0; }
+.page-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.breadcrumb { font-size: 12px; color: var(--cp-text-muted); }
+.breadcrumb span { color: var(--cp-accent); margin-left: 8px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.icon { width: 16px; height: 16px; fill: none; stroke: var(--cp-text); stroke-width: 1.7; vertical-align: middle; }
+.primary { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+.primary:hover { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); }
+.primary .icon { stroke: var(--cp-accent-fg); margin-right: 4px; }
+.heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.heading p { margin-top: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--cp-border); border-radius: 0.625rem; color: var(--cp-text-muted); background: var(--cp-surface-soft); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.pill.good { color: var(--cp-success); }
+.pill.warn { color: var(--cp-warning); }
+.pill.bad { color: var(--cp-danger); }
+.pill.accent { color: var(--cp-accent); background: var(--cp-accent-soft); border-color: var(--cp-border); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cp-text-muted); display: inline-block; }
+.good .status-dot { background: var(--cp-success); }
+.warn .status-dot { background: var(--cp-warning); }
+.bad .status-dot { background: var(--cp-danger); }
+.connection { border: 1px solid var(--cp-border); background: var(--cp-surface); border-radius: 0.625rem; padding: 12px 16px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+.connection.error { border-color: var(--cp-danger); }
+.connection p { font-size: 12px; color: var(--cp-text-muted); }
+.kpis { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 12px; margin-bottom: 24px; }
+.card { border: 1px solid var(--cp-border); background: var(--cp-surface); border-radius: 16px; box-shadow: var(--cp-card-shadow); min-width: 0; }
+.kpi { padding: 20px 16px; }
+.kpi .label { font-size: 12px; color: var(--cp-text-muted); }
+.kpi .value { font-size: clamp(24px,2.2vw,32px); line-height: 1.25; font-weight: 650; margin: 12px 0 8px; letter-spacing: -.6px; overflow-wrap: anywhere; }
+.kpi .detail { color: var(--cp-text-muted); font-size: 11px; min-height: 32px; }
+.section-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 28px 0 12px; }
+.section-title .eyebrow { font-size: 10px; }
+.readiness { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); margin-bottom: 24px; }
+.readiness-item { padding: 20px; }
+.readiness-item + .readiness-item { border-left: 1px solid var(--cp-border); }
+.readiness-item .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.readiness-item p { font-size: 12px; color: var(--cp-text-muted); }
+.panels { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.panel-head { padding: 20px 20px 0; display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.panel-head p { margin-top: 4px; color: var(--cp-text-muted); font-size: 12px; }
+.panel-content { padding: 16px 20px 20px; min-width: 0; }
+.metric-line { display: flex; gap: 24px; margin-bottom: 12px; }
+.metric-line strong { font-size: 24px; font-weight: 600; display: block; letter-spacing: -.5px; }
+.metric-line span { font-size: 11px; color: var(--cp-text-muted); }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart line { stroke: var(--cp-border); stroke-width: 1; }
+.chart text { fill: var(--cp-text-muted); font: 11px "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+.chart .series { stroke: var(--cp-accent); stroke-width: 2.5; fill: none; stroke-linejoin: round; }
+.chart .area { fill: var(--cp-accent-soft); stroke: none; }
+.chart circle { fill: var(--cp-accent); }
+.chart-note { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; color: var(--cp-text-muted); font-size: 11px; margin-top: 8px; }
+.empty { border: 1px dashed var(--cp-border); border-radius: 0.625rem; padding: 24px 16px; color: var(--cp-text-muted); font-size: 13px; text-align: center; }
+.empty.error { text-align: left; border-color: var(--cp-danger); }
+.table-wrap { width: 100%; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; }
+th { text-align: left; font-weight: 600; color: var(--cp-text-muted); border-bottom: 1px solid var(--cp-border); white-space: nowrap; }
+th button { background: var(--cp-surface); border: 0; border-radius: 4px; padding: 8px 8px; min-height: 36px; color: var(--cp-text-muted); font-size: 11px; text-align: left; }
+td { padding: 12px 8px; border-bottom: 1px solid var(--cp-border); vertical-align: top; max-width: 320px; overflow-wrap: anywhere; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--cp-surface-soft); }
+.cell-main { display: block; font-weight: 500; }
+.cell-sub { display: block; font-size: 10px; color: var(--cp-text-muted); margin-top: 4px; word-break: break-all; }
+.pager { display: flex; justify-content: space-between; gap: 12px; align-items: center; border-top: 1px solid var(--cp-border); margin-top: 12px; padding-top: 12px; font-size: 11px; color: var(--cp-text-muted); }
+.pager-controls { display: flex; gap: 8px; }
+.pager button { min-height: 28px; padding: 4px 8px; font-size: 11px; }
+.source-note { margin-top: 12px; color: var(--cp-text-muted); font-size: 11px; }
+.notice { margin-top: 20px; padding: 16px 20px; display: flex; gap: 16px; align-items: start; background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 16px; }
+.notice p { color: var(--cp-text-muted); font-size: 12px; margin-top: 4px; }
+.sources { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.source-card { padding: 16px; }
+.source-card .row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.source-card p { color: var(--cp-text-muted); font-size: 11px; margin-top: 8px; }
+.source-card .error-text { color: var(--cp-danger); overflow-wrap: anywhere; }
+footer { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 24px 0 0; color: var(--cp-text-muted); font-size: 11px; }
+@media (max-width: 1400px) { .kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 1100px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  main { padding: 24px; }
+}
+@media (max-width: 760px) {
+  main { padding: 20px 16px; }
+  .panels, .readiness, .sources { grid-template-columns: 1fr; }
+  .readiness-item + .readiness-item { border-left: 0; border-top: 1px solid var(--cp-border); }
+  .page-top { align-items: start; flex-direction: column; }
+  .actions { width: 100%; }
+  .actions select { flex: 1; }
+  .heading { flex-direction: column; }
+  .kpis { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .kpi { padding: 16px; }
+  .panel-head { padding: 16px 16px 0; }
+  .panel-content { padding: 16px; }
+  .notice { flex-direction: column; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" aria-label="Dashboard navigation">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">C</div><div><strong>ASRE operations</strong><span class="small muted">SRE control center</span></div></div>
+    <div>
+      <p class="eyebrow nav-label">Workspace</p>
+      <nav>
+        <a href="#overview"><span class="nav-number">00</span> Overview</a>
+        <a href="#disk"><span class="nav-number">01</span> Filesystem</a>
+        <a href="#patch"><span class="nav-number">02</span> Patch installation</a>
+        <a href="#overlap"><span class="nav-number">03</span> Alert signals</a>
+        <a href="#capacity"><span class="nav-number">04</span> Capacity trend</a>
+        <a href="#backup"><span class="nav-number">05</span> Backup jobs</a>
+        <a href="#investigations"><span class="nav-number">06</span> Native incidents</a>
+        <a href="#sources"><span class="nav-number">07</span> Data sources</a>
+      </nav>
+    </div>
+    <div class="sidebar-foot"><span class="pill accent">Read-only by design</span><p>No fault triggers, approvals, remediation or ticket writes.</p></div>
+  </aside>
+  <main id="overview">
+    <div class="page-top">
+      <div class="breadcrumb"><a href="/">Incident console</a> <span>/ Operational evidence</span></div>
+      <div class="actions">
+        <label class="small muted" for="window">Period</label>
+        <select id="window" aria-label="Data time window"><option value="1h">Last hour</option><option value="6h">Last 6 hours</option><option value="24h" selected>Last 24 hours</option><option value="7d">Last 7 days</option></select>
+        <button id="refresh" class="primary" type="button"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg>Refresh</button>
+        <button id="theme" type="button" aria-label="Switch color theme"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/></svg><span id="theme-label">Dark mode</span></button>
+      </div>
+    </div>
+    <header class="heading">
+      <div><p class="eyebrow">Infrastructure / native Azure SRE Agent</p><h1>ASRE operations</h1><p class="muted">Five infrastructure signals. One clear, read-only view.</p></div>
+      <a id="agent-link" class="pill" target="_blank" rel="noopener noreferrer" hidden>Open SRE Agent</a>
+    </header>
+    <div id="connection" class="connection" role="status" aria-live="polite">
+      <strong id="connection-text">Connecting to the local adapter...</strong>
+      <p id="freshness">No data loaded yet.</p>
+    </div>
+    <section class="kpis" aria-label="Operational indicators">
+      <article class="card kpi"><p class="label">Agent runtime</p><p class="value" id="k-agent">--</p><p class="detail" id="d-agent">Awaiting Azure resource state</p></article>
+      <article class="card kpi"><p class="label">Native alert intake</p><p class="value" id="k-intake">--</p><p class="detail" id="d-intake">Awaiting response plan</p></article>
+      <article class="card kpi"><p class="label">Monitor rules</p><p class="value" id="k-rules">--</p><p class="detail" id="d-rules">Five fixed ASRE rules</p></article>
+      <article class="card kpi"><p class="label">Native incident threads</p><p class="value" id="k-threads">--</p><p class="detail" id="d-threads">Trigger-origin records in period</p></article>
+      <article class="card kpi"><p class="label">Fired alert records</p><p class="value" id="k-alerts">--</p><p class="detail" id="d-alerts">Among provider records returned</p></article>
+      <article class="card kpi"><p class="label">Filesystem used</p><p class="value" id="k-disk">--</p><p class="detail" id="d-disk">Last sampled interval, not a forecast</p></article>
+    </section>
+    <section aria-labelledby="automation-title">
+      <div class="section-title"><h2 id="automation-title">Runtime &amp; automation</h2><span class="eyebrow">Existing native configuration</span></div>
+      <div class="card readiness">
+        <div class="readiness-item"><div class="row"><h3>Proactive review</h3><span id="schedule-state" class="pill">Waiting</span></div><p id="schedule-detail">Native schedule; read-only review, not automatic case creation.</p></div>
+        <div class="readiness-item"><div class="row"><h3>Native connectors</h3><span id="connector-state" class="pill">Waiting</span></div><p id="connector-detail">Log Analytics and Azure Monitor connector health.</p></div>
+        <div class="readiness-item"><div class="row"><h3>Incident delivery</h3><span class="pill">Native flow</span></div><p>Monitor alert &gt; SRE investigation &gt; ServiceNow. This page observes; it never starts or completes that flow.</p></div>
+      </div>
+    </section>
+    <div class="section-title"><h2>Infrastructure signals</h2><span class="eyebrow">Actual provider records &amp; telemetry</span></div>
+    <div class="panels">
+      <section id="disk" class="card" aria-labelledby="disk-title">
+        <div class="panel-head"><div><h2 id="disk-title">01 / Filesystem utilization</h2><p class="mono">vm-asre-linux-cus /srv/asre-demo</p></div><span id="disk-state" class="pill">Waiting</span></div>
+        <div class="panel-content"><div class="metric-line"><div><strong id="disk-latest">--</strong><span id="disk-average-label">Latest 5-minute mean</span></div><div><strong id="disk-peak">--</strong><span>Highest raw sample in period</span></div></div><div id="disk-chart"></div><div class="chart-note"><span>Used space (%) / fixed 0-100 scale</span><span id="disk-samples">No samples loaded</span></div><p id="disk-note" class="source-note">Source: Log Analytics Perf.</p></div>
+      </section>
+      <section id="capacity" class="card" aria-labelledby="capacity-title">
+        <div class="panel-head"><div><h2 id="capacity-title">04 / Capacity trend</h2><p>Observed utilization, not projected exhaustion</p></div><span id="capacity-state" class="pill">Waiting</span></div>
+        <div class="panel-content"><div class="metric-line"><div><strong id="capacity-change">--</strong><span>Change between interval means (pp)</span></div><div><strong id="capacity-span">--</strong><span>Observed sample span</span></div></div><div id="capacity-chart"></div><div class="chart-note"><span>Used space (%) / adaptive scale</span><span>Same verified filesystem samples</span></div><p class="source-note">A trend is not proof of prevention, remediation or a capacity forecast.</p></div>
+      </section>
+      <section id="patch" class="card" aria-labelledby="patch-title">
+        <div class="panel-head"><div><h2 id="patch-title">02 / Patch installation</h2><p>Azure Update Manager installation results</p></div><span id="patch-state" class="pill">Waiting</span></div>
+        <div class="panel-content"><div id="patch-table"></div><p class="source-note">Installation records only; assessments are not installation results.</p></div>
+      </section>
+      <section id="backup" class="card" aria-labelledby="backup-title">
+        <div class="panel-head"><div><h2 id="backup-title">05 / Backup jobs</h2><p>Recovery Services / vm-asre-backup-cus</p></div><span id="backup-state" class="pill">Waiting</span></div>
+        <div class="panel-content"><p id="backup-summary" class="small muted"></p><div id="backup-table"></div><p class="source-note">Completed jobs are not evidence of a failed-backup demonstration or a failure ticket.</p></div>
+      </section>
+    </div>
+    <section id="overlap" aria-labelledby="alerts-title">
+      <div class="section-title"><h2 id="alerts-title">03 / Alert signals &amp; overlap</h2><span id="alerts-state" class="pill">Waiting</span></div>
+      <div class="card panel-content"><div id="alerts-table"></div><p class="source-note">All five fixed ASRE rules, including noise-overlap. Reported targets are preserved. Counts alone do not establish overlap or deduplication.</p></div>
+    </section>
+    <section id="investigations" aria-labelledby="threads-title">
+      <div class="section-title"><h2 id="threads-title">Native incident threads</h2><span id="threads-state" class="pill">Waiting</span></div>
+      <div class="card panel-content"><div id="threads-table"></div><p class="source-note">Trigger-origin Azure Monitor threads for the five ASRE rules, created within the selected period. The source incident state is not the investigation execution state or ServiceNow case state.</p></div>
+      <div class="notice"><span class="pill">ServiceNow links unavailable</span><div><h3>Case delivery and case visibility are different</h3><p id="case-note">No verified case-link source is bound to this status adapter. No case count or closure state is inferred from alerts or incident threads. Use the native SRE Agent for investigation details.</p></div></div>
+    </section>
+    <section id="sources" aria-labelledby="sources-title">
+      <div class="section-title"><h2 id="sources-title">Data sources &amp; freshness</h2><span class="eyebrow">Errors are not healthy empty results</span></div>
+      <div id="source-cards" class="sources"></div>
+      <p class="source-note">Provider queries use the existing Context guide's exact default-24h KQL through Log Analytics cross-service ARG. ARG is eventually consistent; each query is capped at 1,000 rows. An empty result does not independently prove provider permissions or query completeness. Seven-day filesystem charts use 15-minute bins; other periods use 5-minute bins.</p>
+    </section>
+    <footer><span>ASRE operations / Clawpilot theme</span><span>Loopback adapter &middot; credentials stay server-side &middot; automatic refresh every 60s while visible</span></footer>
+  </main>
+</div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const SOURCES = {
+  agent: ["Agent resource", "Azure Resource Manager"],
+  workspace: ["Log Analytics workspace", "Azure Resource Manager"],
+  intake: ["Native response plan", "SRE Agent / incident filters"],
+  schedule: ["Proactive schedule", "SRE Agent / scheduled tasks"],
+  connectors: ["Connector health", "SRE Agent / native connectors"],
+  rules: ["Five Monitor rules", "Azure Resource Manager"],
+  threads: ["Native incident threads", "SRE Agent / threads"],
+  filesystem: ["Filesystem telemetry", "Log Analytics / Perf"],
+  alerts: ["Alert instances", "Cross-service ARG / AlertsManagementResources"],
+  patch: ["Patch installations", "Cross-service ARG / PatchInstallationResources"],
+  backup: ["Backup jobs", "Cross-service ARG / RecoveryServicesResources"]
+};
+const tableStates = new Map();
+let snapshot = null, busy = false, timer = null, requestFailed = false;
+function text(id, value) { $(id).textContent = value === null || value === undefined ? "--" : String(value); }
+function el(tag, className, content) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (content !== undefined) node.textContent = String(content);
+  return node;
+}
+function badge(id, label, tone = "") { text(id, label); $(id).className = "pill" + (tone ? " " + tone : ""); }
+function data(key) {
+  const source = snapshot?.sources[key];
+  return source && ["ok", "empty"].includes(source.status) ? source.data : null;
+}
+function date(value) {
+  if (!value) return "Not reported";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "Invalid source time" : parsed.toLocaleString(undefined, {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+function count(value) { return Number(value).toLocaleString(); }
+function percent(value) { return Number(value).toFixed(2) + "%"; }
+function lastPart(value) { return value ? String(value).split("/").filter(Boolean).pop() : "Not reported"; }
+function tone(value) {
+  const normalized = String(value || "").toLowerCase();
+  return ["failed","error","fired","disconnected"].includes(normalized) ? "bad" :
+    ["completed","succeeded","running","active","connected","resolved","enabled"].includes(normalized) ? "good" :
+    ["inprogress","in progress","warning","unknown","disabled"].includes(normalized) ? "warn" : "";
+}
+function statusCell(value) { return el("span", "pill " + tone(value), value || "Not reported"); }
+function resourceCell(value) {
+  const node = el("span", "mono", lastPart(value));
+  if (value) node.title = String(value);
+  return node;
+}
+function message(key) {
+  const source = snapshot?.sources[key];
+  return source?.status === "error" ? source.error.code + ": " + source.error.message :
+    source?.status === "empty" ? "No matching records in this period. An empty result does not prove provider access." :
+    "Waiting for read-only source data.";
+}
+function emptyNode(key) {
+  return el("div", "empty" + (snapshot?.sources[key]?.status === "error" ? " error" : ""), message(key));
+}
+function sourceBadge(id, key) {
+  const source = snapshot?.sources[key];
+  const value = data(key);
+  badge(id, !source ? "Waiting" : source.status === "error" ? "Unavailable" :
+    source.status === "empty" ? "No records" : source.at_limit ? "Row limit reached" :
+    Array.isArray(value) ? count(value.length) + " returned" : "Read complete",
+    source?.status === "error" ? "bad" : source?.at_limit || source?.status === "empty" ? "warn" : "");
+}
+function renderTable(id, key, columns) {
+  const mount = $(id), rows = data(key);
+  mount.replaceChildren();
+  if (!rows || !rows.length) { mount.append(emptyNode(key)); return; }
+  let state = tableStates.get(id);
+  if (!state) { state = {sort: null, ascending: true, page: 0}; tableStates.set(id, state); }
+  const sorted = rows.slice();
+  if (state.sort) sorted.sort((a,b) => {
+    const av = a[state.sort], bv = b[state.sort];
+    const comparison = typeof av === "number" && typeof bv === "number" ? av-bv :
+      String(av ?? "").localeCompare(String(bv ?? ""), undefined, {numeric: true});
+    return state.ascending ? comparison : -comparison;
+  });
+  const size = 8, pages = Math.ceil(sorted.length / size);
+  state.page = Math.min(state.page, pages - 1);
+  const wrap = el("div", "table-wrap"), table = el("table");
+  table.setAttribute("aria-label", SOURCES[key][0]);
+  const head = el("thead"), heading = el("tr");
+  for (const column of columns) {
+    const th = el("th"), button = el("button", "", column.label + (state.sort === column.key ? state.ascending ? " +" : " -" : ""));
+    th.scope = "col";
+    th.setAttribute("aria-sort", state.sort === column.key ? state.ascending ? "ascending" : "descending" : "none");
+    button.type = "button";
+    button.addEventListener("click", () => {
+      state.ascending = state.sort === column.key ? !state.ascending : true;
+      state.sort = column.key; state.page = 0; renderTable(id,key,columns);
+    });
+    th.append(button); heading.append(th);
+  }
+  head.append(heading); table.append(head);
+  const body = el("tbody");
+  for (const row of sorted.slice(state.page*size, (state.page+1)*size)) {
+    const tr = el("tr");
+    for (const column of columns) {
+      const td = el("td"), value = column.format ? column.format(row[column.key],row) : row[column.key] ?? "Not reported";
+      if (value instanceof Node) td.append(value); else td.textContent = String(value);
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+  table.append(body); wrap.append(table); mount.append(wrap);
+  const pager = el("div", "pager");
+  pager.append(el("span", "", `${state.page*size+1}-${Math.min((state.page+1)*size,rows.length)} of ${count(rows.length)} returned${snapshot.sources[key].at_limit ? " (capped)" : ""}`));
+  const controls = el("div", "pager-controls");
+  for (const [label,offset] of [["Previous",-1],["Next",1]]) {
+    const button = el("button", "", label);
+    button.type = "button"; button.disabled = offset === -1 ? state.page === 0 : state.page === pages-1;
+    button.setAttribute("aria-label", label + " " + SOURCES[key][0]);
+    button.addEventListener("click", () => { state.page += offset; renderTable(id,key,columns); });
+    controls.append(button);
+  }
+  pager.append(controls); mount.append(pager);
+}
+function svgEl(tag, attributes = {}, content) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [key,value] of Object.entries(attributes)) node.setAttribute(key,String(value));
+  if (content !== undefined) node.textContent = String(content);
+  return node;
+}
+function chart(id, rows, adaptive) {
+  const mount = $(id); mount.replaceChildren();
+  if (!rows || !rows.length) { mount.append(emptyNode("filesystem")); return; }
+  const width=Math.max(280,Math.round(mount.clientWidth || 640)), height=200, left=40, right=12, top=16, bottom=32;
+  const start=Date.parse(rows[0].bucket), end=Date.parse(rows[rows.length-1].bucket);
+  const max=adaptive ? Math.min(100, Math.max(1, Math.ceil(Math.max(...rows.map(row=>row.max_used))*1.15))) : 100;
+  const x = row => left + (end===start ? .5 : (Date.parse(row.bucket)-start)/(end-start))*(width-left-right);
+  const y = value => height-bottom-(value/max)*(height-top-bottom);
+  const svg = svgEl("svg",{viewBox:`0 0 ${width} ${height}`,class:"chart",role:"img","aria-label":`Filesystem used percentage, ${rows.length} interval means. Y axis 0 to ${max} percent.`});
+  const title = svgEl("title",{}, "Actual filesystem samples; not a forecast."); svg.append(title);
+  for (const value of [0,max/2,max]) {
+    svg.append(svgEl("line",{x1:left,x2:width-right,y1:y(value),y2:y(value)}));
+    svg.append(svgEl("text",{x:left-8,y:y(value)+4,"text-anchor":"end"}, Number.isInteger(value) ? value : value.toFixed(1)));
+  }
+  const ticks=width>=440 ? [[0,"start"],[.5,"middle"],[1,"end"]] : [[0,"start"],[1,"end"]];
+  for (const [fraction,anchor] of ticks) {
+    const value=new Date(start+(end-start)*fraction);
+    svg.append(svgEl("text",{x:left+(width-left-right)*fraction,y:height-8,"text-anchor":anchor},value.toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})));
+  }
+  const segments=[];
+  const bucketMs=(snapshot.window==="7d" ? 15 : 5)*60000;
+  for (const row of rows) {
+    const previous=segments.at(-1)?.at(-1);
+    if (!previous || Date.parse(row.bucket)-Date.parse(previous.bucket)>bucketMs*1.5) segments.push([]);
+    segments.at(-1).push(row);
+  }
+  for (const segment of segments) {
+    const points=segment.map(row=>`${x(row).toFixed(2)},${y(row.used_percent).toFixed(2)}`);
+    const line="M"+points.join(" L");
+    svg.append(svgEl("path",{class:"area",d:line+` L${x(segment.at(-1))},${y(0)} L${x(segment[0])},${y(0)} Z`}));
+    svg.append(svgEl("path",{class:"series",d:line}));
+  }
+  svg.append(svgEl("circle",{cx:x(rows.at(-1)),cy:y(rows.at(-1).used_percent),r:3}));
+  mount.append(svg);
+}
+function renderSources() {
+  const mount = $("source-cards"); mount.replaceChildren();
+  for (const [key,[name,description]] of Object.entries(SOURCES)) {
+    const source = snapshot?.sources[key], card = el("article","card source-card"), row=el("div","row");
+    row.append(el("h3","",name),el("span","pill " + (source?.status === "error" ? "bad" : source?.status === "empty" || source?.at_limit ? "warn" : ""),
+      !source ? "Waiting" : source.status === "error" ? "Unavailable" : source.status === "empty" ? "No records" : source.at_limit ? "Capped" : "Read complete"));
+    card.append(row,el("p","",description),el("p","",source ? "Checked " + date(source.checked_at) : "Not checked"));
+    if (source?.status === "error") card.append(el("p","error-text",source.error.code+": "+source.error.message));
+    if (source?.at_limit) card.append(el("p","", "1,000-row limit reached; counts are not complete totals."));
+    mount.append(card);
+  }
+}
+function render() {
+  const agent=data("agent"), intake=data("intake"), rules=data("rules"), threads=data("threads"), alerts=data("alerts"), fs=data("filesystem");
+  text("k-agent",agent?.power || "--");
+  text("d-agent",agent ? `${agent.mode || "Unknown mode"} / ${agent.access || "Unknown access"}; ${agent.provisioning}` : "Agent metadata unavailable");
+  text("k-intake",intake ? intake.enabled ? "Enabled" : "Disabled" : "--");
+  text("d-intake",intake ? "asre-azure-monitor-review / " + (intake.mode || "Unknown mode") : "Native response plan unavailable");
+  text("k-rules",rules ? rules.filter(row=>row.enabled).length + " / 5" : "--");
+  text("d-rules",rules ? "Enabled rules; not a delivery test" : "Monitor rule state unavailable");
+  text("k-threads",threads ? count(threads.length) : "--");
+  text("k-alerts",alerts ? count(alerts.filter(row=>String(row.monitor_condition).toLowerCase()==="fired").length) : "--");
+  text("d-alerts",snapshot.sources.alerts?.at_limit ? "Subset only: provider row cap reached" : "Fired among returned provider records");
+  const latest=fs?.at(-1), first=fs?.[0], minutes=snapshot.window==="7d" ? 15 : 5;
+  text("k-disk",latest ? percent(latest.used_percent) : "--");
+  text("d-disk",latest ? `${minutes}-minute mean; ${date(latest.latest_sample)}` : "No current filesystem sample loaded");
+  text("disk-latest",latest ? percent(latest.used_percent) : "--");
+  text("disk-average-label",`Latest ${minutes}-minute mean`);
+  text("disk-peak",fs?.length ? percent(Math.max(...fs.map(row=>row.max_used))) : "--");
+  text("disk-samples",fs?.length ? count(fs.reduce((sum,row)=>sum+row.sample_count,0))+" actual samples" : "No samples loaded");
+  text("disk-note",latest ? "Last raw sample: "+date(latest.latest_sample)+". Interval means are not instantaneous measurements." : "Source: Log Analytics Perf.");
+  const delta=latest&&first ? latest.used_percent-first.used_percent : null;
+  text("capacity-change",delta===null ? "--" : (delta>0 ? "+" : "")+delta.toFixed(2)+" pp");
+  const span=latest&&first ? (Date.parse(latest.latest_sample)-Date.parse(first.bucket))/3600000 : null;
+  text("capacity-span",span===null ? "--" : span.toFixed(1)+" h");
+  chart("disk-chart",fs,false); chart("capacity-chart",fs,true);
+  sourceBadge("disk-state","filesystem"); sourceBadge("capacity-state","filesystem");
+  if (latest && Date.now()-Date.parse(latest.latest_sample)>15*60000) {
+    badge("disk-state","Old source samples","warn"); badge("capacity-state","Old source samples","warn");
+  }
+  for (const key of ["patch","backup","alerts","threads"]) sourceBadge(key+"-state",key);
+  const schedule=data("schedule"), connectors=data("connectors");
+  badge("schedule-state",schedule?.status || "Unavailable",schedule ? tone(schedule.status) : "bad");
+  text("schedule-detail",schedule ? `${schedule.name}; cron ${schedule.cron || "not reported"}. Read-only review, not case creation.` : message("schedule"));
+  badge("connector-state",connectors ? connectors.filter(row=>row.healthy).length+" / "+connectors.length+" healthy" : "Unavailable",
+    connectors ? connectors.every(row=>row.healthy) ? "good" : "warn" : "bad");
+  text("connector-detail",connectors ? connectors.map(row=>row.name+": "+row.status).join("; ") : message("connectors"));
+  const link=$("agent-link"); link.hidden=true;
+  if (agent?.endpoint) {
+    const target=new URL(agent.endpoint);
+    if (target.protocol==="https:" && target.hostname.startsWith("asre-demo-cus--") && target.hostname.endsWith(".centralus.azuresre.ai")) {
+      link.href=target.href; link.hidden=false;
+    }
+  }
+  renderTable("patch-table","patch",[
+    {key:"observed_at",label:"Observed",format:date},{key:"status",label:"Status",format:statusCell},
+    {key:"installed_patch_count",label:"Installed"},{key:"failed_patch_count",label:"Failed"},
+    {key:"installation_id",label:"Installation",format:resourceCell}
+  ]);
+  renderTable("backup-table","backup",[
+    {key:"started_at",label:"Started",format:date},{key:"status",label:"Status",format:statusCell},
+    {key:"ended_at",label:"Ended",format:date},{key:"job_id",label:"Job ID",format:resourceCell}
+  ]);
+  const backups=data("backup");
+  text("backup-summary",backups ? `${count(backups.length)} returned / ${count(backups.filter(row=>String(row.status).toLowerCase()==="failed").length)} reported Failed${snapshot.sources.backup.at_limit ? " (capped subset)" : ""}` : "");
+  renderTable("alerts-table","alerts",[
+    {key:"fired_at",label:"Fired at",format:date},{key:"rule_id",label:"Monitor rule",format:resourceCell},
+    {key:"monitor_condition",label:"Monitor condition",format:statusCell},{key:"alert_state",label:"Alert state"},
+    {key:"severity",label:"Severity"},{key:"alert_target_id",label:"Reported target",format:resourceCell},
+    {key:"alert_id",label:"Alert instance",format:resourceCell}
+  ]);
+  renderTable("threads-table","threads",[
+    {key:"title",label:"Native investigation"},{key:"incident_state",label:"Source incident state",format:statusCell},
+    {key:"rule_id",label:"Trigger rule",format:resourceCell},{key:"created_at",label:"Created",format:date},
+    {key:"updated_at",label:"Last updated",format:date}
+  ]);
+  renderSources(); updateFreshness();
+}
+function updateFreshness() {
+  if (!snapshot) return;
+  const age=Math.max(0,Math.floor((Date.now()-Date.parse(snapshot.generated_at))/1000));
+  const stale=age>120 || requestFailed;
+  $("connection").classList.toggle("error",stale || snapshot.status!=="ok");
+  text("connection-text",stale ? "Stale view - refresh unavailable or overdue" : snapshot.status==="ok" ? "Read-only sources refreshed" : snapshot.status==="partial" ? "Partial data - inspect unavailable sources below" : "Sources unavailable - check Azure sign-in and read permissions");
+  text("freshness",`${date(snapshot.generated_at)} / ${age}s ago${snapshot.cached ? " / cached" : ""}${stale ? " / retained data is not current" : ""}`);
+}
+async function refresh(force=false) {
+  if (busy) return;
+  clearTimeout(timer);
+  if (location.protocol==="file:") {
+    text("connection-text","Standalone layout / live data disconnected");
+    text("freshness","Start the local adapter with python -m dashboard.server, then open its loopback URL.");
+    $("connection").classList.add("error"); $("refresh").disabled=true;
+    return;
+  }
+  busy=true; $("refresh").disabled=true; $("window").disabled=true;
+  const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),180000);
+  text("connection-text",snapshot ? `Refreshing ${$("window").value} / previous ${snapshot.window} data remains visible until complete` : "Reading Azure and native SRE status...");
+  try {
+    const response=await fetch(`/api/dashboard?window=${encodeURIComponent($("window").value)}&refresh=${force?"1":"0"}`,{cache:"no-store",signal:controller.signal});
+    if (!response.ok) throw new Error("Local adapter returned HTTP "+response.status);
+    const next=await response.json();
+    if (next.schema!=="asre-dashboard/v1" || next.window!==$("window").value || !next.sources || !next.generated_at) throw new Error("Unexpected dashboard response");
+    snapshot=next; requestFailed=false; render();
+  } catch (error) {
+    requestFailed=true;
+    if (snapshot) $("window").value=snapshot.window;
+    $("connection").classList.add("error");
+    text("connection-text","Refresh failed - "+(error.name==="AbortError" ? "request timed out" : error.message));
+    text("freshness",snapshot ? "Previous data retained; not current. Last retrieval "+date(snapshot.generated_at) : "No live data loaded. Start the local adapter and check its output.");
+  } finally {
+    clearTimeout(timeout); busy=false; $("refresh").disabled=false; $("window").disabled=false;
+    timer=setTimeout(()=>{ if (!document.hidden) refresh(); },60000);
+  }
+}
+function themeLabel() {
+  const dark=document.documentElement.dataset.theme==="dark";
+  text("theme-label",dark ? "Light mode" : "Dark mode");
+  $("theme").setAttribute("aria-label","Switch to "+(dark ? "light" : "dark")+" mode");
+}
+$("theme").addEventListener("click",()=>{
+  const theme=document.documentElement.dataset.theme==="dark" ? "light" : "dark";
+  document.documentElement.dataset.theme=theme;
+  const url=new URL(location.href); url.searchParams.set("scoutTheme",theme);
+  history.replaceState(null,"",url); themeLabel();
+});
+$("refresh").addEventListener("click",()=>refresh(true));
+$("window").addEventListener("change",()=>{ tableStates.clear(); refresh(); });
+document.addEventListener("visibilitychange",()=>{ if (!document.hidden) refresh(); });
+window.addEventListener("resize",()=>{ if (snapshot) { chart("disk-chart",data("filesystem"),false); chart("capacity-chart",data("filesystem"),true); } });
+setInterval(updateFreshness,15000);
+themeLabel(); renderSources(); refresh();
+</script>
+</body>
+</html>

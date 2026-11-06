@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "profiles": ["disk", "patch-installation", "alert-recurrence", "capacity-growth", "backup-job"],
+  "not_before": "2026-10-18T21:15:23.835Z",
+  "historical_alert_ids": [
+    "/subscriptions/00000001-000a-4000-a000-000000000001/resourcegroups/rg-asre-control-cus/providers/microsoft.operationalinsights/workspaces/law-asre-cus/providers/Microsoft.AlertsManagement/alerts/00000047-000a-d000-0000-000000000047",
+    "/subscriptions/00000001-000a-4000-a000-000000000001/resourcegroups/rg-asre-control-cus/providers/microsoft.operationalinsights/workspaces/law-asre-cus/providers/Microsoft.AlertsManagement/alerts/00000058-000a-f000-d000-000000000058"
+  ],
+  "rule_id": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/microsoft.insights/scheduledqueryrules/asre-demo-disk",
+  "resource_id": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-linux-cus/providers/Microsoft.Compute/virtualMachines/vm-asre-linux-cus",
+  "facade_origin": "https://example-instance.service-now.com",
+  "facade_client_id": "0000000000000000000000000000005a",
+  "reader": {
+    "sre_origin": "https://asre-demo-cus--0a1b2c3d.4e5f6a7b.centralus.azuresre.ai",
+    "workspace_resource_id": "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-control-cus/providers/Microsoft.OperationalInsights/workspaces/law-asre-cus",
+    "log_analytics_workspace_id": "00000062-000a-4000-8000-000000000062",
+    "native_dto_version": "azmonitor-incident/v1"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:asre-demo:servicenow-action-audit:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transport_version", "write_request_id", "action_request_id", "action_name", "proposal_fingerprint"],
+  "properties": {
+    "transport_version": {"const": "1.0"},
+    "write_request_id": {"type": "string", "format": "uuid"},
+    "action_request_id": {"type": "string", "format": "uuid"},
+    "action_name": {"enum": ["recover_workload", "recover_selected_patch", "recover_guest_agent_and_backup"]},
+    "proposal_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

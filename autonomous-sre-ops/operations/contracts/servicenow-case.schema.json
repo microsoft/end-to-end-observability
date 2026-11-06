@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:asre-demo:servicenow-case:1",
+  "title": "ASRE case evidence contract, not a ServiceNow field/state mapping",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "episode_id", "source_event_ids", "resource_id", "mode", "signal_family", "detected_at", "summary", "evidence", "diagnosis", "actions", "verification"],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "episode_id": {"type": "string", "format": "uuid"},
+    "source_event_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 2048}},
+    "resource_id": {
+      "enum": [
+        "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-linux-cus/providers/Microsoft.Compute/virtualMachines/vm-asre-linux-cus",
+        "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-patch-cus/providers/Microsoft.Compute/virtualMachines/vm-asre-patch-cus",
+        "/subscriptions/00000001-000a-4000-a000-000000000001/resourceGroups/rg-asre-backup-cus/providers/Microsoft.Compute/virtualMachines/vm-asre-backup-cus"
+      ]
+    },
+    "mode": {"enum": ["reactive", "proactive"]},
+    "signal_family": {"enum": ["filesystem", "workload-memory", "alert-recurrence", "patch-installation", "backup-job"]},
+    "detected_at": {"type": "string", "format": "date-time"},
+    "summary": {"type": "string", "minLength": 10, "maxLength": 160},
+    "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}},
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding", "confidence", "gaps"],
+      "properties": {
+        "finding": {"type": "string", "minLength": 1},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "gaps": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "case_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sys_id", "number", "record_type"],
+      "properties": {
+        "sys_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "number": {"type": "string", "pattern": "^(INC|TASK|CHG|PRB)[0-9]+$"},
+        "record_type": {"enum": ["incident", "task", "change_request", "problem"]}
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["request_id", "name", "status"],
+        "properties": {
+          "request_id": {"type": "string", "format": "uuid"},
+          "name": {"enum": ["recover_workload", "recover_selected_patch", "recover_guest_agent_and_backup"]},
+          "status": {"enum": ["proposed", "reserved", "submitted", "submission_unknown", "verified", "failed", "escalated"]},
+          "azure_operation_id": {"type": "string", "minLength": 1},
+          "evidence": {"$ref": "#/$defs/evidence"}
+        },
+        "allOf": [
+          {"if": {"properties": {"status": {"enum": ["submitted", "verified"]}}}, "then": {"required": ["azure_operation_id"]}},
+          {"if": {"properties": {"status": {"const": "verified"}}}, "then": {"required": ["evidence"]}}
+        ]
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "recovery_owner"],
+      "properties": {
+        "status": {"enum": ["not_started", "pending", "verified", "failed", "inconclusive"]},
+        "recovery_owner": {"enum": ["none", "agent", "watchdog", "manual"]},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "verified"}}}, "then": {"required": ["observed_at", "evidence"]}}
+      ]
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "observed_at", "reference", "finding"],
+      "properties": {
+        "source": {"enum": ["AzureMonitor", "GuestInspection", "UpdateManager", "AzureBackup", "ServiceNow"]},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "reference": {"type": "string", "minLength": 1, "maxLength": 2048},
+        "finding": {"type": "string", "minLength": 1, "maxLength": 4096}
+      }
+    }
+  }
+}

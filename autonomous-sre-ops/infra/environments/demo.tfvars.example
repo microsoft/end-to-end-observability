@@ -1,0 +1,30 @@
+# Conservative first-apply values. Copy to demo.tfvars (git-ignored) and adjust.
+# scripts/Invoke-Terraform.ps1 supplies the subscription and tenant ids (TF_VAR_subscription_id, TF_VAR_tenant_id).
+# The two SSH public keys (different keys, ssh-ed25519 or ssh-rsa) must be exported in the shell as
+# TF_VAR_admin_ssh_public_key and TF_VAR_runner_ssh_public_key before planning; the script only checks that they are set.
+# None of these four belongs in this file.
+
+deploy_managed_agent = false
+agent_model = {
+  name     = "Automatic"
+  provider = "MicrosoftFoundry"
+}
+
+# First apply: false. Second apply: true. One-way (protection is never silently destroyed). Never use -target.
+backup_protection_enabled = false
+
+deploy_runtime       = false
+runtime_image_digest = ""
+
+# Optional: run the runtime (the Container Apps environment and its jobs) in westcentralus, southcentralus or westus2.
+# null or centralus keeps it in Central US. Choose it before the first runtime apply: a live environment cannot be moved.
+runner_location = null
+
+enable_servicenow_feedback = false
+enabled_native_alert_rules = []
+
+dashboard = { phase = "disabled" }
+
+# Entra object ID (lowercase GUID) of the operator running Terraform. Leave null until deploy_managed_agent is true;
+# the managed agent then requires it, and so does any dashboard phase other than "disabled".
+operator_object_id = null

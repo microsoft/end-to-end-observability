@@ -1,0 +1,11 @@
+*
+!Dockerfile
+!.dockerignore
+!requirements.txt
+!__init__.py
+!context.py
+!server.py
+!queries.py
+!journey.py
+!index.html
+!evidence.html

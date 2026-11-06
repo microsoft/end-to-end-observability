@@ -42,6 +42,7 @@ The platform follows a hybrid deployment model: **Terraform** orchestrates Azure
 | [`discovery/`](discovery/) | Transitional reference implementation (slated for deprecation per ADR-001) for ARG-based monitoring gap recommendations |
 | [`utility-iot-observability/`](utility-iot-observability/) | Utility industry IoT observability reference implementation |
 | [`test-data/`](test-data/) | Synthetic test data generator for workbook and dashboard validation |
+| [`autonomous-sre-ops/`](autonomous-sre-ops/) | Standalone Azure SRE Agent demonstration (Review mode) on a three-VM demo environment — not part of the onboarding sequence |
 
 ---
 
@@ -117,6 +118,12 @@ Generates large-scale synthetic datasets (Azure Resource Graph-shaped) for testi
 
 - 11 subscriptions across 3 environment rings
 - Pre-generated output: 6,000 AMBA policy states, 6,000 monitoring baselines states, 3,000 alerts, 58 alert rules, and more
+
+### Autonomous SRE Ops
+
+A deployable demonstration of a managed **Azure SRE Agent** (Review mode, access level Low) investigating real Azure Monitor alerts, Azure Update Manager failures and Azure Backup failures on a self-contained three-VM demo environment, with a private runtime that collects immutable evidence for the agent. It deploys from the operator's workstation (Terraform + PowerShell, saved plans, remote state) into one subscription, driven by a single generated context document instead of hard-coded values. Standalone: it is not a step of the onboarding sequence above, and its ServiceNow and dashboard parts are deferred.
+
+See [`autonomous-sre-ops/README.md`](autonomous-sre-ops/README.md) and the runbook [`autonomous-sre-ops/docs/deployment.md`](autonomous-sre-ops/docs/deployment.md).
 
 ---
 

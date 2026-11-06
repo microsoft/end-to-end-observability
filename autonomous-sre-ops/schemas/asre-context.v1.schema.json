@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:asre:schema:context:v1",
+  "title": "asre-context/v1",
+  "description": "Stored deployment context emitted by the Terraform output 'context'. Resource IDs are never stored: every loader derives them from subscription, resource group, provider type and name. Loaders also require name_suffix == first 10 hex characters of sha256('<subscription_id>:asre-demo') and every suffixed name and endpoint to embed it. The optional values operator_object_id, servicenow, identities.bootstrap and agent.endpoint may be omitted or null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "subscription_id", "tenant_id", "location", "name_suffix", "resource_groups",
+    "log_analytics", "registry", "key_vault", "storage", "recovery_vault", "identities", "targets", "agent"
+  ],
+  "properties": {
+    "schema": { "const": "asre-context/v1" },
+    "subscription_id": { "$ref": "#/$defs/guid" },
+    "tenant_id": { "$ref": "#/$defs/guid" },
+    "location": { "const": "centralus" },
+    "name_suffix": { "type": "string", "pattern": "^[0-9a-f]{10}$" },
+    "operator_object_id": { "anyOf": [{ "$ref": "#/$defs/guid" }, { "type": "null" }] },
+    "resource_groups": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control", "linux", "patch", "backup"],
+      "properties": {
+        "control": { "const": "rg-asre-control-cus" },
+        "linux": { "const": "rg-asre-linux-cus" },
+        "patch": { "const": "rg-asre-patch-cus" },
+        "backup": { "const": "rg-asre-backup-cus" }
+      }
+    },
+    "log_analytics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "customer_id"],
+      "properties": {
+        "name": { "const": "law-asre-cus" },
+        "customer_id": { "$ref": "#/$defs/guid" }
+      }
+    },
+    "registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "login_server"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^acrasre[0-9a-f]{10}$" },
+        "login_server": { "type": "string", "pattern": "^acrasre[0-9a-f]{10}\\.azurecr\\.io$" }
+      }
+    },
+    "key_vault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "uri"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^kv-asre-[0-9a-f]{10}$" },
+        "uri": { "type": "string", "pattern": "^https://kv-asre-[0-9a-f]{10}\\.vault\\.azure\\.net/$" }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["account_name", "blob_endpoint", "table_endpoint"],
+      "properties": {
+        "account_name": { "type": "string", "pattern": "^stasre[0-9a-f]{10}$" },
+        "blob_endpoint": { "type": "string", "pattern": "^https://stasre[0-9a-f]{10}\\.blob\\.core\\.windows\\.net$" },
+        "table_endpoint": { "type": "string", "pattern": "^https://stasre[0-9a-f]{10}\\.table\\.core\\.windows\\.net$" }
+      }
+    },
+    "recovery_vault": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "resource_group"],
+      "properties": {
+        "name": { "const": "rsv-asre-cus" },
+        "resource_group": { "const": "rg-asre-backup-cus" }
+      }
+    },
+    "identities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent", "runner", "collector", "pull"],
+      "properties": {
+        "agent": { "$ref": "#/$defs/identity" },
+        "runner": { "$ref": "#/$defs/identity" },
+        "collector": { "$ref": "#/$defs/identity" },
+        "pull": { "$ref": "#/$defs/identity" },
+        "bootstrap": { "anyOf": [{ "$ref": "#/$defs/identity" }, { "type": "null" }] }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["linux", "patch", "backup"],
+      "properties": {
+        "linux": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "resource_group", "address"],
+          "properties": {
+            "name": { "const": "vm-asre-linux-cus" },
+            "resource_group": { "const": "rg-asre-linux-cus" },
+            "address": { "const": "10.42.0.10" }
+          }
+        },
+        "patch": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "resource_group", "address"],
+          "properties": {
+            "name": { "const": "vm-asre-patch-cus" },
+            "resource_group": { "const": "rg-asre-patch-cus" },
+            "address": { "const": "10.42.0.11" }
+          }
+        },
+        "backup": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "resource_group", "address"],
+          "properties": {
+            "name": { "const": "vm-asre-backup-cus" },
+            "resource_group": { "const": "rg-asre-backup-cus" },
+            "address": { "const": "10.42.0.12" }
+          }
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "const": "asre-demo-cus" },
+        "endpoint": {
+          "type": ["string", "null"],
+          "pattern": "^https://asre-demo-cus--[a-z0-9]+\\.[a-z0-9]+\\.centralus\\.azuresre\\.ai$"
+        }
+      }
+    },
+    "servicenow": { "anyOf": [{ "$ref": "#/$defs/servicenow" }, { "type": "null" }] }
+  },
+  "$defs": {
+    "servicenow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "api_base", "client_id", "facade_client_id", "assignment_group", "configuration_items"],
+      "properties": {
+        "origin": { "type": "string", "pattern": "^https://[a-z0-9-]+\\.service-now\\.com$" },
+        "api_base": { "type": "string", "pattern": "^/api/x_[0-9a-z]+_asre/case_adapter/v1$" },
+        "client_id": { "$ref": "#/$defs/sysid" },
+        "facade_client_id": { "$ref": "#/$defs/sysid" },
+        "assignment_group": { "$ref": "#/$defs/sysid" },
+        "configuration_items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["linux", "patch", "backup"],
+          "properties": {
+            "linux": { "$ref": "#/$defs/sysid" },
+            "patch": { "$ref": "#/$defs/sysid" },
+            "backup": { "$ref": "#/$defs/sysid" }
+          }
+        }
+      }
+    },
+    "guid": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+    "sysid": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["client_id", "principal_id"],
+      "properties": {
+        "client_id": { "$ref": "#/$defs/guid" },
+        "principal_id": { "$ref": "#/$defs/guid" }
+      }
+    }
+  }
+}

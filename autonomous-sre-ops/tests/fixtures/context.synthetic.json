@@ -1,0 +1,90 @@
+{
+  "schema": "asre-context/v1",
+  "subscription_id": "00000001-000a-4000-a000-000000000001",
+  "tenant_id": "00000002-000a-4000-9000-000000000002",
+  "location": "centralus",
+  "name_suffix": "8a327010f9",
+  "operator_object_id": "00000003-000a-4000-9000-000000000003",
+  "resource_groups": {
+    "control": "rg-asre-control-cus",
+    "linux": "rg-asre-linux-cus",
+    "patch": "rg-asre-patch-cus",
+    "backup": "rg-asre-backup-cus"
+  },
+  "log_analytics": {
+    "name": "law-asre-cus",
+    "customer_id": "00000062-000a-4000-8000-000000000062"
+  },
+  "registry": {
+    "name": "acrasre8a327010f9",
+    "login_server": "acrasre8a327010f9.azurecr.io"
+  },
+  "key_vault": {
+    "name": "kv-asre-8a327010f9",
+    "uri": "https://kv-asre-8a327010f9.vault.azure.net/"
+  },
+  "storage": {
+    "account_name": "stasre8a327010f9",
+    "blob_endpoint": "https://stasre8a327010f9.blob.core.windows.net",
+    "table_endpoint": "https://stasre8a327010f9.table.core.windows.net"
+  },
+  "recovery_vault": {
+    "name": "rsv-asre-cus",
+    "resource_group": "rg-asre-backup-cus"
+  },
+  "identities": {
+    "agent": {
+      "client_id": "00000028-000a-4000-9000-000000000028",
+      "principal_id": "00000072-000a-4000-8000-000000000072"
+    },
+    "runner": {
+      "client_id": "00000071-000a-4000-8000-000000000071",
+      "principal_id": "00000073-000a-4000-8000-000000000073"
+    },
+    "collector": {
+      "client_id": "00000074-000a-4000-8000-000000000074",
+      "principal_id": "00000075-000a-4000-8000-000000000075"
+    },
+    "pull": {
+      "client_id": "00000076-000a-4000-8000-000000000076",
+      "principal_id": "00000077-000a-4000-8000-000000000077"
+    },
+    "bootstrap": {
+      "client_id": "00000078-000a-4000-8000-000000000078",
+      "principal_id": "00000079-000a-4000-8000-000000000079"
+    }
+  },
+  "targets": {
+    "linux": {
+      "name": "vm-asre-linux-cus",
+      "resource_group": "rg-asre-linux-cus",
+      "address": "10.42.0.10"
+    },
+    "patch": {
+      "name": "vm-asre-patch-cus",
+      "resource_group": "rg-asre-patch-cus",
+      "address": "10.42.0.11"
+    },
+    "backup": {
+      "name": "vm-asre-backup-cus",
+      "resource_group": "rg-asre-backup-cus",
+      "address": "10.42.0.12"
+    }
+  },
+  "agent": {
+    "name": "asre-demo-cus",
+    "endpoint": "https://asre-demo-cus--0a1b2c3d.4e5f6a7b.centralus.azuresre.ai"
+  },
+  "servicenow": {
+    "origin": "https://example-instance.service-now.com",
+    "api_base": "/api/x_0000000_asre/case_adapter/v1",
+    "client_id": "0000000000000000000000000000003a",
+    "facade_client_id": "0000000000000000000000000000005a",
+    "assignment_group": "0000000000000000000000000000007a",
+    "configuration_items": {
+      "linux": "0000000000000000000000000000014a",
+      "patch": "0000000000000000000000000000001a",
+      "backup": "0000000000000000000000000000012a"
+    }
+  }
+}

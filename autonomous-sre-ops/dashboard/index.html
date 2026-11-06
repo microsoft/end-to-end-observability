@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="An evidence-backed journey through native ASRE incident routing and investigation.">
+<title>ASRE / Incident journey</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+:root { --cp-card-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font: 14px/1.5 "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; }
+button, select { font: inherit; }
+button, select, .action { min-height: 36px; padding: 8px 12px; border: 1px solid var(--cp-border); border-radius: .625rem; background: var(--cp-surface); color: var(--cp-text); }
+button { cursor: pointer; }
+button:hover, .action:hover { border-color: var(--cp-accent); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; }
+a { color: var(--cp-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1,h2,h3,p { margin: 0; }
+h1 { font-size: clamp(22px,2.1vw,30px); line-height: 1.25; letter-spacing: -.5px; font-weight: 650; }
+h2 { font-size: 17px; font-weight: 600; }
+h3 { font-size: 14px; font-weight: 600; }
+[hidden] { display: none !important; }
+.small { font-size: 12px; }
+.muted { color: var(--cp-text-muted); }
+.mono { font-family: Consolas, "Courier New", Courier, monospace; font-size: 11px; overflow-wrap: anywhere; }
+.eyebrow { font-size: 10px; color: var(--cp-text-muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-soft); font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: .625rem; }
+.pill.good { color: var(--cp-success); }
+.pill.warn { color: var(--cp-warning); }
+.pill.bad { color: var(--cp-danger); }
+.pill.accent { color: var(--cp-accent); background: var(--cp-accent-soft); }
+.dot { width: 6px; height: 6px; display: inline-block; border-radius: 50%; background: var(--cp-border-strong); }
+.dot.good { background: var(--cp-success); }
+.dot.warn { background: var(--cp-warning); }
+.dot.accent { background: var(--cp-accent); }
+.topbar { padding: 16px 24px; border-bottom: 1px solid var(--cp-border); background: var(--cp-surface); display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.brand { display: flex; gap: 12px; align-items: center; }
+.brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: .625rem; color: var(--cp-accent-fg); background: var(--cp-accent); font-size: 18px; font-weight: 700; }
+.brand strong { display: block; font-size: 14px; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.top-actions a { font-size: 12px; }
+.primary { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+.primary:hover { background: var(--cp-accent-hover); }
+.layout { display: grid; grid-template-columns: 248px minmax(0,1fr); min-height: calc(100vh - 72px); }
+.inbox { min-width: 0; border-right: 1px solid var(--cp-border); background: var(--cp-bg-elevated); padding: 20px 12px; }
+.inbox-head { padding: 0 8px 16px; }
+.inbox-head select { width: 100%; margin-top: 12px; font-size: 12px; }
+.incident-list { display: flex; flex-direction: column; gap: 8px; max-height: 760px; overflow-y: auto; }
+.incident { width: 100%; text-align: left; padding: 12px; min-width: 0; background: var(--cp-bg-elevated); }
+.incident.selected { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+.incident .title { font-size: 12px; font-weight: 600; display: block; margin: 8px 0; overflow-wrap: anywhere; }
+.incident .meta { font-size: 10px; color: var(--cp-text-muted); display: flex; gap: 8px; justify-content: space-between; }
+.inbox-foot { border-top: 1px solid var(--cp-border); margin-top: 20px; padding: 16px 8px 0; }
+main { min-width: 0; padding: 24px; }
+.page-heading { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 16px; }
+.page-heading p { margin-top: 8px; }
+.live-status { text-align: right; min-width: 180px; }
+.live-status .small { margin-top: 4px; }
+.connection { border-left: 3px solid var(--cp-accent); background: var(--cp-surface); border-radius: 0 .625rem .625rem 0; padding: 12px 16px; margin-bottom: 16px; }
+.connection.error { border-color: var(--cp-danger); }
+.connection .small { margin-top: 4px; color: var(--cp-text-muted); }
+.profiles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.profile-chip { padding: 8px 12px; font-size: 12px; }
+.profile-chip.selected { background: var(--cp-accent-soft); border-color: var(--cp-accent); color: var(--cp-accent); }
+.profile-chip span { margin-left: 8px; color: var(--cp-text-muted); font-size: 10px; }
+.board { background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 16px; overflow: hidden; }
+.board-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--cp-border); }
+.board-top .small { margin-top: 4px; }
+.canvas-scroll { overflow-x: auto; }
+.canvas { position: relative; display: grid; grid-template-columns: minmax(150px,.85fr) minmax(180px,1fr) minmax(200px,1.15fr) minmax(170px,1fr) minmax(170px,1fr); gap: 24px; padding: 24px 20px; min-width: 1030px; min-height: 480px; }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.wire { fill: none; stroke: var(--cp-border-strong); stroke-width: 1.2; opacity: .55; }
+.wire.selected { stroke: var(--cp-accent); opacity: 1; stroke-width: 2; }
+.wire.observed { stroke: var(--cp-success); opacity: .85; }
+.flow-column { position: relative; z-index: 1; min-width: 0; }
+.stage-heading { margin-bottom: 20px; }
+.stage-heading h3 { margin-top: 8px; font-size: 16px; }
+.stage-heading p { margin-top: 4px; font-size: 11px; color: var(--cp-text-muted); }
+.node { width: 100%; padding: 16px 12px; text-align: left; border: 1px solid var(--cp-border); border-radius: .625rem; background: var(--cp-surface); box-shadow: var(--cp-card-shadow); }
+.node[data-state="completed"] { border-top: 2px solid var(--cp-success); }
+.node[data-state="reported"], .node[data-state="waiting"] { border-top: 2px solid var(--cp-warning); }
+.node[data-state="failed"] { border-top: 2px solid var(--cp-danger); }
+.node[data-state="running"] { border-top: 2px solid var(--cp-accent); }
+.node.inspected { outline: 1px solid var(--cp-accent); outline-offset: 3px; }
+.node strong { display: block; font-size: 13px; line-height: 1.4; }
+.node p { margin-top: 12px; font-size: 11px; color: var(--cp-text-soft); overflow-wrap: anywhere; }
+.node .pill { margin-top: 12px; }
+.node .mono { margin-top: 12px; color: var(--cp-text-muted); }
+.branch { display: flex; flex-direction: column; gap: 8px; }
+.route-node { width: 100%; text-align: left; background: var(--cp-bg-elevated); padding: 12px; min-width: 0; }
+.route-node.selected { border-color: var(--cp-accent); background: var(--cp-surface); box-shadow: var(--cp-card-shadow); }
+.route-node strong { font-size: 12px; display: block; }
+.route-node .mono { display: block; color: var(--cp-text-muted); font-size: 10px; margin-top: 4px; }
+.route-node .pill { margin-top: 8px; }
+.subcard { margin-top: 12px; padding: 12px; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: .625rem; font-size: 11px; color: var(--cp-text-muted); }
+.subcard p + p { margin-top: 8px; }
+.skill { display: block; padding-left: 8px; border-left: 2px solid var(--cp-border); margin: 8px 0; color: var(--cp-text-soft); overflow-wrap: anywhere; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 0 20px 16px; font-size: 10px; color: var(--cp-text-muted); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.schedule-lane { border-top: 1px solid var(--cp-border); padding: 12px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--cp-text-muted); }
+.schedule-lane strong { color: var(--cp-text); }
+.detail-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.95fr); gap: 20px; margin-top: 20px; }
+.panel { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; min-width: 0; overflow: hidden; }
+.panel-heading { padding: 16px 20px; border-bottom: 1px solid var(--cp-border); display: flex; gap: 12px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.panel-content { padding: 20px; }
+.panel-content p { color: var(--cp-text-soft); font-size: 12px; }
+.panel-content p + p { margin-top: 12px; }
+.fields { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 8px 16px; margin: 16px 0; font-size: 12px; }
+.fields dt { color: var(--cp-text-muted); }
+.fields dd { margin: 0; overflow-wrap: anywhere; }
+.procedure { list-style: none; padding: 0; margin: 16px 0; counter-reset: step; }
+.procedure li { font-size: 12px; padding: 8px 0 8px 32px; position: relative; color: var(--cp-text-soft); }
+.procedure li::before { counter-increment: step; content: counter(step,decimal-leading-zero); position: absolute; left: 0; color: var(--cp-accent); font: 11px Consolas, "Courier New", Courier, monospace; }
+.detail-actions { border-top: 1px solid var(--cp-border); padding-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+.detail-actions .action, .detail-actions button { font-size: 11px; }
+.action { display: inline-flex; align-items: center; }
+.timeline { max-height: 420px; overflow-y: auto; padding: 16px 20px; }
+.event { border-left: 1px solid var(--cp-border); margin-left: 4px; padding: 0 0 20px 20px; position: relative; }
+.event::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cp-border-strong); position: absolute; left: -4px; top: 6px; }
+.event[data-kind="agent_update"]::before { background: var(--cp-accent); }
+.event .stamp { color: var(--cp-text-muted); font-size: 10px; }
+.event h3 { font-size: 12px; margin: 4px 0 8px; }
+.event p { white-space: pre-wrap; font-size: 12px; color: var(--cp-text-soft); overflow-wrap: anywhere; }
+.event details { margin-top: 8px; font-size: 11px; color: var(--cp-text-muted); }
+.event summary { cursor: pointer; }
+.event details p { margin-top: 8px; font-size: 11px; }
+.empty { padding: 24px 16px; font-size: 12px; color: var(--cp-text-muted); border: 1px dashed var(--cp-border); border-radius: .625rem; overflow-wrap: anywhere; }
+.warning { border-left: 2px solid var(--cp-warning); padding-left: 12px; }
+.error-text { color: var(--cp-danger) !important; }
+.source-strip { margin-top: 20px; padding: 16px 0; border-top: 1px solid var(--cp-border); display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; font-size: 11px; color: var(--cp-text-muted); }
+.source-errors { width: 100%; }
+.source-errors p { margin-top: 4px; }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--cp-surface); border: 1px solid var(--cp-accent); border-radius: .625rem; color: var(--cp-text); padding: 12px 16px; z-index: 5; max-width: min(400px,90vw); }
+@media (min-width:1800px) { main { padding: 28px 36px; } .canvas { gap: 40px; padding: 28px; } }
+@media (max-width:1100px) {
+  .layout { grid-template-columns: 208px minmax(0,1fr); }
+  main { padding: 20px 16px; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width:760px) {
+  .topbar { padding: 16px; }
+  .layout { grid-template-columns: minmax(0,1fr); }
+  .inbox { border-right: 0; border-bottom: 1px solid var(--cp-border); padding: 16px; }
+  .inbox-head { padding: 0; }
+  .inbox-head select { width: auto; margin: 0; }
+  .incident-list { flex-direction: row; margin-top: 12px; max-height: 160px; overflow-x: auto; }
+  .incident { flex: 0 0 220px; }
+  .inbox-foot { display: none; }
+  .page-heading { flex-direction: column; }
+  .live-status { text-align: left; }
+  .canvas { grid-template-columns: 1fr; min-width: 0; gap: 28px; padding: 20px; }
+  .canvas .wires { display: none; }
+  .stage-heading { margin-bottom: 12px; }
+  .flow-column { border-left: 2px solid var(--cp-border); padding-left: 16px; }
+  .branch { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .branch .route-node.selected { grid-column: 1 / -1; }
+  .node { padding: 16px; }
+  .profiles { gap: 8px; }
+  .profile-chip { flex: 1 1 140px; }
+  .board-top { padding: 16px; }
+  .fields { grid-template-columns: 90px minmax(0,1fr); gap: 8px; }
+  .source-strip { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark" aria-hidden="true">C</div><div><strong>ASRE / Incident journey</strong><div class="eyebrow">Native SRE operations</div></div></div>
+  <div class="top-actions">
+    <a href="/evidence" class="action">Operational evidence</a>
+    <button id="theme" type="button">Switch theme</button>
+    <button id="refresh" type="button" class="primary">Refresh sources</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="inbox" aria-label="Native incident inbox">
+    <div class="inbox-head"><div class="row between"><h2>Incident inbox</h2><span id="inbox-count" class="pill">Waiting</span></div><div class="row between"><p class="small muted">Trigger-origin / five ASRE rules</p><select id="period" aria-label="Incident time period"><option value="1h">Last hour</option><option value="6h">Last 6 hours</option><option value="24h" selected>Last 24 hours</option><option value="7d">Last 7 days</option></select></div></div>
+    <div id="incident-list" class="incident-list"><p class="empty">Reading native incident records...</p></div>
+    <div class="inbox-foot"><span class="pill accent">Read-only console</span><p class="small muted">Select an incident to inspect its real journey. Select a use case to explore its planned route.</p></div>
+  </aside>
+  <main>
+    <div class="page-heading">
+      <div><p class="eyebrow">Observe the process / understand the next step</p><h1 id="page-title">From signal to case.</h1><p id="page-description" class="small muted">Native routing, investigation activity and honest delivery evidence.</p></div>
+      <div class="live-status"><span id="run-state" class="pill">No incident selected</span><p id="runtime" class="small muted">Loading agent state...</p></div>
+    </div>
+    <div id="connection" class="connection" role="status" aria-live="polite"><strong id="connection-text">Connecting to the read-only adapter...</strong><p id="freshness" class="small">No live data loaded.</p></div>
+    <div id="profiles" class="profiles" aria-label="Use case routes"></div>
+    <section class="board" aria-label="Incident journey map">
+      <div class="board-top"><div><div class="row"><span id="journey-mode" class="pill">Waiting for data</span><strong id="journey-title">Select an incident or a use case</strong></div><p id="journey-subtitle" class="small muted">Planned steps and observed progress are kept separate.</p></div><div class="row"><button id="copy-id" type="button" disabled>Copy incident ID</button><button id="export" type="button" disabled>Export trace</button></div></div>
+      <div class="canvas-scroll">
+        <div id="canvas" class="canvas">
+          <svg id="wires" class="wires" aria-hidden="true"></svg>
+          <div class="flow-column"><div class="stage-heading"><span class="eyebrow">Stage 01 / Intake</span><h3>Receive the signal</h3><p>Actual Azure Monitor incident</p></div><button id="node-signal" class="node" data-stage="signal" type="button"><strong>Alert received</strong><p>Native alert identity and source time.</p><span class="pill">Not observed</span></button><div class="subcard"><p>No synthetic alert or manual chat is used to start this flow.</p></div></div>
+          <div class="flow-column"><div class="stage-heading"><span class="eyebrow">Stage 02 / Route</span><h3>Choose the profile</h3><p>One native plan. Five fixed branches.</p></div><div id="branches" class="branch"></div><div class="subcard"><p class="mono">asre-azure-monitor-review</p><p id="route-current">Current native plan state not loaded.</p></div></div>
+          <div class="flow-column"><div class="stage-heading"><span class="eyebrow">Stage 03 / Investigate</span><h3>Build the diagnosis</h3><p>Profile-specific evidence and skills</p></div><button id="node-investigate" class="node" data-stage="investigate" type="button"><strong>Evidence &amp; investigation</strong><p>Inspect native run state and source events.</p><span class="pill">Not observed</span></button><div class="subcard"><p class="eyebrow">Expected skills / not proof of loading</p><div id="skills"></div><p id="audit-summary">Tool-audit events not loaded.</p></div></div>
+          <div class="flow-column"><div class="stage-heading"><span class="eyebrow">Stage 04 / Record</span><h3>Record the findings</h3><p>Authorized native case tool</p></div><button id="node-case" class="node" data-stage="case" type="button"><strong>Case &amp; internal findings</strong><p>Create/obtain the correlated case and append the findings.</p><span class="pill">Not observed</span></button><div class="subcard"><p>Automatic within the existing permitted case boundary.</p><p>No new mandatory human gate.</p></div></div>
+          <div class="flow-column"><div class="stage-heading"><span class="eyebrow">Stage 05 / Verify</span><h3>Verify the delivery</h3><p>Independent persisted evidence</p></div><button id="node-verify" class="node" data-stage="verify" type="button"><strong>Case + findings receipts</strong><p>Verify original writes; do not infer case closure.</p><span class="pill">Not observed</span></button><div class="subcard"><p id="approval-summary">Native approval source not loaded.</p><p>Repair and closure are outside this Review flow.</p></div></div>
+        </div>
+      </div>
+      <div class="legend"><span><i class="dot good"></i>Observed completion</span><span><i class="dot accent"></i>Selected route / native running state</span><span><i class="dot warn"></i>Reported or waiting</span><span><i class="dot"></i>Planned / not observed</span></div>
+      <div class="schedule-lane"><span class="pill">Separate proactive lane</span><strong id="schedule-state">State unavailable</strong><span>Six-hour native review &gt; collect evidence &gt; report risks</span><span class="pill">No case-write or repair authority</span></div>
+    </section>
+    <div class="detail-grid">
+      <section id="inspector" class="panel" aria-label="Selected step details"><div class="panel-heading"><div><p class="eyebrow">Step inspector</p><h2 id="inspect-title">Plan &amp; profile matched</h2></div><div class="row"><span id="inspect-state" class="pill">Planned</span><button id="back-map" type="button">Back to map</button></div></div><div id="inspect-content" class="panel-content"><p>Select a route or stage to inspect its purpose, evidence and permitted next actions.</p></div></section>
+      <section id="activity" class="panel" aria-label="Native source event timeline"><div class="panel-heading"><div><p class="eyebrow">Actual native events / no simulated progress</p><h2>Execution timeline</h2></div><select id="event-filter" aria-label="Timeline stage"><option value="all">All stages</option><option value="signal">Signal</option><option value="investigate">Investigation</option><option value="case">Case references</option></select></div><div id="timeline" class="timeline"><p class="empty">Choose a native incident to read its available events.</p></div></section>
+    </div>
+    <footer class="source-strip"><span id="source-summary">Sources not loaded.</span><span>Native state != alert state != case state</span><span>Read-only / light &amp; dark / local browser times</span><div id="source-errors" class="source-errors"></div></footer>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const STAGES=["signal","route","investigate","case","verify"];
+const NAMES={signal:"Alert received",route:"Plan & profile matched",investigate:"Evidence & investigation",case:"Case & findings",verify:"Delivery verification"};
+const LABELS={completed:"Observed complete",running:"Native running",waiting:"Waiting",failed:"Failed",reported:"Agent reported",not_observed:"Not observed",planned:"Planned"};
+let snapshot=null, journey=null, selectedId=null, selectedProfile=null, inboxFilter=null, selectedStage="route";
+let sourcesBusy=false, detailBusy=false, detailStale=false, sourcesStale=false;
+let detailGeneration=0, sourceTimer=null, detailTimer=null, toastTimer=null;
+function text(id,value) { $(id).textContent=value??"--"; }
+function node(tag,cls,value) { const e=document.createElement(tag); if(cls)e.className=cls; if(value!==undefined)e.textContent=String(value); return e; }
+function source(key) { const s=snapshot?.sources[key]; return s&&["ok","empty"].includes(s.status)?s.data:null; }
+function profiles() { return snapshot?.profiles||[]; }
+function profile() { return profiles().find(p=>p.id===selectedProfile)||null; }
+function incidents() { return source("threads")||[]; }
+function selected() { return incidents().find(i=>i.id===selectedId)||null; }
+function when(value) { const d=new Date(value); return !value||Number.isNaN(d.getTime())?"Not reported":d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+function tone(state) { return state==="completed"?"good":state==="failed"?"bad":["reported","waiting"].includes(state)?"warn":state==="running"?"accent":""; }
+function badge(id,label,state) { text(id,label); $(id).className="pill "+tone(state); }
+function profileOf(incident) { return profiles().find(p=>p.rule_id.toLowerCase()===incident.rule_id.toLowerCase()); }
+function stateOf(raw) { return {complete:"completed",completed:"completed",inprogress:"running",running:"running",failed:"failed",error:"failed",pending:"waiting",queued:"waiting"}[String(raw||"").replaceAll(" ","").toLowerCase()]||"not_observed"; }
+function step(id) { return journey?.stages.find(s=>s.id===id)||{id,name:NAMES[id],state:selectedId?"not_observed":"planned",summary:selectedId?"No source event observed for this step.":"Planned step; no incident execution selected.",at:null}; }
+function notify(message) { text("toast",message); $("toast").hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$("toast").hidden=true,6000); }
+function bookmark() {
+  const url=new URL(location.href);
+  for(const k of ["incident","profile"])url.searchParams.delete(k);
+  if(selectedId)url.searchParams.set("incident",selectedId); else if(selectedProfile)url.searchParams.set("profile",selectedProfile);
+  history.replaceState(null,"",url);
+}
+function selectIncident(identity) {
+  const record=incidents().find(i=>i.id===identity); if(!record)return;
+  selectedId=identity; selectedProfile=profileOf(record)?.id||null; journey=null; detailStale=false;
+  detailGeneration++; clearTimeout(detailTimer); bookmark(); render(); loadDetail();
+}
+function selectProfile(identity) {
+  selectedProfile=identity;inboxFilter=identity;
+  const first=incidents().find(i=>profileOf(i)?.id===identity);
+  if(first) { selectIncident(first.id); return; }
+  selectedId=null; journey=null; detailStale=false; detailBusy=false; detailGeneration++; clearTimeout(detailTimer);
+  bookmark(); render();
+}
+function renderInbox() {
+  const list=$("incident-list"); list.replaceChildren();
+  const records=incidents().filter(i=>!inboxFilter||profileOf(i)?.id===inboxFilter);
+  text("inbox-count",records.length+" returned");
+  if(!records.length)list.append(node("p","empty",source("threads")===null?"Native thread source unavailable. Inspect source errors below.":"No native incidents in this route and period. The canvas is a plan preview, not a completed run."));
+  for(const record of records) {
+    const button=node("button","incident"+(record.id===selectedId?" selected":""));
+    button.type="button"; button.setAttribute("aria-pressed",String(record.id===selectedId));
+    const meta=node("div","meta"), state=stateOf(record.execution_state);
+    meta.append(node("span","",profileOf(record)?.name||"Native incident"),node("span","pill "+tone(state),record.execution_state||"Unknown"));
+    button.append(meta,node("span","title",record.title),node("span","meta",when(record.created_at)));
+    button.addEventListener("click",()=>selectIncident(record.id)); list.append(button);
+  }
+}
+function renderRoutes() {
+  const chips=$("profiles"), branches=$("branches"); chips.replaceChildren(); branches.replaceChildren();
+  const all=node("button","profile-chip"+(!inboxFilter?" selected":""),"All incidents");
+  all.type="button"; all.addEventListener("click",()=>{inboxFilter=null;renderInbox();renderRoutes();drawWires();}); chips.append(all);
+  for(const p of profiles()) {
+    const count=incidents().filter(i=>profileOf(i)?.id===p.id).length;
+    const chip=node("button","profile-chip"+(p.id===inboxFilter?" selected":""),p.name);
+    chip.type="button"; chip.dataset.profile=p.id; chip.append(node("span","",count+" runs"));
+    chip.setAttribute("aria-pressed",String(p.id===inboxFilter)); chip.addEventListener("click",()=>selectProfile(p.id)); chips.append(chip);
+    const route=node("button","route-node"+(p.id===selectedProfile?" selected":""));
+    route.type="button"; route.dataset.profile=p.id;
+    route.append(node("strong","",p.name),node("span","mono",p.id));
+    if(p.id===selectedProfile) {
+      route.id="node-route"; route.dataset.stage="route";
+      const s=step("route"); route.append(node("span","pill "+tone(s.state),LABELS[s.state]));
+      route.addEventListener("click",()=>inspect("route"));
+    } else route.addEventListener("click",()=>selectProfile(p.id));
+    branches.append(route);
+  }
+}
+function renderNodes() {
+  const p=profile(), record=selected();
+  for(const id of STAGES) {
+    if(id==="route")continue;
+    const element=$("node-"+id), s=step(id);
+    element.dataset.state=s.state; element.classList.toggle("inspected",selectedStage===id);
+    const pill=element.querySelector(".pill"); pill.textContent=LABELS[s.state]||s.state; pill.className="pill "+tone(s.state);
+    element.querySelector("p").textContent=id==="signal"?(record?record.rule_id.split("/").at(-1):"Wait for a native alert for this profile."):
+      id==="investigate"?(p?.focus||"Select a use-case profile."):s.summary;
+  }
+  $("node-route")?.classList.toggle("inspected",selectedStage==="route");
+  const skills=$("skills"); skills.replaceChildren();
+  for(const name of p?.skills||[])skills.append(node("span","skill mono",name));
+  const audits=journey&&journey.sources.messages.status!=="error"?journey.events.filter(e=>e.kind==="tool_audit").length:undefined;
+  text("audit-summary",audits===undefined?"Tool-audit source not loaded.":`${audits} post-tool audit events. Named tool results are not exposed by these hook records.`);
+  const approvals=journey?.approvals;
+  text("approval-summary",!approvals?"Native approvals not read.":approvals.pending_count===null?"Native approval source unavailable.":approvals.pending_count?`${approvals.pending_count} pending native approvals. Open SRE Agent to review.`:"No pending native approvals reported.");
+}
+function safeAgentLink() {
+  const endpoint=source("agent")?.endpoint; if(!endpoint)return null;
+  const url=new URL(endpoint);
+  return url.protocol==="https:"&&!url.username&&!url.password&&url.hostname.startsWith("asre-demo-cus--")&&url.hostname.endsWith(".centralus.azuresre.ai")?url.href:null;
+}
+function actionLink(label,url) { const a=node("a","action",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";return a; }
+function fields(mount,values) {
+  const dl=node("dl","fields");
+  for(const [key,value]of values){dl.append(node("dt","",key),node("dd",key.includes("ID")||key==="Rule"?"mono":"",value??"Not supplied"));}
+  mount.append(dl);
+}
+function scrollToElement(element) { element.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"nearest"}); }
+function inspect(id) { selectedStage=id; renderInspector();renderNodes();scrollToElement($("inspector")); }
+function renderInspector() {
+  const mount=$("inspect-content"), p=profile(), record=journey?.thread||selected(), s=step(selectedStage);
+  mount.replaceChildren(); text("inspect-title",NAMES[selectedStage]);badge("inspect-state",LABELS[s.state]||s.state,s.state);
+  if(!p){mount.append(node("p","","Select an incident or a use-case branch."));return;}
+  const descriptions={
+    signal:"The entry point is a real Azure Monitor alert. Alert state is not the investigation execution state.",
+    route:"The native plan matches the alert, then the fixed case profile determines the evidence and permitted case operations. Expected skills below are not claims that they were loaded.",
+    investigate:p.focus,
+    case:"The existing case tool creates or obtains the owned incident and writes the initial internal findings. A reference in an agent message is reported evidence, not an independent persisted-write receipt.",
+    verify:"Verify the original case and internal-findings writes independently. Neither a completed native run nor a resolved Monitor alert proves delivery, recovery or case closure."
+  };
+  mount.append(node("p","",descriptions[selectedStage]));
+  if(selectedStage==="signal")fields(mount,[["Alert ID",record?.alert_instance_id],["Rule",p.rule_id],["Native created",when(record?.created_at)],["Source alert state",record?.incident_state]]);
+  if(selectedStage==="route") {
+    const intake=source("intake");
+    fields(mount,[["Incident plan",record?.plan_id||"Not observed"],["Current handler",intake?.handler],["Current mode",intake?.mode],["Profile",p.id],["Current priorities",intake?.priorities?.join(", ")],["Current title match",intake?.title_contains],["Current target",intake?.target]]);
+    mount.append(node("p","small muted","Current configuration and the historical incident binding are separate observations."));
+  }
+  if(selectedStage==="investigate") {
+    fields(mount,[["Native run state",journey?.execution_state||record?.execution_state||"Not observed"],["Expected skill",p.skills[0]],["Shared skill",p.skills[1]],["Source events",journey?String(journey.events.length):"Not loaded"]]);
+    const ul=node("ol","procedure");
+    for(const detail of ["Validate the exact alert, VM or protected item and evaluation window.",p.focus,"Keep unknown causes explicit. Review does not authorize repair or closure."])ul.append(node("li","",detail));
+    mount.append(ul);
+  }
+  if(selectedStage==="case") {
+    const references=journey?.case_references||[];
+    if(!references.length)mount.append(node("p","warning","No reported case reference in the available native messages. This does not prove that no case exists."));
+    for(const ref of references) {
+      fields(mount,[["Reported case",ref.number],["Source message ID",ref.source_message_id],["Reported at",when(ref.reported_at)],["Verification","Agent reported; independent receipt not connected"]]);
+      if(/^https:\/\/[a-z0-9-]+\.service-now\.com\/incident\.do\?sys_id=[0-9a-f]{32}$/.test(ref.url))mount.append(actionLink("Open reported "+ref.number,ref.url));
+    }
+  }
+  if(selectedStage==="verify") {
+    mount.append(node("p","warning","Not observed: this adapter has no independent ServiceNow create/findings receipt reader. No green completion is inferred."));
+    fields(mount,[["Native execution",journey?.execution_state||"Not observed"],["Source alert",record?.incident_state],["Case delivery","Unverified in this console"],["Recovery owner","Not established by this status view"]]);
+  }
+  if(p.id==="backup-job")mount.append(node("p","warning",p.qualification+". Completed backup jobs are not failure acceptance."));
+  const actions=node("div","detail-actions");
+  actions.append(actionLink("Inspect operational evidence",p.evidence_url));
+  const native=safeAgentLink();if(native)actions.append(actionLink("Open native SRE Agent",native));
+  const events=node("button","","Show step events");events.type="button";
+  events.addEventListener("click",()=>{$("event-filter").value=["route","verify"].includes(selectedStage)?"all":selectedStage;renderTimeline();scrollToElement($("activity"));});
+  actions.append(events);mount.append(actions);
+}
+function renderTimeline() {
+  const mount=$("timeline"); mount.replaceChildren();
+  if(!selectedId){mount.append(node("p","empty","Plan preview only. No incident events are invented."));return;}
+  if(!journey){mount.append(node("p","empty",detailBusy?"Reading native incident events...":"Native journey not available. Refresh to retry."));return;}
+  const error=journey.sources.messages.error;
+  if(error)mount.append(node("p","empty error-text",error.code+": "+error.message));
+  const filter=$("event-filter").value, events=journey.events.filter(e=>filter==="all"||e.stage===filter);
+  if(!events.length&&!error)mount.append(node("p","empty","No source events returned for this stage. No progress is inferred."));
+  for(const event of events) {
+    const item=node("article","event");item.dataset.kind=event.kind;
+    item.append(node("div","stamp",when(event.at)+" / "+event.source),node("h3","",event.title));
+    if(event.kind==="tool_audit")item.append(node("p","",event.text+(typeof event.duration_ms==="number"?" Hook duration "+event.duration_ms+" ms.":"")));
+    else {
+      const content=event.text.length>260?event.text.slice(0,260)+"...":event.text;
+      item.append(node("p","",content));
+      if(event.text.length>260){const details=node("details"),summary=node("summary","","Read full public update");details.append(summary,node("p","",event.text));item.append(details);}
+    }
+    mount.append(item);
+  }
+  if(journey.message_rows>journey.event_limit)mount.append(node("p","small muted","Only the last "+journey.event_limit+" eligible public events are displayed."));
+}
+function drawWires() {
+  const svg=$("wires"), canvas=$("canvas");svg.replaceChildren();
+  if(!profile()||innerWidth<=760)return;
+  const box=canvas.getBoundingClientRect();svg.setAttribute("viewBox",`0 0 ${box.width} ${box.height}`);
+  const point=(element,right)=>{const r=element.getBoundingClientRect();return{x:(right?r.right:r.left)-box.left,y:r.top-box.top+r.height/2};};
+  function wire(from,to,cls) {
+    if(!from||!to)return;
+    const a=point(from,true),b=point(to,false),mid=(a.x+b.x)/2;
+    const path=document.createElementNS("http://www.w3.org/2000/svg","path");path.setAttribute("d",`M${a.x} ${a.y} C${mid} ${a.y},${mid} ${b.y},${b.x} ${b.y}`);path.setAttribute("class","wire "+cls);svg.append(path);
+  }
+  for(const route of $("branches").children)wire($("node-signal"),route,route.id==="node-route"?"selected":"");
+  for(const [a,b]of [["route","investigate"],["investigate","case"],["case","verify"]])wire($("node-"+a),$("node-"+b),step(a).state==="completed"&&step(b).state==="completed"?"observed":"selected");
+}
+function freshness() {
+  if(!snapshot)return;
+  const age=Math.max(0,Math.floor((Date.now()-Date.parse(snapshot.generated_at))/1000));
+  const detailAge=journey?Math.max(0,Math.floor((Date.now()-Date.parse(journey.generated_at))/1000)):null;
+  const stale=sourcesStale||detailStale||age>120||(detailAge!==null&&detailAge>45);
+  $("connection").classList.toggle("error",stale||snapshot.status!=="ok");
+  text("connection-text",stale?"Stale or unavailable read - retained progress is not current":snapshot.status==="ok"?"Native source data / read-only observation":"Partial source data / inspect errors below");
+  text("freshness",`Sources ${when(snapshot.generated_at)} (${age}s ago)${detailAge===null?"":` / journey ${detailAge}s ago`}. Stages reflect evidence, not animation.`);
+}
+function render() {
+  renderInbox();renderRoutes();renderNodes();renderInspector();renderTimeline();
+  const p=profile(), record=selected(), agent=source("agent"), intake=source("intake"), schedule=source("schedule");
+  text("page-title",p?p.name+" / incident journey":"From signal to case.");
+  text("page-description",record?record.title:"Select a native incident, or explore a use case without inventing an execution.");
+  badge("journey-mode",selectedId?"Native incident":"Plan preview",selectedId?"running":null);
+  text("journey-title",selectedId?selectedId.slice(0,8)+" / "+(p?.id||""):p?.name||"Select a route");
+  text("journey-subtitle",selectedId?"Click a stage to inspect its source, expected procedure and permitted next actions.":"No live incident selected. All steps below are planned, not completed.");
+  const raw=journey?.execution_state||record?.execution_state, state=stateOf(raw);
+  badge("run-state",selectedId?"Native run: "+(raw||"unknown"):"Plan preview",state);
+  text("runtime",agent?`${agent.name} / ${agent.power} / ${agent.mode}`:"Agent state unavailable");
+  text("route-current",intake?`Current plan ${intake.enabled?"enabled":"disabled"} / ${intake.mode||"unknown mode"}`:"Current native plan state unavailable.");
+  text("schedule-state",schedule?`${schedule.status} / ${schedule.cron||"cron unavailable"}`:"Schedule unavailable");
+  $("copy-id").disabled=!selectedId;$("export").disabled=!journey||detailStale;
+  const sources=snapshot?.sources||{},errors=Object.entries(sources).filter(([,s])=>s.status==="error");
+  text("source-summary",`${Object.keys(sources).length-errors.length}/${Object.keys(sources).length} source reads available. Journey refresh 15s / overview 60s while visible.`);
+  const errorMount=$("source-errors");errorMount.replaceChildren();
+  for(const [key,value]of errors)errorMount.append(node("p","error-text",key+": "+value.error.code+" / "+value.error.message));
+  for(const [key,value]of Object.entries(journey?.sources||{}))if(value.error)errorMount.append(node("p","error-text",key+": "+value.error.code+" / "+value.error.message));
+  freshness();requestAnimationFrame(drawWires);
+}
+async function readJson(url,signal) {
+  const response=await fetch(url,{cache:"no-store",signal});
+  if(!response.ok)throw new Error("Read adapter HTTP "+response.status);
+  return response.json();
+}
+async function loadSources(force=false) {
+  if(sourcesBusy)return;
+  clearTimeout(sourceTimer);
+  if(location.protocol==="file:"){text("connection-text","Disconnected layout / start the local read-only adapter");text("freshness","python -m dashboard.server --port 8766, then open http://127.0.0.1:8766");$("refresh").disabled=true;return;}
+  sourcesBusy=true;$("refresh").disabled=true;$("period").disabled=true;
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),180000);
+  try {
+    const next=await readJson(`/api/dashboard?window=${$("period").value}&refresh=${force?"1":"0"}`,controller.signal);
+    if(next.schema!=="asre-dashboard/v1"||!Array.isArray(next.profiles))throw new Error("Unexpected overview contract");
+    snapshot=next;sourcesStale=false;
+    if(selectedId&&!incidents().some(i=>i.id===selectedId)){selectedId=null;journey=null;detailGeneration++;clearTimeout(detailTimer);}
+    if(!selectedProfile&&!selectedId) {
+      const url=new URL(location.href),requested=url.searchParams.get("incident"),requestedProfile=url.searchParams.get("profile");
+      const candidate=incidents().find(i=>i.id===requested)||(!requestedProfile?incidents()[0]:null);
+      if(candidate){selectedId=candidate.id;selectedProfile=profileOf(candidate)?.id;}
+      else {selectedProfile=profiles().find(p=>p.id===requestedProfile)?.id||profiles()[0]?.id;inboxFilter=requestedProfile?selectedProfile:null;}
+    }
+    render();
+    if(selectedId&&!detailBusy)loadDetail(force);
+  } catch(error) {
+    sourcesStale=true;$("connection").classList.add("error");
+    text("connection-text","Source refresh failed / "+(error.name==="AbortError"?"request timed out":error.message));
+    text("freshness",snapshot?"Previous source data retained; not current.":"No live records loaded. Check the local adapter and Azure sign-in.");
+    if(snapshot)$("period").value=snapshot.window;
+  } finally {
+    clearTimeout(timeout);sourcesBusy=false;$("refresh").disabled=false;$("period").disabled=false;
+    sourceTimer=setTimeout(()=>{if(!document.hidden)loadSources();},60000);
+  }
+}
+async function loadDetail(force=false) {
+  if(!selectedId)return;
+  const identity=selectedId,generation=++detailGeneration;
+  clearTimeout(detailTimer);detailBusy=true;renderTimeline();
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),120000);
+  try {
+    const next=await readJson(`/api/incidents/${identity}?refresh=${force?"1":"0"}`,controller.signal);
+    if(generation!==detailGeneration||identity!==selectedId)return;
+    if(next.schema!=="asre-journey/v1")throw new Error("Unexpected journey contract");
+    if(next.status==="error")throw new Error(next.error.code+": "+next.error.message);
+    if(next.data.thread.id!==identity)throw new Error("Incident identity mismatch");
+    journey={...next.data,generated_at:next.generated_at};detailStale=false;render();
+  } catch(error) {
+    if(generation!==detailGeneration)return;
+    detailStale=true;$("connection").classList.add("error");
+    text("connection-text","Journey read failed / "+(error.name==="AbortError"?"request timed out":error.message));
+    text("freshness",journey?"Previous journey retained; not current.":"No execution progress assumed. Native detail source is unavailable.");
+    $("timeline").replaceChildren(node("p","empty error-text","Journey read unavailable: "+error.message));
+    $("export").disabled=true;
+  } finally {
+    clearTimeout(timeout);
+    if(generation===detailGeneration){detailBusy=false;detailTimer=setTimeout(()=>{if(!document.hidden)loadDetail();},15000);}
+  }
+}
+for(const button of document.querySelectorAll("[data-stage]"))button.addEventListener("click",()=>inspect(button.dataset.stage));
+$("event-filter").addEventListener("change",renderTimeline);
+$("back-map").addEventListener("click",()=>scrollToElement(document.querySelector(".board")));
+$("refresh").addEventListener("click",()=>loadSources(true));
+$("period").addEventListener("change",()=>{selectedId=null;selectedProfile=null;inboxFilter=null;journey=null;detailGeneration++;detailBusy=false;clearTimeout(detailTimer);const u=new URL(location.href);u.searchParams.delete("incident");u.searchParams.delete("profile");history.replaceState(null,"",u);loadSources();});
+$("copy-id").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(selectedId);notify("Incident ID copied.");}catch(error){notify("Clipboard unavailable: "+error.message);}});
+$("export").addEventListener("click",()=>{
+  if(!journey||detailStale)return;
+  const url=URL.createObjectURL(new Blob([JSON.stringify({exported_at:new Date().toISOString(),...journey},null,2)],{type:"application/json"}));
+  const a=document.createElement("a");a.href=url;a.download="asre-incident-"+selectedId+".json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+function themeLabel(){text("theme",document.documentElement.dataset.theme==="dark"?"Light mode":"Dark mode");}
+$("theme").addEventListener("click",()=>{const value=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=value;const url=new URL(location.href);url.searchParams.set("scoutTheme",value);history.replaceState(null,"",url);themeLabel();});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){if(!snapshot||Date.now()-Date.parse(snapshot.generated_at)>60000)loadSources();else if(selectedId)loadDetail();}});
+window.addEventListener("resize",()=>requestAnimationFrame(drawWires));
+setInterval(freshness,10000);
+themeLabel();loadSources();
+</script>
+</body>
+</html>

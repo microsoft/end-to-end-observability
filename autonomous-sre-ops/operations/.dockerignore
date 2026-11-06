@@ -1,0 +1,6 @@
+*
+!*.py
+!requirements.txt
+!Dockerfile
+!contracts/
+!contracts/*.json

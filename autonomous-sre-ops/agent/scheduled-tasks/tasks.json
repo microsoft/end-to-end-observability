@@ -1,0 +1,12 @@
+{
+  "artifact_kind": "portal-configuration-checklist",
+  "version": "1.0",
+  "deployed": false,
+  "note": "Proposed schedules, not claims of installed tasks or invented management API payloads.",
+  "tasks": [
+    {"name": "asre-capacity-risk", "enabled": false, "proposed_frequency_minutes": 5, "mode": "Autonomous", "skills": ["asre-proactive-analysis", "asre-case-and-verification"], "gate": "D8 real baseline and preventive repair accepted"},
+    {"name": "asre-alert-recurrence", "enabled": false, "proposed_frequency_minutes": 15, "mode": "Review", "skills": ["asre-proactive-analysis", "asre-case-and-verification"], "gate": "D8 raw notifications and independent-failure controls recorded"},
+    {"name": "asre-patch-backup-readiness", "enabled": false, "proposed_frequency_minutes": 15, "mode": "Review", "skills": ["asre-patch-backup-recovery", "asre-case-and-verification"], "gate": "D4 baseline complete"},
+    {"name": "asre-pending-operation-verification", "enabled": false, "proposed_frequency_minutes": 5, "mode": "Autonomous", "skills": ["asre-case-and-verification"], "gate": "Authenticated collector and asynchronous lifecycle accepted"}
+  ]
+}
